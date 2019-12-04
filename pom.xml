@@ -16,6 +16,7 @@
     <project.license.url>http://www.apache.org/licenses/LICENSE-2.0</project.license.url>
     <java.version>1.8</java.version>
 
+    <arrow.version>0.10.3</arrow.version>
     <antlr.version>4.7.2</antlr.version>
     <antlr4.visitor>true</antlr4.visitor>
     <assertj.version>3.13.2</assertj.version>
@@ -234,6 +235,11 @@
       <artifactId>antlr4</artifactId>
       <version>${antlr.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-stdlib-jdk8</artifactId>
+      <version>${kotlin.version}</version>
+    </dependency>
 
     <!-- test dependencies -->
     <dependency>
@@ -256,13 +262,40 @@
     </dependency>
     <dependency>
       <groupId>org.jetbrains.kotlin</groupId>
-      <artifactId>kotlin-stdlib-jdk8</artifactId>
-      <version>${kotlin.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.kotlin</groupId>
       <artifactId>kotlin-test</artifactId>
       <version>${kotlin.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.arrow-kt</groupId>
+      <artifactId>arrow-core</artifactId>
+      <version>${arrow.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.arrow-kt</groupId>
+      <artifactId>arrow-syntax</artifactId>
+      <version>${arrow.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- logging -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j-api.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+      <version>${logback.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>${logback.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
