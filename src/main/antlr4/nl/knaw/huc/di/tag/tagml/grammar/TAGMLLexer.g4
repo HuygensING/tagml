@@ -13,6 +13,10 @@ DEFAULT_NamespaceOpener
   : '[!ns ' -> pushMode(INSIDE_NAMESPACE)
   ;
 
+DEFAULT_SchemaOpener
+  : '[!schema ' -> pushMode(INSIDE_SCHEMA)
+  ;
+
 DEFAULT_Comment
   : Comment -> skip
   ;
@@ -54,6 +58,17 @@ IN_NamespaceURI
   ;
 
 IN_NamespaceCloser
+  : ']' -> popMode
+  ;
+
+// ----------------- Everything INSIDE of a NAMESPACE ---------------------
+mode INSIDE_SCHEMA;
+
+IS_SchemaURI
+  : ('http://' | 'https://' | 'file://') ( NameChar | '/' | '.' | ':')+
+  ;
+
+IS_SchemaCloser
   : ']' -> popMode
   ;
 

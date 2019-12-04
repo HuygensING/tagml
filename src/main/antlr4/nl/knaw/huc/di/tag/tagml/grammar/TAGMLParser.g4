@@ -3,11 +3,15 @@ parser grammar TAGMLParser;
 options { tokenVocab=TAGMLLexer; }
 
 document
-  :  ( namespaceDefinition text* )* chunk+ EOF
+  :  ( ( namespaceDefinition | schemaLocation ) text* )* chunk+ EOF
   ;
 
 namespaceDefinition
   : DEFAULT_NamespaceOpener IN_NamespaceIdentifier IN_NamespaceURI IN_NamespaceCloser
+  ;
+
+schemaLocation
+  : DEFAULT_SchemaOpener IS_SchemaURI IS_SchemaCloser
   ;
 
 chunk
