@@ -11,7 +11,7 @@ namespaceDefinition
   ;
 
 schemaLocation
-  : DEFAULT_SchemaOpener IS_SchemaURI IS_SchemaCloser
+  : DEFAULT_SchemaOpener IS_SchemaURL IS_SchemaCloser
   ;
 
 chunk

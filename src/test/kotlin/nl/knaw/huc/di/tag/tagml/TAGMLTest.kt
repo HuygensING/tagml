@@ -88,14 +88,28 @@ class TAGMLTest {
         assertParseSucceeds(tagml)
     }
 
-    private fun assertParseSucceeds(tagml: String) {
-        val result = parse(tagml)
-        assertThat(result is Either.Right)
+    @Test
+    fun testURLInSchemaLocationParses1() {
+        val tagml = "[!schema file://localhost/tmp/schema.yaml]\n[tagml>Hello World!<tagml]\n"
+        assertParseSucceeds(tagml)
     }
 
-    private fun assertParseFails(tagml: String) {
-        val result = parse(tagml)
-        assertThat(result is Either.Left)
+    @Test
+    fun testURLInSchemaLocationParses2() {
+        val tagml = "[!schema file:///tmp/schema.yaml]\n[tagml>Hello World!<tagml]\n"
+        assertParseSucceeds(tagml)
+    }
+
+//    @Test
+//    fun testURLInSchemaLocationParses3() {
+//        val tagml = "[!schema file://localhost/c\$/WINDOWS/Temp/schema.yaml]\n[tagml>Hello World!<tagml]\n"
+//        assertParseSucceeds(tagml)
+//    }
+
+    @Test
+    fun testURLInSchemaLocationParses4() {
+        val tagml = "[!schema file:///c:/WINDOWS/Temp/hello%20world%20schema.yaml]\n[tagml>Hello World!<tagml]\n"
+        assertParseSucceeds(tagml)
     }
 
     @Test
@@ -106,20 +120,26 @@ class TAGMLTest {
 
     val LOG: Logger = LoggerFactory.getLogger(TAGMLTest::class.java)
 
-    fun parse(tagml: String): Either<List<String>, ParseTree> {
+    private fun assertParseSucceeds(tagml: String) {
+        val result = parse(tagml)
+        assertThat(result.isRight()).isTrue()
+    }
+
+    private fun assertParseFails(tagml: String) {
+        val result = parse(tagml)
+        assertThat(result.isLeft()).isTrue()
+    }
+
+    private fun parse(tagml: String): Either<List<String>, ParseTree> {
         val antlrInputStream: CharStream = CharStreams.fromString(tagml)
         val lexer = TAGMLLexer(antlrInputStream)
         val errorListener = TestErrorListener()
         lexer.addErrorListener(errorListener)
         val tokens = CommonTokenStream(lexer)
-
         val parser = TAGMLParser(tokens)
         parser.addErrorListener(errorListener)
         parser.buildParseTree = true
-
         val parseTree: ParseTree = parser.document()
-//    val listener = TestListener(errorListener)
-//    ParseTreeWalker.DEFAULT.walk(listener, parseTree)
         return if (errorListener.hasErrors()) {
             Left(errorListener.errors)
         } else {

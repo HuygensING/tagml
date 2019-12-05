@@ -64,8 +64,8 @@ IN_NamespaceCloser
 // ----------------- Everything INSIDE of a NAMESPACE ---------------------
 mode INSIDE_SCHEMA;
 
-IS_SchemaURI
-  : ('http://' | 'https://' | 'file://') ( NameChar | '/' | '.' | ':')+
+IS_SchemaURL
+  : ('http' | 'https' | 'file') '://' (LETTER | DIGIT | ALLOWED_CHARACTERS)+
   ;
 
 IS_SchemaCloser
@@ -415,7 +415,7 @@ DOUBLE_QUOTED_TEXT_ESCAPE_CHARACTER
   ;
 
 fragment ESCAPE_CHARACTER  : '\\\\';
-
+fragment LETTER: [a-zA-Z] | '\u00C0'..'\u00D6' | '\u00D8'..'\u00F6' | '\u00F8'..'\u00FF' ;
 fragment A : [Aa];
 fragment B : [Bb];
 fragment C : [Cc];
@@ -443,6 +443,8 @@ fragment X : [Xx];
 fragment Y : [Yy];
 fragment Z : [Zz];
 
+fragment ALLOWED_CHARACTERS: '*' | '_' | '/' | '\\' | '@' | '.' | ',' | '%' | '-' | '(' | ')'
+        | '?' | '=' | '&' | '#' | '$' | ':' | '^' | '\'' ;
 fragment
 NameChar
   : NameStartChar
