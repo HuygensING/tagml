@@ -100,6 +100,12 @@ class TAGMLTest {
         assertParseSucceeds(tagml)
     }
 
+    @Test
+    fun testMissingSchemaFails() {
+        val tagml = "[tagml>Hello World!<tagml]\n"
+        assertParseFails(tagml)
+    }
+
 //    @Test
 //    fun testURLInSchemaLocationParses3() {
 //        val tagml = "[!schema file://localhost/c\$/WINDOWS/Temp/schema.yaml]\n[tagml>Hello World!<tagml]\n"
