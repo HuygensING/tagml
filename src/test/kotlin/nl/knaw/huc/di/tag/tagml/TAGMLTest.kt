@@ -95,6 +95,12 @@ class TAGMLTest {
 //    }
 
     @Test
+    fun test_schema_header_is_optional() {
+        val tagml = "[tagml>Hello World!<tagml]\n"
+        assertParseSucceeds(tagml)
+    }
+
+    @Test
     fun testCorrectTAGML() {
         val tagml = "[!schema http://alexandria.net/schemas/xyz.yaml]\n[tagml>Hello World!<tagml]\n"
         assertParseSucceeds(tagml)
@@ -112,11 +118,11 @@ class TAGMLTest {
         assertParseSucceeds(tagml)
     }
 
-    @Test
-    fun testMissingSchemaFails() {
-        val tagml = "[tagml>Hello World!<tagml]\n"
-        assertParseFails(tagml)
-    }
+//    @Test
+//    fun testMissingSchemaFails() {
+//        val tagml = "[tagml>Hello World!<tagml]\n"
+//        assertParseFails(tagml)
+//    }
 
     @Test
     fun testSchemaLocationAndNamespace() {

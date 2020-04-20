@@ -7,7 +7,7 @@ document
   ;
 
 header
-  : schemaLocation whitespace? ( namespaceDefinition whitespace? )*
+  : (schemaLocation whitespace?)? ( namespaceDefinition whitespace? )*
   ;
 
 body
