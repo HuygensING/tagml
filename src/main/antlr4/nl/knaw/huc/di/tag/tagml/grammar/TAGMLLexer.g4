@@ -33,8 +33,12 @@ DEFAULT_BeginCloseMarkup
   : TagCloseStartChar  -> pushMode(INSIDE_MARKUP_CLOSER)
   ;
 
+DEFAULT_Whitespace
+  : WS
+  ;
+
 DEFAULT_Text  // match any 16 bit char other than { (start close tag) and [ (start open tag)
-  : ( ~[[<\\] | REGULAR_TEXT_ESCAPE_CHARACTER )+
+  : ( ~[[<\\ \t\r\n] | REGULAR_TEXT_ESCAPE_CHARACTER | WS )+
   ;
 
 NAME

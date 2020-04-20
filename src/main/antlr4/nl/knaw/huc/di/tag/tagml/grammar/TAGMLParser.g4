@@ -3,7 +3,15 @@ parser grammar TAGMLParser;
 options { tokenVocab=TAGMLLexer; }
 
 document
-  :  schemaLocation WS* ( namespaceDefinition WS* )* chunk+ EOF
+  : header whitespace? body whitespace? EOF
+  ;
+
+header
+  : schemaLocation whitespace? ( namespaceDefinition whitespace? )*
+  ;
+
+body
+  : chunk+
   ;
 
 namespaceDefinition
@@ -175,4 +183,8 @@ text
   : DEFAULT_Text
   | ITV_Text
   | IRT_Text
+  ;
+
+whitespace
+  : DEFAULT_Whitespace
   ;

@@ -2,7 +2,7 @@
  * #%L
  * tagml
  * =======
- * Copyright (C) 2016 - 2019 HuC DI (KNAW)
+ * Copyright (C) 2016 - 2020 HuC DI (KNAW)
  * =======
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ package nl.knaw.huc.di.tag.tagml
 import arrow.core.Either
 import arrow.core.Left
 import arrow.core.Right
+import nl.knaw.huc.di.tag.ANTLRUtils.printTokens
 import nl.knaw.huc.di.tag.tagml.TAGML.escapeDoubleQuotedText
 import nl.knaw.huc.di.tag.tagml.TAGML.escapeRegularText
 import nl.knaw.huc.di.tag.tagml.TAGML.escapeSingleQuotedText
@@ -35,51 +36,55 @@ import org.antlr.v4.runtime.dfa.DFA
 import org.antlr.v4.runtime.tree.ParseTree
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import org.junit.jupiter.api.Nested
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*
 
-
 class TAGMLTest {
 
-    @Test
-    fun testEscapeRegularText() {
-        val text = """Escape these characters: \ < [, but not these: | " ' """
-        val expectation = """Escape these characters: \\ \< \[, but not these: | " ' """
-        val escaped = escapeRegularText(text)
-        assertThat(escaped).isEqualTo(expectation)
-    }
+    @Nested
+    inner class TestEscape {
+        @Test
+        fun testEscapeRegularText() {
+            val text = """Escape these characters: \ < [, but not these: | " ' """
+            val expectation = """Escape these characters: \\ \< \[, but not these: | " ' """
+            val escaped = escapeRegularText(text)
+            assertThat(escaped).isEqualTo(expectation)
+        }
 
-    @Test
-    fun testEscapeVariantText() {
-        val text = """Escape these characters : \ < [|, but not these: " ' """
-        val expectation = """Escape these characters : \\ \< \[\|, but not these: " ' """
-        val escaped = escapeVariantText(text)
-        assertThat(escaped).isEqualTo(expectation)
-    }
+        @Test
+        fun testEscapeVariantText() {
+            val text = """Escape these characters : \ < [|, but not these: " ' """
+            val expectation = """Escape these characters : \\ \< \[\|, but not these: " ' """
+            val escaped = escapeVariantText(text)
+            assertThat(escaped).isEqualTo(expectation)
+        }
 
-    @Test
-    fun testEscapeSingleQuotedText() {
-        val text = """Escape these characters: \ ', but not these: < [ | " """
-        val expectation = """Escape these characters: \\ \', but not these: < [ | " """
-        val escaped = escapeSingleQuotedText(text)
-        assertThat(escaped).isEqualTo(expectation)
-    }
+        @Test
+        fun testEscapeSingleQuotedText() {
+            val text = """Escape these characters: \ ', but not these: < [ | " """
+            val expectation = """Escape these characters: \\ \', but not these: < [ | " """
+            val escaped = escapeSingleQuotedText(text)
+            assertThat(escaped).isEqualTo(expectation)
+        }
 
-    @Test
-    fun testEscapeDoubleQuotedText() {
-        val text = """Escape these characters: \ ", but not these: < [ | ' """
-        val expectation = """Escape these characters: \\ \", but not these: < [ | ' """
-        val escaped = escapeDoubleQuotedText(text)
-        assertThat(escaped).isEqualTo(expectation)
-    }
+        @Test
+        fun testEscapeDoubleQuotedText() {
+            val text = """Escape these characters: \ ", but not these: < [ | ' """
+            val expectation = """Escape these characters: \\ \", but not these: < [ | ' """
+            val escaped = escapeDoubleQuotedText(text)
+            assertThat(escaped).isEqualTo(expectation)
+        }
 
-    @Test
-    fun testUnEscape() {
-        val text = """Unescape this: \< \[ \| \! \" \' \\ """
-        val expectation = """Unescape this: < [ | ! " ' \ """
-        val unEscaped = unEscape(text)
-        assertThat(unEscaped).isEqualTo(expectation)
+        @Test
+        fun testUnEscape() {
+            val text = """Unescape this: \< \[ \| \! \" \' \\ """
+            val expectation = """Unescape this: < [ | ! " ' \ """
+            val unEscaped = unEscape(text)
+            assertThat(unEscaped).isEqualTo(expectation)
+        }
+
     }
 
     @Test
@@ -104,6 +109,12 @@ class TAGMLTest {
     fun testMissingSchemaFails() {
         val tagml = "[tagml>Hello World!<tagml]\n"
         assertParseFails(tagml)
+    }
+
+    @Test
+    fun testSchemaLocationAndNamespace() {
+        val tagml = "[!schema file:///tmp/schema.yaml]\n[!ns a http://example.org/bla]\n[tagml>Hello World!<tagml]\n"
+        assertParseSucceeds(tagml)
     }
 
 //    @Test
@@ -137,6 +148,7 @@ class TAGMLTest {
     }
 
     private fun parse(tagml: String): Either<List<String>, ParseTree> {
+        printTokens(tagml)
         val antlrInputStream: CharStream = CharStreams.fromString(tagml)
         val lexer = TAGMLLexer(antlrInputStream)
         val errorListener = TestErrorListener()
