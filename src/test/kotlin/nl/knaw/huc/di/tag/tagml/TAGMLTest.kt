@@ -156,7 +156,7 @@ class TAGMLTest {
         parser.addErrorListener(errorListener)
         parser.buildParseTree = true
         val parseTree: ParseTree = parser.document()
-        return if (errorListener.hasErrors()) {
+        return if (errorListener.hasErrors) {
             Left(errorListener.errors)
         } else {
             Right(parseTree)
@@ -166,7 +166,11 @@ class TAGMLTest {
 
 class TestErrorListener : ANTLRErrorListener {
     private val LOG: Logger = LoggerFactory.getLogger(TestErrorListener::class.java)
+
     internal val errors: MutableList<String> = ArrayList()
+    val hasErrors: Boolean
+        get() = errors.isNotEmpty()
+
     private val reportAmbiguity = false
     private val reportAttemptingFullContext = false
     private val reportContextSensitivity = true
@@ -209,12 +213,8 @@ class TestErrorListener : ANTLRErrorListener {
         }
     }
 
-    fun hasErrors(): Boolean {
-        return !errors.isEmpty()
-    }
-
-    fun addError(messageTemplate: String?, vararg messageArgs: Any?) {
-        errors.add(String.format(messageTemplate!!, *messageArgs))
+    fun addError(messageTemplate: String, vararg messageArgs: Any) {
+        errors.add(String.format(messageTemplate, *messageArgs))
     }
 
 }
