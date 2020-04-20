@@ -36,56 +36,56 @@ import org.antlr.v4.runtime.dfa.DFA
 import org.antlr.v4.runtime.tree.ParseTree
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import org.junit.jupiter.api.Nested
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*
 
 class TAGMLTest {
 
-    @Nested
-    inner class TestEscape {
-        @Test
-        fun testEscapeRegularText() {
-            val text = """Escape these characters: \ < [, but not these: | " ' """
-            val expectation = """Escape these characters: \\ \< \[, but not these: | " ' """
-            val escaped = escapeRegularText(text)
-            assertThat(escaped).isEqualTo(expectation)
-        }
+    val LOG: Logger = LoggerFactory.getLogger(TAGMLTest::class.java)
 
-        @Test
-        fun testEscapeVariantText() {
-            val text = """Escape these characters : \ < [|, but not these: " ' """
-            val expectation = """Escape these characters : \\ \< \[\|, but not these: " ' """
-            val escaped = escapeVariantText(text)
-            assertThat(escaped).isEqualTo(expectation)
-        }
-
-        @Test
-        fun testEscapeSingleQuotedText() {
-            val text = """Escape these characters: \ ', but not these: < [ | " """
-            val expectation = """Escape these characters: \\ \', but not these: < [ | " """
-            val escaped = escapeSingleQuotedText(text)
-            assertThat(escaped).isEqualTo(expectation)
-        }
-
-        @Test
-        fun testEscapeDoubleQuotedText() {
-            val text = """Escape these characters: \ ", but not these: < [ | ' """
-            val expectation = """Escape these characters: \\ \", but not these: < [ | ' """
-            val escaped = escapeDoubleQuotedText(text)
-            assertThat(escaped).isEqualTo(expectation)
-        }
-
-        @Test
-        fun testUnEscape() {
-            val text = """Unescape this: \< \[ \| \! \" \' \\ """
-            val expectation = """Unescape this: < [ | ! " ' \ """
-            val unEscaped = unEscape(text)
-            assertThat(unEscaped).isEqualTo(expectation)
-        }
-
+    //    @Nested
+//    inner class TestEscape {
+    @Test
+    fun testEscapeRegularText() {
+        val text = """Escape these characters: \ < [, but not these: | " ' """
+        val expectation = """Escape these characters: \\ \< \[, but not these: | " ' """
+        val escaped = escapeRegularText(text)
+        assertThat(escaped).isEqualTo(expectation)
     }
+
+    @Test
+    fun testEscapeVariantText() {
+        val text = """Escape these characters : \ < [|, but not these: " ' """
+        val expectation = """Escape these characters : \\ \< \[\|, but not these: " ' """
+        val escaped = escapeVariantText(text)
+        assertThat(escaped).isEqualTo(expectation)
+    }
+
+    @Test
+    fun testEscapeSingleQuotedText() {
+        val text = """Escape these characters: \ ', but not these: < [ | " """
+        val expectation = """Escape these characters: \\ \', but not these: < [ | " """
+        val escaped = escapeSingleQuotedText(text)
+        assertThat(escaped).isEqualTo(expectation)
+    }
+
+    @Test
+    fun testEscapeDoubleQuotedText() {
+        val text = """Escape these characters: \ ", but not these: < [ | ' """
+        val expectation = """Escape these characters: \\ \", but not these: < [ | ' """
+        val escaped = escapeDoubleQuotedText(text)
+        assertThat(escaped).isEqualTo(expectation)
+    }
+
+    @Test
+    fun testUnEscape() {
+        val text = """Unescape this: \< \[ \| \! \" \' \\ """
+        val expectation = """Unescape this: < [ | ! " ' \ """
+        val unEscaped = unEscape(text)
+        assertThat(unEscaped).isEqualTo(expectation)
+    }
+//    }
 
     @Test
     fun testCorrectTAGML() {
@@ -134,8 +134,6 @@ class TAGMLTest {
         val tagml = "<xml>This is not TAGML!</xml>"
         assertParseFails(tagml)
     }
-
-    val LOG: Logger = LoggerFactory.getLogger(TAGMLTest::class.java)
 
     private fun assertParseSucceeds(tagml: String) {
         val result = parse(tagml)
