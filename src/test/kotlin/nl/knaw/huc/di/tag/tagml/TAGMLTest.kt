@@ -1,3 +1,5 @@
+package nl.knaw.huc.di.tag.tagml
+
 /*-
  * #%L
  * tagml
@@ -17,12 +19,17 @@
  * limitations under the License.
  * #L%
  */
-package nl.knaw.huc.di.tag.tagml
 
 import arrow.core.Either
 import arrow.core.Left
 import arrow.core.Right
 import nl.knaw.huc.di.tag.ANTLRUtils.printTokens
+import nl.knaw.huc.di.tag.tagml.TAGML.BRANCH
+import nl.knaw.huc.di.tag.tagml.TAGML.BRANCHES
+import nl.knaw.huc.di.tag.tagml.TAGML.CLOSE_TAG_ENDCHAR
+import nl.knaw.huc.di.tag.tagml.TAGML.CLOSE_TAG_STARTCHAR
+import nl.knaw.huc.di.tag.tagml.TAGML.OPEN_TAG_ENDCHAR
+import nl.knaw.huc.di.tag.tagml.TAGML.OPEN_TAG_STARTCHAR
 import nl.knaw.huc.di.tag.tagml.TAGML.escapeDoubleQuotedText
 import nl.knaw.huc.di.tag.tagml.TAGML.escapeRegularText
 import nl.knaw.huc.di.tag.tagml.TAGML.escapeSingleQuotedText
@@ -42,7 +49,7 @@ import java.util.*
 
 class TAGMLTest {
 
-    val LOG: Logger = LoggerFactory.getLogger(TAGMLTest::class.java)
+    val log: Logger = LoggerFactory.getLogger(TAGMLTest::class.java)
 
     //    @Nested
 //    inner class TestEscape {
@@ -135,6 +142,16 @@ class TAGMLTest {
         assertParseFails(tagml)
     }
 
+    @Test
+    fun call_constants() {
+        assertThat(OPEN_TAG_STARTCHAR).isEqualTo("[")
+        assertThat(OPEN_TAG_ENDCHAR).isEqualTo(">")
+        assertThat(CLOSE_TAG_STARTCHAR).isEqualTo("<")
+        assertThat(CLOSE_TAG_ENDCHAR).isEqualTo("]")
+        assertThat(BRANCHES).isEqualTo(":branches")
+        assertThat(BRANCH).isEqualTo(":branch")
+    }
+
     private fun assertParseSucceeds(tagml: String) {
         val result = parse(tagml)
         assertThat(result.isRight()).isTrue()
@@ -165,7 +182,7 @@ class TAGMLTest {
 }
 
 class TestErrorListener : ANTLRErrorListener {
-    private val LOG: Logger = LoggerFactory.getLogger(TestErrorListener::class.java)
+    private val log: Logger = LoggerFactory.getLogger(TestErrorListener::class.java)
 
     internal val errors: MutableList<String> = ArrayList()
     val hasErrors: Boolean
