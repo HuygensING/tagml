@@ -28,6 +28,7 @@ chunk
   | milestoneTag
   | textVariation
   | text
+  | whitespace
   ;
 
 startTag

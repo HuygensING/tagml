@@ -125,6 +125,12 @@ class TAGMLTest {
     }
 
     @Test
+    fun allow_whitespace_after_body() {
+        val tagml = "[!schema file:///tmp/schema.yaml]\n[tagml>Hello[a> happy<a] [b>happy<b] World!<tagml]\n"
+        assertParseSucceeds(tagml)
+    }
+
+    @Test
     fun testURLInSchemaLocationParses4() {
         val tagml = "[!schema file:///c:/WINDOWS/Temp/hello%20world%20schema.yaml]\n[tagml>Hello World!<tagml]\n"
         assertParseSucceeds(tagml)
