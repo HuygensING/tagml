@@ -1,0 +1,134 @@
+{
+  ":ontology": {
+    "root": "excerpt",
+    "elements": {
+      "excerpt": {
+        "description": "A short extract from a text",
+        "dataType": "TAGML markup element",
+        "attributes": [
+          "type",
+          "title",
+          "author",
+          "year",
+          "page",
+          "persons",
+          "id"
+        ]
+      },
+      "img": {
+        "description": "Image; the (external) representation of the document containing the text",
+        "dataType": "TAGML milestone markup element",
+        "properties": [
+          "milestone"
+        ],
+        "attributes": [
+          "source"
+        ]
+      },
+      "chapter": {
+        "description": "Main division of a text",
+        "dataType": "TAGML markup element",
+        "attributes": [
+          "n"
+        ]
+      },
+      "par": {
+        "description": "A distinct section in a text, indicated by a new line or an indentation",
+        "dataType": "TAGML markup element",
+        "attributes": [
+          "n"
+        ]
+      },
+      "s": {
+        "description": "contains a sentence-like division of a text",
+        "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-s.html",
+        "dataType": "TAGML markup element"
+      },
+      "sic": {
+        "description": "contains text reproduced although apparently incorrect or inaccurate",
+        "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-sic.html",
+        "dataType": "TAGML markup element"
+      },
+      "corr": {
+        "description": "contains the correct form of a passage apparently erroneous in the copy text",
+        "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-corr.html",
+        "dataType": "TAGML markup element"
+      },
+      "said": {
+        "description": "(speech or thought) indicates passages thought or spoken aloud",
+        "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-said.html",
+        "dataType": "TAGML markup element",
+        "attributes": [
+          "who"
+        ],
+        "properties": [
+          "discontinuous"
+        ]
+      },
+      "persName": {
+        "description": "personal name: contains a proper noun or proper noun phrase referring to a person",
+        "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-persName.html",
+        "dataType": "TAGML markup element",
+        "attributes": [
+          "id"
+        ]
+      },
+      "emph": {
+        "description": "(emphasized) marks words or phrases which are stressed or emphasized for linguistic or rhetorical effect",
+        "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-emph.html",
+        "dataType": "TAGML markup element"
+      }
+    },
+    "attributes": {
+      "type": {
+        "description": "TAGML attribute; used to classify the source of the text in the document",
+        "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-att.typed.html",
+        "dataType": "String"
+      },
+      "title": {
+        "description": "TAGML attribute; used to indicate the title of the text in the document",
+        "dataType": "String"
+      },
+      "source": {
+        "description": "TAGML attribute; refers to the source of the (external) representation of the document containing the text",
+        "dataType": "URI"
+      },
+      "author": {
+        "description": "TAGML attribute; refers to the name of the author(s) of the text in the document",
+        "dataType": "Pointer"
+      },
+      "year": {
+        "description": "TAGML attribute; refers to the year of publication of the text in the document",
+        "dataType": "Integer"
+      },
+      "page": {
+        "description": "TAGML attribute; indicates the page(s) of the text in the document",
+        "dataType": "IntegerList"
+      },
+      "persons": {
+        "description": "TAGML attribute; (fictional) persons mentioned in the document",
+        "dataType": "StringList"
+      },
+      "id": {
+        "description": "TAGML attribute; points to a unique identifier for the element bearing the attribute",
+        "dataType": "ID"
+      },
+      "who": {
+        "description": "TAGML attribute; points to the unique identifier of a person in the document",
+        "dataType": "Pointer"
+      },
+      "n": {
+        "description": "TAGML attribute; gives a number for an element which is not necessarily unique in the document",
+        "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-att.global.html",
+        "dataType": "Integer"
+      }
+    },
+    "relations": [
+      "excerpt > chapter+, img+",
+      "chapter > par+, said+",
+      "par > s+",
+      "s > (sic, corr)*",
+      "said > persName+, emph+, said*"
+    ]
+  }
+}
