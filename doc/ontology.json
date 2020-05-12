@@ -123,12 +123,14 @@
         "dataType": "Integer"
       }
     },
-    "relations": [
+    "rules": [
       "excerpt > chapter+, img+",
       "chapter > par+, said+",
       "par > s+",
       "s > (sic, corr)*",
       "said > persName+, emph+, said*"
+      "said may-not-overlap-with s",
+      "sic is-non-linear-with corr"
     ]
   }
 }

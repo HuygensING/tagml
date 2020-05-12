@@ -1,5 +1,18 @@
 { ":include": "ontology.json" }
-[excerpt|+A,+B type='novel' title='Marion, the story of an artist\'s model' author->wat01 year=1916 page=[17,18] persons=[{name='Marion Ascough'},{name='Ada Ascough'},{name='Ellen Ascough'},{name='Monsieur de St. Vidal'},{name='Onoto Watanna'}] id='urn:oclc:record:1048793515'>
+[excerpt|+A,+B
+  type='novel'
+  title='Marion, the story of an artist\'s model'
+  author->wat01
+  year=1916
+  page=[17,18]
+  persons=[
+    {name='Marion Ascough'},
+    {name='Ada Ascough'},
+    {name='Ellen Ascough'},
+    {name='Monsieur de St. Vidal'},
+    {name='Onoto Watanna'}
+  ]
+  id='urn:oclc:record:1048793515'>
 [img source='https://archive.org/details/marionstoryofart00wata/page/17/mode/1up']
 [chapter|A,B n=4>
 [par|B n=1>
