@@ -108,7 +108,7 @@
         "dataType": "Pointer"
       },
       "n": {
-        "description": "TAGML attribute; gives a number for an element which is not necessarily unique in the document",
+        "description": "gives a number for an element which is not necessarily unique in the document",
         "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-att.global.html",
         "dataType": "Integer"
       }
@@ -118,7 +118,7 @@
       "chapter > par+, said+",
       "par > s+",
       "s > (sic, corr)*",
-      "said > persName+, emph+, said*"
+      "said > persName+, emph+, said*",
       "said may-not-overlap-with s",
       "sic is-non-linear-with corr"
     ]
