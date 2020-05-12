@@ -1,46 +1,60 @@
 { ":include": "ontology.json" }
-[excerpt|+A,+B
+[excerpt
   type='novel'
   title='Marion, the story of an artist\'s model'
   author->wat01
   year=1916
   page=[17,18]
   persons=[
-    {name='Marion Ascough'},
-    {name='Ada Ascough'},
-    {name='Ellen Ascough'},
-    {name='Monsieur de St. Vidal'},
-    {name='Onoto Watanna'}
+    {id="mar01" name='Marion Ascough'},
+    {id="ada01" name='Ada Ascough'},
+    {id="ell01" name='Ellen Ascough'},
+    {id="stv01" name='Monsieur de St. Vidal'},
+    {id="wat01" name='Onoto Watanna'}
   ]
   id='urn:oclc:record:1048793515'>
 [img source='https://archive.org/details/marionstoryofart00wata/page/17/mode/1up']
-[chapter|A,B n=4>
-[par|B n=1>
-[s|B>[persName|A id->ell01>Ellen<persName|A] was running up the stairs, and now [persName|A id->ell01>she<persName|A]
-burst into our room excitedly, with a package in her hand.<s|B]<par|B][par|B n=2>[s|B>[said|A who->ell01>"Look,
-[persName|A id->mar01>Marion<persName|A]! Here's your present.<s|B] [s|B>[persName|A id->stv01>He<persName|A] wouldn't
-stop––just left it, and [persName|A id->stv01>he<persName|A] said, with such
+[chapter n=4>
+
+[par n=1>
+[s>[persName id->ell01>Ellen<persName] was running up the stairs, and now [persName id->ell01>she<persName]
+burst into our room excitedly, with a package in her hand.<s]<par]
+
+[par n=2>[s>[said who->ell01>"Look,
+[persName id->mar01>Marion<persName]! Here's your present.<s] [s>[persName id->stv01>He<persName] wouldn't
+stop––just left it, and [persName id->stv01>he<persName] said, with such
 [img source='https://archive.org/details/marionstoryofart00wata/page/18/mode/1up']
-a Frenchy bow––whew! I don't like the French!––[said|A who->stv01>'Pour [persName|A id->mar01>Mamselle Marion<persName|A],
-avec mes compliments!'<said|A]"<said|A] and [persName|A id->ell01>Ellen<persName|A] mimicked
-[persName|A id->stv01>St. Vidal<persName|A]'s best French manner and voice.<s|B]<par|B]
-[par|B n=3>[s|B>I opened the package.<s|B]
-[s|B>Oh, such a lovely box of paints––a perfect treasure!<s|B]<par|B]
-[par|B n=4>[s|B>[said|A who->mar01>"Just exactly what I wanted!"<said|A] I cried excitedly, looking at the new brushes
- and palette.<s|B]<par|B]
-[par|B n=5>[s|B>[persName|A id->ada01>Ada<persName|A] was sitting reading by the window, and now
-[persName|A id->ada01>she<persName|A] looked up and said:<s|B]<par|B][par|B n=6>[s|B>[said|A who->ada01>"Oh, did
-[persName|A id->stv01>that French [emph|A>wine merchant<emph|A]<persName|A] give that to
-[persName|A id->mar01>Marion<persName|A]?"<said|A]<s|B]<par|B][par|B n=7>[s|B>She cast a disparaging glance at the box,
-and then, addressing [persName|A,B id->ell01>Ellen<persName|A,B], [persName|A,B id->ada01>she<persName|A,B]
-continued:<s|B]<par|B][par|B n=8>[said|A who->ada01>"[persName|A id->mar01>Marion<persName|A] is disgustingly old
-for sixteen, but, of course, if [persName|A id->stv01>he<persName|A] gives [persName|A id->mar01>her<persName|A]
-presents"<-said|A] ([persName|A id->stv01>he<persName|A] had never given given me anything but candy before)
-[+said|A>"[persName|A id->stv01>he<persName|A] will propose to [persName|A id->mar01>her<persName|A], I suppose.
-Mama married at sixteen and I suppose [emph|A>some<emph|A] people––"<-said|A] [persName|A id->ada01>Ada<persName|A]
-gave me another look that was anything but approving––[+said|A>"[emph|A>are<emph|A] in a hurry to get married.
-[emph|A>I<emph|A] shall never marry until I am twenty-five!"<said|A] [persName|A id->ada01>[s|B>Ada<persName]
-was twenty.<s|B]<par|B][par|B n=9>[s|B>This time, [persName|A id->ell01>Ellen<persName|A], who was eighteen, got the
-<|[sic|B>condeming<sic]|[corr|B>condemning<corr]|> look.<s|B]<par|B]
-<chapter|A,B]
-<excerpt|A,B]
+a Frenchy bow––whew! I don't like the French!––[said who->stv01>'Pour [persName id->mar01>Mamselle Marion<persName],
+avec mes compliments!'<said]"<said] and [persName id->ell01>Ellen<persName] mimicked
+[persName id->stv01>St. Vidal<persName]'s best French manner and voice.<s]<par]
+
+[par n=3>[s>I opened the package.<s]
+[s>Oh, such a lovely box of paints––a perfect treasure!<s]<par]
+
+[par n=4>[s>[said who->mar01>"Just exactly what I wanted!"<said] I cried excitedly, looking at the new brushes
+ and palette.<s]<par]
+
+[par n=5>[s>[persName id->ada01>Ada<persName] was sitting reading by the window, and now
+[persName id->ada01>she<persName] looked up and said:<s]<par]
+
+[par n=6>[s>[said who->ada01>"Oh, did [persName id->stv01>that French [emph>wine merchant<emph]<persName] give that to
+[persName id->mar01>Marion<persName]?"<said]<s]<par]
+
+[par n=7>[s>She cast a disparaging glance at the box,
+and then, addressing [persName id->ell01>Ellen<persName], [persName id->ada01>she<persName]
+continued:<s]<par]
+
+[par n=8>[said who->ada01>"[persName id->mar01>Marion<persName] is disgustingly old
+for sixteen, but, of course, if [persName id->stv01>he<persName] gives [persName id->mar01>her<persName]
+presents"<-said] ([persName id->stv01>he<persName] had never given given me anything but candy before)
+[+said>"[persName id->stv01>he<persName] will propose to [persName id->mar01>her<persName], I suppose.
+Mama married at sixteen and I suppose [emph>some<emph] people––"<-said] [persName id->ada01>Ada<persName]
+gave me another look that was anything but approving––[+said>"[emph>are<emph] in a hurry to get married.
+[emph>I<emph] shall never marry until I am twenty-five!"<said] [persName id->ada01>[s>Ada<persName]
+was twenty.<s]<par]
+
+[par n=9>[s>This time, [persName id->ell01>Ellen<persName], who was eighteen, got the
+<|[sic>condeming<sic]|[corr>condemning<corr]|> look.<s]<par]
+
+<chapter]
+<excerpt]
