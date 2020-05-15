@@ -51,6 +51,12 @@ class TAGMLTest {
 
     val log: Logger = LoggerFactory.getLogger(TAGMLTest::class.java)
 
+    @Test
+    fun test_whitespace_in_text() {
+        val tagml = "[l>[w>Just<w] [w>some<w] [w>words<w]<l]] \n \n"
+        assertParseSucceeds(tagml)
+    }
+
     //    @Nested
 //    inner class TestEscape {
     @Test
