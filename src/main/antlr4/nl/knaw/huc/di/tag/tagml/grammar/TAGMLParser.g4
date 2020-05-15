@@ -183,6 +183,7 @@ text
   : DEFAULT_Text
   | ITV_Text
   | IRT_Text
+  | whitespace
   ;
 
 whitespace
