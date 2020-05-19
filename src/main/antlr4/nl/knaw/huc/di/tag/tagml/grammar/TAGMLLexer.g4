@@ -9,13 +9,51 @@ lexer grammar TAGMLLexer;
 
 // default mode
 
-DEFAULT_NamespaceOpener
-  : '[!ns ' -> pushMode(INSIDE_NAMESPACE)
+//DEFAULT_NamespaceOpener
+//  : '[!ns ' -> pushMode(INSIDE_NAMESPACE)
+//  ;
+//
+//DEFAULT_SchemaOpener
+//  : '[!schema ' -> pushMode(INSIDE_SCHEMA)
+//  ;
+
+DEFAULT_BeginHeader
+  : '{' -> pushMode(INSIDE_HEADER)
   ;
 
-DEFAULT_SchemaOpener
-  : '[!schema ' -> pushMode(INSIDE_SCHEMA)
+
+// ----------------- Everything INSIDE of a HEADER ---------------------
+mode INSIDE_HEADER;
+
+IH_CloseHeader
+  : '}' -> pushMode(INSIDE_BODY)
   ;
+
+IH_BeginNesting
+  : '{' -> pushMode(INSIDE_HEADER_NESTING)
+  ;
+
+IH_Text
+  : ( ~[{}] | WS )+
+  ;
+
+// ----------------- Everything INSIDE of a HEADER ---------------------
+mode INSIDE_HEADER_NESTING;
+
+IHN_CloseHeader
+  : '}' -> popMode
+  ;
+
+IHN_BeginNesting
+  : '{' -> pushMode(INSIDE_HEADER_NESTING)
+  ;
+
+IHN_Text
+  : ( ~[{}] | WS )+
+  ;
+
+// ----------------- Everything INSIDE of a HEADER ---------------------
+mode INSIDE_BODY;
 
 DEFAULT_Comment
   : Comment -> skip
@@ -46,35 +84,35 @@ NAME
   | NameStartChar NameChar* NameEndChar
   ;
 
-// ----------------- Everything INSIDE of a NAMESPACE ---------------------
-mode INSIDE_NAMESPACE;
-
-IN_NamespaceIdentifier
-  : NameChar+
-  ;
-
-IN_WS
-  : WS -> skip
-  ;
-
-IN_NamespaceURI
-  : ('http://' | 'https://') ( NameChar | '/' | '.' )+
-  ;
-
-IN_NamespaceCloser
-  : ']' -> popMode
-  ;
-
-// ----------------- Everything INSIDE of a NAMESPACE ---------------------
-mode INSIDE_SCHEMA;
-
-IS_SchemaURL
-  : ('http' | 'https' | 'file') '://' (LETTER | DIGIT | ALLOWED_CHARACTERS)+
-  ;
-
-IS_SchemaCloser
-  : ']' -> popMode
-  ;
+//// ----------------- Everything INSIDE of a NAMESPACE ---------------------
+//mode INSIDE_NAMESPACE;
+//
+//IN_NamespaceIdentifier
+//  : NameChar+
+//  ;
+//
+//IN_WS
+//  : WS -> skip
+//  ;
+//
+//IN_NamespaceURI
+//  : ('http://' | 'https://') ( NameChar | '/' | '.' )+
+//  ;
+//
+//IN_NamespaceCloser
+//  : ']' -> popMode
+//  ;
+//
+//// ----------------- Everything INSIDE of a NAMESPACE ---------------------
+//mode INSIDE_SCHEMA;
+//
+//IS_SchemaURL
+//  : ('http' | 'https' | 'file') '://' (LETTER | DIGIT | ALLOWED_CHARACTERS)+
+//  ;
+//
+//IS_SchemaCloser
+//  : ']' -> popMode
+//  ;
 
 // ----------------- Everything INSIDE of a MARKUP OPENER ---------------------
 mode INSIDE_MARKUP_OPENER;

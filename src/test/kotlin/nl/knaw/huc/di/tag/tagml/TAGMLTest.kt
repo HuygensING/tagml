@@ -52,9 +52,36 @@ class TAGMLTest {
     val log: Logger = LoggerFactory.getLogger(TAGMLTest::class.java)
 
     @Test
-    fun test_whitespace_in_text() {
-        val tagml = "[l>[w>Just<w] [w>some<w] [w>words<w]<l]] \n \n"
+    fun test_header() {
+        val tagml = """
+            {
+                "name": "test",
+                "id": "test001".
+                ":ontology": {
+                },
+                "author": "me"
+            }
+            [l>[w>Just<w] [w>some<w] [w>words<w]<l]
+            """.trimIndent()
         assertParseSucceeds(tagml)
+    }
+
+    @Test
+    fun test_whitespace_in_text() {
+        val tagml = "{}[l>[w>Just<w] [w>some<w] [w>words<w]<l] \n \n"
+        assertParseSucceeds(tagml)
+    }
+
+    @Test
+    fun test_schema_header_is_required() {
+        val tagmlBad = "[tagml>Hello World!<tagml]\n"
+        assertParseFails(tagmlBad)
+
+        val tagmlGood = """
+            {}
+            [tagml>Hello World!<tagml]
+            """.trimIndent()
+        assertParseSucceeds(tagmlGood)
     }
 
     //    @Nested
@@ -100,29 +127,23 @@ class TAGMLTest {
     }
 //    }
 
-    @Test
-    fun test_schema_header_is_optional() {
-        val tagml = "[tagml>Hello World!<tagml]\n"
-        assertParseSucceeds(tagml)
-    }
+//    @Test
+//    fun testCorrectTAGML() {
+//        val tagml = "[!schema http://alexandria.net/schemas/xyz.yaml]\n[tagml>Hello World!<tagml]\n"
+//        assertParseSucceeds(tagml)
+//    }
 
-    @Test
-    fun testCorrectTAGML() {
-        val tagml = "[!schema http://alexandria.net/schemas/xyz.yaml]\n[tagml>Hello World!<tagml]\n"
-        assertParseSucceeds(tagml)
-    }
-
-    @Test
-    fun testURLInSchemaLocationParses1() {
-        val tagml = "[!schema file://localhost/tmp/schema.yaml]\n[tagml>Hello World!<tagml]\n"
-        assertParseSucceeds(tagml)
-    }
-
-    @Test
-    fun testURLInSchemaLocationParses2() {
-        val tagml = "[!schema file:///tmp/schema.yaml]\n[tagml>Hello World!<tagml]\n"
-        assertParseSucceeds(tagml)
-    }
+//    @Test
+//    fun testURLInSchemaLocationParses1() {
+//        val tagml = "[!schema file://localhost/tmp/schema.yaml]\n[tagml>Hello World!<tagml]\n"
+//        assertParseSucceeds(tagml)
+//    }
+//
+//    @Test
+//    fun testURLInSchemaLocationParses2() {
+//        val tagml = "[!schema file:///tmp/schema.yaml]\n[tagml>Hello World!<tagml]\n"
+//        assertParseSucceeds(tagml)
+//    }
 
 //    @Test
 //    fun testMissingSchemaFails() {
@@ -130,11 +151,11 @@ class TAGMLTest {
 //        assertParseFails(tagml)
 //    }
 
-    @Test
-    fun testSchemaLocationAndNamespace() {
-        val tagml = "[!schema file:///tmp/schema.yaml]\n[!ns a http://example.org/bla]\n[tagml>Hello World!<tagml]\n"
-        assertParseSucceeds(tagml)
-    }
+//    @Test
+//    fun testSchemaLocationAndNamespace() {
+//        val tagml = "[!schema file:///tmp/schema.yaml]\n[!ns a http://example.org/bla]\n[tagml>Hello World!<tagml]\n"
+//        assertParseSucceeds(tagml)
+//    }
 
 //    @Test
 //    fun testURLInSchemaLocationParses3() {
@@ -142,11 +163,11 @@ class TAGMLTest {
 //        assertParseSucceeds(tagml)
 //    }
 
-    @Test
-    fun testURLInSchemaLocationParses4() {
-        val tagml = "[!schema file:///c:/WINDOWS/Temp/hello%20world%20schema.yaml]\n[tagml>Hello World!<tagml]\n"
-        assertParseSucceeds(tagml)
-    }
+//    @Test
+//    fun testURLInSchemaLocationParses4() {
+//        val tagml = "[!schema file:///c:/WINDOWS/Temp/hello%20world%20schema.yaml]\n[tagml>Hello World!<tagml]\n"
+//        assertParseSucceeds(tagml)
+//    }
 
     @Test
     fun testIncorrectTAGML() {

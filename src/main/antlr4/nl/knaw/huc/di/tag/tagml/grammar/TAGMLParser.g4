@@ -7,7 +7,7 @@ document
   ;
 
 header
-  : (schemaLocation whitespace?)? ( namespaceDefinition whitespace? )*
+  : DEFAULT_BeginHeader .* IH_CloseHeader
   ;
 
 body
