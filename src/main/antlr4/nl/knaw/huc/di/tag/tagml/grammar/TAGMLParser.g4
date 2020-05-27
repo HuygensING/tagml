@@ -7,19 +7,11 @@ document
   ;
 
 header
-  : DEFAULT_BeginHeader .* IH_CloseHeader
+  : DEFAULT_BeginHeader IH_Text? IH_CloseHeader
   ;
 
 body
   : chunk+
-  ;
-
-namespaceDefinition
-  : DEFAULT_NamespaceOpener IN_NamespaceIdentifier IN_NamespaceURI IN_NamespaceCloser
-  ;
-
-schemaLocation
-  : DEFAULT_SchemaOpener IS_SchemaURL IS_SchemaCloser
   ;
 
 chunk

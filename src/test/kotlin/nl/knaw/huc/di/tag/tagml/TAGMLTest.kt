@@ -54,13 +54,13 @@ class TAGMLTest {
     @Test
     fun test_header() {
         val tagml = """
-            {
+            {{
                 "name": "test",
                 "id": "test001".
                 ":ontology": {
                 },
                 "author": "me"
-            }
+            }}
             [l>[w>Just<w] [w>some<w] [w>words<w]<l]
             """.trimIndent()
         assertParseSucceeds(tagml)
@@ -68,7 +68,7 @@ class TAGMLTest {
 
     @Test
     fun test_whitespace_in_text() {
-        val tagml = "{}[l>[w>Just<w] [w>some<w] [w>words<w]<l] \n \n"
+        val tagml = "{{}}[l>[w>Just<w] [w>some<w] [w>words<w]<l] \n \n"
         assertParseSucceeds(tagml)
     }
 
@@ -78,7 +78,7 @@ class TAGMLTest {
         assertParseFails(tagmlBad)
 
         val tagmlGood = """
-            {}
+            {{}}
             [tagml>Hello World!<tagml]
             """.trimIndent()
         assertParseSucceeds(tagmlGood)

@@ -18,7 +18,7 @@ lexer grammar TAGMLLexer;
 //  ;
 
 DEFAULT_BeginHeader
-  : '{' -> pushMode(INSIDE_HEADER)
+  : '{{' -> pushMode(INSIDE_HEADER)
   ;
 
 
@@ -26,30 +26,11 @@ DEFAULT_BeginHeader
 mode INSIDE_HEADER;
 
 IH_CloseHeader
-  : '}' -> pushMode(INSIDE_BODY)
-  ;
-
-IH_BeginNesting
-  : '{' -> pushMode(INSIDE_HEADER_NESTING)
+  : '}}' -> pushMode(INSIDE_BODY)
   ;
 
 IH_Text
-  : ( ~[{}] | WS )+
-  ;
-
-// ----------------- Everything INSIDE of a HEADER ---------------------
-mode INSIDE_HEADER_NESTING;
-
-IHN_CloseHeader
-  : '}' -> popMode
-  ;
-
-IHN_BeginNesting
-  : '{' -> pushMode(INSIDE_HEADER_NESTING)
-  ;
-
-IHN_Text
-  : ( ~[{}] | WS )+
+  :  (~[}] | ('}' ~[}]))*
   ;
 
 // ----------------- Everything INSIDE of a HEADER ---------------------
@@ -518,6 +499,6 @@ WS
   : [ \t\r\n]+
   ;
 
-//UNEXPECTED_CHAR // Throw unexpected token exception
-//  :  .
-//  ;
+UNEXPECTED_CHAR // Throw unexpected token exception
+  :  .
+  ;
