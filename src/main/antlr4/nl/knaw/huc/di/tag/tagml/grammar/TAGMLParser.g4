@@ -7,7 +7,31 @@ document
   ;
 
 header
-  : DEFAULT_BeginHeader IH_Text? IH_CloseHeader
+  : DEFAULT_BeginHeader (json_pair (COMMA json_pair)*)? IH_CloseHeader
+  ;
+
+json_value
+  : JSON_STRING
+  | JSON_NUMBER
+  | json_obj
+  | json_arr
+  | JSON_TRUE
+  | JSON_FALSE
+  | JSON_NULL
+  ;
+
+json_obj
+  : LEFT_CURLY_BRACKET json_pair (COMMA json_pair)* RIGHT_CURLY_BRACKET
+  | LEFT_CURLY_BRACKET RIGHT_CURLY_BRACKET
+  ;
+
+json_arr
+   : LEFT_SQUARE_BRACKET json_value (COMMA json_value)* RIGHT_SQUARE_BRACKET
+   | LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET
+   ;
+
+json_pair
+  : JSON_STRING COLON json_value
   ;
 
 body

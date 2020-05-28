@@ -22,16 +22,60 @@ DEFAULT_BeginHeader
   ;
 
 
-// ----------------- Everything INSIDE of a HEADER ---------------------
+// ----------------- Everything INSIDE of a HEADER (JSON pairs) ---------------------
 mode INSIDE_HEADER;
 
 IH_CloseHeader
-  : '}}' -> pushMode(INSIDE_BODY)
+  : '}}' -> popMode, pushMode(INSIDE_BODY)
   ;
 
-IH_Text
-  :  (~[}] | ('}' ~[}]))*
+COMMA
+  : ','
   ;
+
+LEFT_SQUARE_BRACKET
+  : '['
+  ;
+
+RIGHT_SQUARE_BRACKET
+  : ']'
+  ;
+
+COLON
+  : ':'
+  ;
+
+LEFT_CURLY_BRACKET
+  : '{'
+  ;
+
+RIGHT_CURLY_BRACKET
+  : '}'
+  ;
+
+JSON_STRING
+   : '"' (JSON_ESC | JSON_SAFECODEPOINT)* '"'
+   ;
+
+JSON_NUMBER
+   : '-'? JSON_INT ('.' [0-9] +)? JSON_EXP?
+   ;
+
+JSON_TRUE
+  : 'true'
+  ;
+
+JSON_FALSE
+  : 'false'
+  ;
+
+JSON_NULL
+  : 'null'
+  ;
+
+JSON_WS
+   : [ \t\n\r] + -> skip
+   ;
 
 // ----------------- Everything INSIDE of a HEADER ---------------------
 mode INSIDE_BODY;
@@ -65,35 +109,6 @@ NAME
   | NameStartChar NameChar* NameEndChar
   ;
 
-//// ----------------- Everything INSIDE of a NAMESPACE ---------------------
-//mode INSIDE_NAMESPACE;
-//
-//IN_NamespaceIdentifier
-//  : NameChar+
-//  ;
-//
-//IN_WS
-//  : WS -> skip
-//  ;
-//
-//IN_NamespaceURI
-//  : ('http://' | 'https://') ( NameChar | '/' | '.' )+
-//  ;
-//
-//IN_NamespaceCloser
-//  : ']' -> popMode
-//  ;
-//
-//// ----------------- Everything INSIDE of a NAMESPACE ---------------------
-//mode INSIDE_SCHEMA;
-//
-//IS_SchemaURL
-//  : ('http' | 'https' | 'file') '://' (LETTER | DIGIT | ALLOWED_CHARACTERS)+
-//  ;
-//
-//IS_SchemaCloser
-//  : ']' -> popMode
-//  ;
 
 // ----------------- Everything INSIDE of a MARKUP OPENER ---------------------
 mode INSIDE_MARKUP_OPENER;
@@ -395,17 +410,6 @@ DOT
   : '.'
   ;
 
-COMMA
-  : ','
-  ;
-
-LEFT_SQUARE_BRACKET
-  : '['
-  ;
-
-RIGHT_SQUARE_BRACKET
-  : ']'
-  ;
 
 DIGIT
   : [0-9]
@@ -436,6 +440,9 @@ DOUBLE_QUOTED_TEXT_ESCAPE_CHARACTER
   : ESCAPE_CHARACTER
   | '\\"'
   ;
+
+
+// all fragments should be here, so rulename and rulenumber matches up in the lexer
 
 fragment ESCAPE_CHARACTER  : '\\\\';
 fragment LETTER: [a-zA-Z] | '\u00C0'..'\u00D6' | '\u00D8'..'\u00F6' | '\u00F8'..'\u00FF' ;
@@ -489,6 +496,32 @@ NameStartChar
   | '\uF900'..'\uFDCF'
   | '\uFDF0'..'\uFFFD'
   ;
+
+fragment JSON_ESC
+   : '\\' (["\\/bfnrt] | JSON_UNICODE)
+   ;
+
+fragment JSON_UNICODE
+   : 'u' JSON_HEX JSON_HEX JSON_HEX JSON_HEX
+   ;
+
+fragment JSON_HEX
+   : [0-9a-fA-F]
+   ;
+
+fragment JSON_SAFECODEPOINT
+   : ~ ["\\\u0000-\u001F]
+   ;
+
+
+fragment JSON_INT
+   : '0' | [1-9] [0-9]*
+   ;
+
+// no leading zeros
+fragment JSON_EXP
+   : [Ee] [+\-]? JSON_INT
+   ;
 
 NameEndChar
   : NameStartChar

@@ -56,10 +56,10 @@ class TAGMLTest {
         val tagml = """
             {{
                 "name": "test",
-                "id": "test001".
+                "id": "test001",
                 ":ontology": {
                 },
-                "author": "me"
+                "author": [ "me", "you" ]
             }}
             [l>[w>Just<w] [w>some<w] [w>words<w]<l]
             """.trimIndent()
