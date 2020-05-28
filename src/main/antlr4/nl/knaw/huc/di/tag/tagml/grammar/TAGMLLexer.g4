@@ -77,6 +77,32 @@ JSON_WS
    : [ \t\n\r] + -> skip
    ;
 
+fragment JSON_ESC
+   : '\\' (["\\/bfnrt] | JSON_UNICODE)
+   ;
+
+fragment JSON_UNICODE
+   : 'u' JSON_HEX JSON_HEX JSON_HEX JSON_HEX
+   ;
+
+fragment JSON_HEX
+   : [0-9a-fA-F]
+   ;
+
+fragment JSON_SAFECODEPOINT
+   : ~ ["\\\u0000-\u001F]
+   ;
+
+
+fragment JSON_INT
+   : '0' | [1-9] [0-9]*
+   ;
+
+// no leading zeros
+fragment JSON_EXP
+   : [Ee] [+\-]? JSON_INT
+   ;
+
 // ----------------- Everything INSIDE of a HEADER ---------------------
 mode INSIDE_BODY;
 
@@ -441,9 +467,6 @@ DOUBLE_QUOTED_TEXT_ESCAPE_CHARACTER
   | '\\"'
   ;
 
-
-// all fragments should be here, so rulename and rulenumber matches up in the lexer
-
 fragment ESCAPE_CHARACTER  : '\\\\';
 fragment LETTER: [a-zA-Z] | '\u00C0'..'\u00D6' | '\u00D8'..'\u00F6' | '\u00F8'..'\u00FF' ;
 fragment A : [Aa];
@@ -496,32 +519,6 @@ NameStartChar
   | '\uF900'..'\uFDCF'
   | '\uFDF0'..'\uFFFD'
   ;
-
-fragment JSON_ESC
-   : '\\' (["\\/bfnrt] | JSON_UNICODE)
-   ;
-
-fragment JSON_UNICODE
-   : 'u' JSON_HEX JSON_HEX JSON_HEX JSON_HEX
-   ;
-
-fragment JSON_HEX
-   : [0-9a-fA-F]
-   ;
-
-fragment JSON_SAFECODEPOINT
-   : ~ ["\\\u0000-\u001F]
-   ;
-
-
-fragment JSON_INT
-   : '0' | [1-9] [0-9]*
-   ;
-
-// no leading zeros
-fragment JSON_EXP
-   : [Ee] [+\-]? JSON_INT
-   ;
 
 NameEndChar
   : NameStartChar
