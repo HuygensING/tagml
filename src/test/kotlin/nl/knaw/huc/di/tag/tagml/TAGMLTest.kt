@@ -23,7 +23,7 @@ package nl.knaw.huc.di.tag.tagml
 import arrow.core.Either
 import arrow.core.Left
 import arrow.core.Right
-import nl.knaw.huc.di.tag.ANTLRUtils.printTokens
+import nl.knaw.huc.di.tag.ANTLRUtils.printTAGMLTokens
 import nl.knaw.huc.di.tag.tagml.TAGML.BRANCH
 import nl.knaw.huc.di.tag.tagml.TAGML.BRANCHES
 import nl.knaw.huc.di.tag.tagml.TAGML.CLOSE_TAG_ENDCHAR
@@ -196,7 +196,7 @@ class TAGMLTest {
     }
 
     private fun parse(tagml: String): Either<List<String>, ParseTree> {
-        printTokens(tagml)
+        printTAGMLTokens(tagml)
         val antlrInputStream: CharStream = CharStreams.fromString(tagml)
         val lexer = TAGMLLexer(antlrInputStream)
         val errorListener = TestErrorListener()

@@ -25,6 +25,7 @@ import de.vandermeer.asciitable.CWC_LongestLine
 import de.vandermeer.asciithemes.a7.A7_Grids
 import de.vandermeer.skb.interfaces.transformers.textformat.TextAlignment
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLLexer
+import nl.knaw.huc.di.tag.tagorl.TAGORLLexer
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.Lexer
@@ -57,7 +58,7 @@ object ANTLRUtils {
             if (token.type != Token.EOF) {
                 val pos = token.line.toString() + ":" + token.charPositionInLine
                 val text = "'" + token.text + "'"
-                val rule = lexer.vocabulary.getSymbolicName(token.type)
+                val rule = lexer.vocabulary.getSymbolicName(token.type) ?: "-"
                 val mode = lexer.modeNames[lexer._mode]
                 table.addRow(pos, text, rule, mode, token)
             }
@@ -67,18 +68,34 @@ object ANTLRUtils {
         return table.render()
     }
 
-    fun printTokens(input: String) {
+    fun printTAGMLTokens(input: String) {
         LOG.info("\nTAGML:\n{}\n", input)
-        printTokens(CharStreams.fromString(input))
+        printTAGMLTokens(CharStreams.fromString(input))
     }
 
     @Throws(IOException::class)
-    fun printTokens(input: InputStream) {
-        printTokens(CharStreams.fromStream(input))
+    fun printTAGMLTokens(input: InputStream) {
+        printTAGMLTokens(CharStreams.fromStream(input))
     }
 
-    private fun printTokens(inputStream: CharStream) {
+    private fun printTAGMLTokens(inputStream: CharStream) {
         val lexer = TAGMLLexer(inputStream)
+        val table: String = makeTokenTable(lexer)
+        LOG.info("\nTokens:\n{}\n", table)
+    }
+
+    fun printTAGORLTokens(input: String) {
+        LOG.info("\nTAGORL:\n{}\n", input)
+        printTAGORLTokens(CharStreams.fromString(input))
+    }
+
+    @Throws(IOException::class)
+    fun printTAGORLTokens(input: InputStream) {
+        printTAGORLTokens(CharStreams.fromStream(input))
+    }
+
+    private fun printTAGORLTokens(inputStream: CharStream) {
+        val lexer = TAGORLLexer(inputStream)
         val table: String = makeTokenTable(lexer)
         LOG.info("\nTokens:\n{}\n", table)
     }

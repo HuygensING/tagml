@@ -287,6 +287,12 @@
             <version>${arrow.version}</version>
             <scope>test</scope>
         </dependency>
+        <!--        <dependency>-->
+        <!--            <groupId>io.arrow-kt</groupId>-->
+        <!--            <artifactId>arrow-fx</artifactId>-->
+        <!--            <version>${arrow.version}</version>-->
+        <!--            <scope>test</scope>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>de.vandermeer</groupId>
             <artifactId>asciitable</artifactId>
