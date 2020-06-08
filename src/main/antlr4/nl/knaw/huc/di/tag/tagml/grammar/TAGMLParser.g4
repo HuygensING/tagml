@@ -5,7 +5,7 @@ parser grammar TAGMLParser;
 // however, is context-free, because ANTLR4 does not provide a way to encode context-sensitive grammars.
 // The parser generated from the grammar cannot check that every open tag (eg. `[tag>`) is eventually followed by a
 // corresponding close tag (`<tag]`).
-// This check, and other validity checks are done in post-processing.
+// This and other validity checks are done in post-processing.
 
 options { tokenVocab=TAGMLLexer; }
 
