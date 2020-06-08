@@ -1,5 +1,12 @@
 parser grammar TAGMLParser;
 
+// Because in TAGML markup ranges may overlap, the markup does not have to be closed in the exact reverse order
+// in which it was opened. This makes the TAGML grammar context-sensitive. The ANTLR4 grammar used in this library,
+// however, is context-free, because ANTLR4 does not provide a way to encode context-sensitive grammars.
+// The parser generated from the grammar cannot check that every open tag (eg. `[tag>`) is eventually followed by a
+// corresponding close tag (`<tag]`).
+// This check, and other validity checks are done in post-processing.
+
 options { tokenVocab=TAGMLLexer; }
 
 document
