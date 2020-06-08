@@ -53,20 +53,22 @@ class TAGORLTest {
     @Test
     fun test_hierarchy_rule_1() {
         val rule = "excerpt > chapter+, img?"
+        val expectedParent = "excerpt"
+        val expectedChildren1 = "chapter"
+        val expectedChildren = "img"
         when (val result = parse(rule)) {
-            is Left -> fail("left $result.a")
+            is Left -> fail("$result.a")
             is Right -> {
                 when (result.b) {
                     is TAGORLParser.HierarchyRuleContext -> {
                         val hrc = result.b as TAGORLParser.HierarchyRuleContext
-                        val expectedParent = "excerpt"
                         assertThat(hrc.Name().text).isEqualTo(expectedParent)
 
                         val child0 = hrc.children().child(0) as OneOrMoreChildContext
-                        assertThat(child0.Name().text).isEqualTo("chapter")
+                        assertThat(child0.Name().text).isEqualTo(expectedChildren1)
 
                         val child1 = hrc.children().child(1) as OptionalChildContext
-                        assertThat(child1.Name().text).isEqualTo("img")
+                        assertThat(child1.Name().text).isEqualTo(expectedChildren)
                     }
                     else -> fail("expected HierarchyRuleContext")
                 }
@@ -133,9 +135,7 @@ class TAGORLTest {
                         is TAGORLParser.SetRuleContext -> {
                             val sr = result.b as TAGORLParser.SetRuleContext
                             assertThat(sr.Name().text).isEqualTo(expectedFunctionName)
-
                             assertThat(sr.child()).hasSameSizeAs(expectedParameters)
-
                             for (i in sr.child().indices) {
                                 val child = sr.child(i)
                                 assert(child is TAGORLParser.OneChildContext)

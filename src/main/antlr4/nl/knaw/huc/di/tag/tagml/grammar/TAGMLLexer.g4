@@ -18,7 +18,7 @@ lexer grammar TAGMLLexer;
 //  ;
 
 DEFAULT_BeginHeader
-  : '[{' -> pushMode(INSIDE_HEADER)
+  : '[!{' -> pushMode(INSIDE_HEADER)
   ;
 
 
@@ -26,7 +26,7 @@ DEFAULT_BeginHeader
 mode INSIDE_HEADER;
 
 IH_CloseHeader
-  : '}]' -> popMode, pushMode(INSIDE_BODY)
+  : '}!]' -> popMode, pushMode(INSIDE_BODY)
   ;
 
 COMMA
