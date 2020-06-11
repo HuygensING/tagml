@@ -34,7 +34,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     private val _tokens: MutableList<TAGMLTokens.TAGMLToken> = mutableListOf()
     private val context = ListenerContext()
 
-    class ListenerContext() {
+    class ListenerContext {
         val openMarkup: MutableList<String> = mutableListOf()
     }
 
@@ -70,7 +70,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         _tokens += token
     }
 
-    fun addError(
+    private fun addError(
             ctx: ParserRuleContext, messageTemplate: String, vararg messageArgs: Any) {
         errorListener.addError(
                 Position.startOf(ctx), Position.endOf(ctx), messageTemplate, messageArgs)

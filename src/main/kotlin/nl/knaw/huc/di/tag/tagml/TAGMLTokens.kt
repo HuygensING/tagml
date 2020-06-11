@@ -21,15 +21,15 @@ package nl.knaw.huc.di.tag.tagml
  */
 
 object TAGMLTokens {
-    open class TAGMLToken(val range: Range, val rawContent: String) {
+    open class TAGMLToken(private val range: Range, private val rawContent: String) {
         override fun toString(): String = "$range $rawContent"
     }
 
-    class HeaderToken(range: Range, rawContent: String) : TAGMLToken(range, rawContent) {}
+    class HeaderToken(range: Range, rawContent: String) : TAGMLToken(range, rawContent)
 
-    class MarkupOpenToken(range: Range, rawContent: String, val qName: String) : TAGMLToken(range, rawContent) {}
+    class MarkupOpenToken(range: Range, rawContent: String, val qName: String) : TAGMLToken(range, rawContent)
 
-    class MarkupCloseToken(range: Range, rawContent: String, val qName: String) : TAGMLToken(range, rawContent) {}
+    class MarkupCloseToken(range: Range, rawContent: String, val qName: String) : TAGMLToken(range, rawContent)
 
     class TextToken(range: Range, rawContent: String) : TAGMLToken(range, rawContent) {
         val isWhiteSpace: Boolean =

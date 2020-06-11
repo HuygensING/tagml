@@ -19,6 +19,4 @@
  */
 package nl.knaw.huc.di.tag.tagml
 
-class TAGMLBreakingError(message: String) : RuntimeException(message) {
-
-}
+class TAGMLBreakingError(message: String) : RuntimeException(message)

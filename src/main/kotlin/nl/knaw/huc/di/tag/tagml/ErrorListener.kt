@@ -38,7 +38,7 @@ class ErrorListener : ANTLRErrorListener {
 
     private var hasBreakingError = false
 
-    class TAGErrorComparator() : Comparator<TAGError> {
+    class TAGErrorComparator : Comparator<TAGError> {
         override fun compare(e1: TAGError, e2: TAGError): Int = when {
             (e1 is CustomError && e2 is CustomError) -> when {
                 e1.range.startPosition.line != e2.range.startPosition.line -> e1.range.startPosition.line.compareTo(e2.range.startPosition.line)

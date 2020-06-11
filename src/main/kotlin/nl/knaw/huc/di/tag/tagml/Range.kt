@@ -19,8 +19,6 @@
  */
 package nl.knaw.huc.di.tag.tagml
 
-import java.util.*
-
 data class Range(val startPosition: Position, val endPosition: Position) {
 
     override fun toString(): String =
