@@ -1,3 +1,5 @@
+package nl.knaw.huc.di.tag.tagml
+
 /*-
  * #%L
  * tagml
@@ -17,7 +19,6 @@
  * limitations under the License.
  * #L%
  */
-package nl.knaw.huc.di.tag.tagml
 
 import org.antlr.v4.runtime.ANTLRErrorListener
 import org.antlr.v4.runtime.Parser

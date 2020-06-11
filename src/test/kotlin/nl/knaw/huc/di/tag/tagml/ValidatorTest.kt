@@ -1,4 +1,5 @@
 package nl.knaw.huc.di.tag.tagml
+
 /*-
  * #%L
  * tagml
@@ -183,19 +184,20 @@ class ValidatorTest {
             |""".trimMargin())
         assertTAGMLHasErrors(tagml) { errors ->
             assertThat(errors).hasSize(1)
-            assertThat(errors[0]).hasFieldOrPropertyWithValue("message", "Closing tag found without corresponding open tag: <somethingelse]")
+            assertThat(errors[0])
+                    .hasFieldOrPropertyWithValue("message", "Closing tag found without corresponding open tag: <somethingelse]")
         }
     }
 
     private fun assertTAGMLParses(tagml: String, tokenListAssert: (List<TAGMLToken>) -> Unit) {
-        validate(tagml).bimap(
-                { fail("$it") },
+        validate(tagml).fold(
+                { fail("parsing errors:\n${it.joinToString { "\n" }}") },
                 { tokenListAssert(it) }
         )
     }
 
     private fun assertTAGMLHasErrors(tagml: String, errorListAssert: (List<TAGError>) -> Unit) {
-        validate(tagml).bimap(
+        validate(tagml).fold(
                 { errorListAssert(it) },
                 { fail("expected parsing to fail") }
         )

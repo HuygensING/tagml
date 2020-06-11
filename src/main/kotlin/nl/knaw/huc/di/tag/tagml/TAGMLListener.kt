@@ -1,3 +1,5 @@
+package nl.knaw.huc.di.tag.tagml
+
 /*-
  * #%L
  * tagml
@@ -17,7 +19,6 @@
  * limitations under the License.
  * #L%
  */
-package nl.knaw.huc.di.tag.tagml
 
 import nl.knaw.huc.di.tag.tagml.ParserUtils.getRange
 import nl.knaw.huc.di.tag.tagml.TAGMLTokens.HeaderToken
