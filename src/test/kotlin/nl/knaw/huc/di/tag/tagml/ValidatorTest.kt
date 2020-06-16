@@ -20,7 +20,6 @@ package nl.knaw.huc.di.tag.tagml
  * #L%
  */
 
-import arrow.core.Either
 import nl.knaw.huc.di.tag.tagml.ErrorListener.TAGError
 import nl.knaw.huc.di.tag.tagml.ParserUtils.validate
 import nl.knaw.huc.di.tag.tagml.TAGMLTokens.HeaderToken
@@ -200,20 +199,6 @@ class ValidatorTest {
         }
     }
 
-    private fun assertOntologyParses(headerToken: HeaderToken, ontologyAssert: (TAGOntology) -> Unit) {
-        val ontologyV = headerToken.headerMap[":ontology"]
-        assertThat(ontologyV).isNotNull
-
-        val ontologyE = ontologyV as Either<List<TAGError>, TAGOntology>
-        ontologyE.fold(
-                { errorList ->
-                    val errors = errorList.joinToString("\n")
-                    fail("parsing errors:\n$errors")
-                },
-                { ontologyAssert(it) }
-        )
-    }
-
     @Test
     fun test_illegal_closing_tag_error() {
         val tagml = ("""
@@ -262,6 +247,16 @@ class ValidatorTest {
         validate(tagml).fold(
                 { errorListAssert(it) },
                 { fail("expected parsing to fail") }
+        )
+    }
+
+    private fun assertOntologyParses(headerToken: HeaderToken, ontologyAssert: (TAGOntology) -> Unit) {
+        headerToken.ontologyParseResult.fold(
+                { errorList ->
+                    val errors = errorList.joinToString("\n")
+                    fail("parsing errors:\n$errors")
+                },
+                { ontologyAssert(it) }
         )
     }
 

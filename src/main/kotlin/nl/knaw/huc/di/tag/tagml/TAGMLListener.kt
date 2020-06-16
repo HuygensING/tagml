@@ -21,7 +21,8 @@ package nl.knaw.huc.di.tag.tagml
  */
 
 import arrow.core.Either
-import nl.knaw.huc.di.tag.tagml.ErrorListener.*
+import nl.knaw.huc.di.tag.tagml.ErrorListener.CustomError
+import nl.knaw.huc.di.tag.tagml.ErrorListener.TAGError
 import nl.knaw.huc.di.tag.tagml.ParserUtils.getRange
 import nl.knaw.huc.di.tag.tagml.TAGMLTokens.HeaderToken
 import nl.knaw.huc.di.tag.tagml.TAGMLTokens.MarkupCloseToken
@@ -30,6 +31,7 @@ import nl.knaw.huc.di.tag.tagml.TAGMLTokens.TextToken
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParser
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
+import java.lang.String.format
 
 class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseListener() {
 
@@ -48,7 +50,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         val headerMap: Map<String, Any> = parseHeader(ctx)
         val token = HeaderToken(ctx.getRange(), ctx.text, headerMap)
         when (val ontologyParseResult = headerMap[":ontology"]) {
-            null -> addError(ctx, """Field ":ontology" missing in header.""")
+            null -> addError(ctx, MISSING_ONTOLOGY_FIELD)
             is Either<*, *> -> ontologyParseResult.fold(
                     { errorListener.addErrors(it as List<TAGError>) },
                     { context.ontology = it as TAGOntology }
@@ -91,11 +93,11 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                 "rules" -> {
                     rules.addAll(pair.json_value().json_arr().json_value().map { it.text })
                 }
-                else -> errors.add(CustomError(jsonValueCtx.getRange(), "Unexpected key $key"))
+                else -> errors.add(CustomError(jsonValueCtx.getRange(), format(UNEXPECTED_KEY, key)))
             }
         }
         if (root == null) {
-            errors.add(CustomError(jsonValueCtx.getRange(), """Field "root" missing in ontology header."""))
+            errors.add(CustomError(jsonValueCtx.getRange(), MISSING_ONTOLOGY_ROOT))
         }
         return if (errors.isEmpty()) {
             Either.right(TAGOntology(root!!, elements, attributes, rules))
@@ -109,7 +111,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         val qName = ctx.markupName().text
         val expectedRoot = context.ontology?.root
         if (context.openMarkup.isEmpty() && expectedRoot != null && qName != expectedRoot) {
-            addError(ctx, """Root element "$qName" does not match the one defined in the header: "$expectedRoot"""")
+            addError(ctx, UNEXPECTED_ROOT, qName, expectedRoot)
         }
         context.openMarkup += qName
         val token = MarkupOpenToken(ctx.getRange(), ctx.text, qName)
@@ -120,7 +122,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         val rawContent = ctx.text
         val qName = ctx.markupName().text
         if (!context.openMarkup.contains(qName)) {
-            addError(ctx, "Closing tag found without corresponding open tag: $rawContent")
+            addError(ctx, MISSING_OPEN_TAG, rawContent)
         } else {
             context.openMarkup.remove(qName)
         }
@@ -136,13 +138,13 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     private fun addError(
             ctx: ParserRuleContext, messageTemplate: String, vararg messageArgs: Any) {
         errorListener.addError(
-                Position.startOf(ctx), Position.endOf(ctx), messageTemplate, messageArgs)
+                Position.startOf(ctx), Position.endOf(ctx), messageTemplate, *messageArgs)
     }
 
     fun addBreakingError(
             ctx: ParserRuleContext, messageTemplate: String, vararg messageArgs: Any) {
         errorListener.addBreakingError(
-                Position.startOf(ctx), Position.endOf(ctx), messageTemplate, messageArgs)
+                Position.startOf(ctx), Position.endOf(ctx), messageTemplate, *messageArgs)
     }
 
 }

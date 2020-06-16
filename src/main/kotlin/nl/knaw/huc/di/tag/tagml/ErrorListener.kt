@@ -171,12 +171,12 @@ class ErrorListener : ANTLRErrorListener {
 
     fun addError(
             startPos: Position, endPos: Position, messageTemplate: String, vararg messageArgs: Any) {
-        errors.add(CustomError(startPos, endPos, String.format(messageTemplate, *messageArgs)))
+        errors.add(CustomError(startPos, endPos, format(messageTemplate, *messageArgs)))
     }
 
     fun addWarning(
             startPos: Position, endPos: Position, messageTemplate: String, vararg messageArgs: Any) {
-        warnings.add(CustomError(startPos, endPos, String.format(messageTemplate, *messageArgs)))
+        warnings.add(CustomError(startPos, endPos, format(messageTemplate, *messageArgs)))
     }
 
     fun addBreakingError(
@@ -188,7 +188,7 @@ class ErrorListener : ANTLRErrorListener {
     private fun abortParsing(messageTemplate: String, vararg messageArgs: Any) {
         hasBreakingError = true
         throw TAGMLBreakingError("""
-                ${String.format(messageTemplate, *messageArgs)}
+                ${format(messageTemplate, *messageArgs)}
                 parsing aborted!
                 """.trimIndent())
     }

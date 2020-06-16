@@ -1,5 +1,7 @@
 package nl.knaw.huc.di.tag.tagml
 
+import arrow.core.Either
+
 /*-
  * #%L
  * tagml
@@ -21,11 +23,16 @@ package nl.knaw.huc.di.tag.tagml
  */
 
 object TAGMLTokens {
-    open class TAGMLToken(private val range: Range, private val rawContent: String) {
+    open class TAGMLToken(internal val range: Range, private val rawContent: String) {
         override fun toString(): String = "$range $rawContent"
     }
 
-    class HeaderToken(range: Range, rawContent: String, val headerMap: Map<String, Any>) : TAGMLToken(range, rawContent)
+    class HeaderToken(range: Range, rawContent: String, val headerMap: Map<String, Any>) : TAGMLToken(range, rawContent) {
+        val ontologyParseResult: Either<List<ErrorListener.TAGError>, TAGOntology>
+            get() = headerMap.getOrElse(":ontology")
+            { Either.left(listOf(ErrorListener.CustomError(range, MISSING_ONTOLOGY_FIELD))) }
+                    as Either<List<ErrorListener.TAGError>, TAGOntology>
+    }
 
     class MarkupOpenToken(range: Range, rawContent: String, val qName: String) : TAGMLToken(range, rawContent)
 
