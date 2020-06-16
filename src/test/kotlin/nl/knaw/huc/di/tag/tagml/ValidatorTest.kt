@@ -20,6 +20,7 @@ package nl.knaw.huc.di.tag.tagml
  * #L%
  */
 
+import arrow.core.Either
 import nl.knaw.huc.di.tag.tagml.ErrorListener.TAGError
 import nl.knaw.huc.di.tag.tagml.ParserUtils.validate
 import nl.knaw.huc.di.tag.tagml.TAGMLTokens.HeaderToken
@@ -32,6 +33,20 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 class ValidatorTest {
+
+    @Test
+    fun test_header_without_root_creates_error() {
+        val tagml = ("""
+            |[!{
+            |}!]
+            |[tagml>body<tagml]
+            |""".trimMargin())
+        assertTAGMLHasErrors(tagml) { errors ->
+            assertThat(errors).hasSize(1)
+            assertThat(errors[0])
+                    .hasFieldOrPropertyWithValue("message", """Field ":ontology" missing in header.""")
+        }
+    }
 
     @Test
     fun test_correct_tagml() {
@@ -151,7 +166,7 @@ class ValidatorTest {
             |  "title": "test",
             |  "version": 0.2
             |}!]
-            |[tagml>body<tagml]
+            |[excerpt>body<excerpt]
             |""".trimMargin())
 
         assertTAGMLParses(tagml) { tokens ->
@@ -159,26 +174,53 @@ class ValidatorTest {
             assertThat(tokens).hasSize(5)
             assertThat(tokens[0])
                     .isInstanceOf(HeaderToken::class.java)
+            val headerToken = tokens[0] as HeaderToken
+            assertThat(headerToken.headerMap)
+                    .containsOnlyKeys("version", ":ontology", ":authors", "title")
+                    .containsEntry("title", "test")
+                    .containsEntry("version", "0.2")
             assertThat(tokens[1])
                     .isInstanceOf(MarkupOpenToken::class.java)
-                    .hasFieldOrPropertyWithValue("qName", "tagml")
+                    .hasFieldOrPropertyWithValue("qName", "excerpt")
             assertThat(tokens[2])
                     .isInstanceOf(TextToken::class.java)
                     .hasFieldOrPropertyWithValue("rawContent", "body")
                     .hasFieldOrPropertyWithValue("isWhiteSpace", false)
             assertThat(tokens[3])
                     .isInstanceOf(MarkupCloseToken::class.java)
-                    .hasFieldOrPropertyWithValue("qName", "tagml")
+                    .hasFieldOrPropertyWithValue("qName", "excerpt")
             assertThat(tokens[4])
                     .isInstanceOf(TextToken::class.java)
                     .hasFieldOrPropertyWithValue("isWhiteSpace", true)
+
+            assertOntologyParses(headerToken) { ontology ->
+                assertThat(ontology)
+                        .hasFieldOrPropertyWithValue("root", "excerpt")
+            }
         }
+    }
+
+    private fun assertOntologyParses(headerToken: HeaderToken, ontologyAssert: (TAGOntology) -> Unit) {
+        val ontologyV = headerToken.headerMap[":ontology"]
+        assertThat(ontologyV).isNotNull
+
+        val ontologyE = ontologyV as Either<List<TAGError>, TAGOntology>
+        ontologyE.fold(
+                { errorList ->
+                    val errors = errorList.joinToString("\n")
+                    fail("parsing errors:\n$errors")
+                },
+                { ontologyAssert(it) }
+        )
     }
 
     @Test
     fun test_illegal_closing_tag_error() {
         val tagml = ("""
             |[!{
+            |  ":ontology": {
+            |    "root": "tagml"
+            |  }
             |}!]
             |[tagml>body<somethingelse]
             |""".trimMargin())
@@ -189,9 +231,29 @@ class ValidatorTest {
         }
     }
 
+    @Test
+    fun test_different_root_in_header_and_body_gives_error() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "root"
+            |  }
+            |}!]
+            |[tagml>body<tagml]
+            |""".trimMargin())
+        assertTAGMLHasErrors(tagml) { errors ->
+            assertThat(errors).hasSize(1)
+            assertThat(errors[0])
+                    .hasFieldOrPropertyWithValue("message", """Root element "tagml" does not match the one defined in the header: "root"""")
+        }
+    }
+
     private fun assertTAGMLParses(tagml: String, tokenListAssert: (List<TAGMLToken>) -> Unit) {
         validate(tagml).fold(
-                { fail("parsing errors:\n${it.joinToString { "\n" }}") },
+                { errorList ->
+                    val errors = errorList.joinToString("\n")
+                    fail("parsing errors:\n$errors")
+                },
                 { tokenListAssert(it) }
         )
     }

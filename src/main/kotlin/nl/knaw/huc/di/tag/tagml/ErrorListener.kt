@@ -31,6 +31,7 @@ import java.util.*
 
 class ErrorListener : ANTLRErrorListener {
     private val errors: MutableList<TAGError> = mutableListOf()
+    private val warnings: MutableList<TAGError> = mutableListOf()
 
     private val reportAmbiguity = false
     private val reportAttemptingFullContext = false
@@ -67,11 +68,17 @@ class ErrorListener : ANTLRErrorListener {
     val orderedErrors: List<TAGError>
         get() = errors.sortedWith(TAGErrorComparator())
 
+    val orderedWarnings: List<TAGError>
+        get() = warnings.sortedWith(TAGErrorComparator())
+
     val errorMessages: List<String>
         get() = orderedErrors.map { it.message }
 
     val hasErrors: Boolean
         get() = errors.isNotEmpty()
+
+    val hasWarnings: Boolean
+        get() = warnings.isNotEmpty()
 
     override fun reportAmbiguity(
             recognizer: Parser,
@@ -151,14 +158,13 @@ class ErrorListener : ANTLRErrorListener {
                 .map(this::prefixedErrorMessage)
                 .joinToString { "\n" }
 
-    private fun prefixedErrorMessage(error: TAGError): String {
-        if (error is CustomError) {
-            return prefix(error.range.startPosition) + error.message
-        }
-        return if (error is TAGSyntaxError) {
-            prefix(error.position) + error.message
-        } else ""
-    }
+    private fun prefixedErrorMessage(error: TAGError): String =
+            when (error) {
+                is CustomError -> prefix(error.range.startPosition) + error.message
+                is CustomWarning -> "warning: " + prefix(error.range.startPosition) + error.message
+                is TAGSyntaxError -> prefix(error.position) + error.message
+                else -> ""
+            }
 
     private fun prefix(position: Position): String =
             format("line %d:%d : ", position.line, position.character)
@@ -166,6 +172,11 @@ class ErrorListener : ANTLRErrorListener {
     fun addError(
             startPos: Position, endPos: Position, messageTemplate: String, vararg messageArgs: Any) {
         errors.add(CustomError(startPos, endPos, String.format(messageTemplate, *messageArgs)))
+    }
+
+    fun addWarning(
+            startPos: Position, endPos: Position, messageTemplate: String, vararg messageArgs: Any) {
+        warnings.add(CustomError(startPos, endPos, String.format(messageTemplate, *messageArgs)))
     }
 
     fun addBreakingError(
@@ -180,6 +191,10 @@ class ErrorListener : ANTLRErrorListener {
                 ${String.format(messageTemplate, *messageArgs)}
                 parsing aborted!
                 """.trimIndent())
+    }
+
+    fun addErrors(list: List<TAGError>) {
+        errors.addAll(list)
     }
 
     abstract class TAGError(val message: String)
@@ -197,7 +212,19 @@ class ErrorListener : ANTLRErrorListener {
     class CustomError(startPos: Position, endPos: Position, message: String) : TAGError(message) {
         val range = Range(startPos, endPos)
 
+        constructor(range: Range, message: String) :
+                this(range.startPosition, range.endPosition, message)
+
         override fun toString(): String = "CustomError{range=$range, message=$message}"
+    }
+
+    class CustomWarning(startPos: Position, endPos: Position, message: String) : TAGError(message) {
+        val range = Range(startPos, endPos)
+
+        constructor(range: Range, message: String) :
+                this(range.startPosition, range.endPosition, message)
+
+        override fun toString(): String = "CustomWarning{range=$range, message=$message}"
     }
 
 }

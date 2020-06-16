@@ -31,6 +31,7 @@ import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 
 object ParserUtils {
+
     fun ParserRuleContext.getRange(): Range =
             Range(Position.startOf(this), Position.endOf(this))
 

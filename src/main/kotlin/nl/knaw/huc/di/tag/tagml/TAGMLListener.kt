@@ -20,6 +20,8 @@ package nl.knaw.huc.di.tag.tagml
  * #L%
  */
 
+import arrow.core.Either
+import nl.knaw.huc.di.tag.tagml.ErrorListener.*
 import nl.knaw.huc.di.tag.tagml.ParserUtils.getRange
 import nl.knaw.huc.di.tag.tagml.TAGMLTokens.HeaderToken
 import nl.knaw.huc.di.tag.tagml.TAGMLTokens.MarkupCloseToken
@@ -35,6 +37,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     private val context = ListenerContext()
 
     class ListenerContext {
+        var ontology: TAGOntology? = null
         val openMarkup: MutableList<String> = mutableListOf()
     }
 
@@ -42,12 +45,72 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         get() = _tokens.toList()
 
     override fun exitHeader(ctx: TAGMLParser.HeaderContext) {
-        val token = HeaderToken(ctx.getRange(), ctx.text)
+        val headerMap: Map<String, Any> = parseHeader(ctx)
+        val token = HeaderToken(ctx.getRange(), ctx.text, headerMap)
+        when (val ontologyParseResult = headerMap[":ontology"]) {
+            null -> addError(ctx, """Field ":ontology" missing in header.""")
+            is Either<*, *> -> ontologyParseResult.fold(
+                    { errorListener.addErrors(it as List<TAGError>) },
+                    { context.ontology = it as TAGOntology }
+            )
+        }
         _tokens += token
+    }
+
+    private fun parseHeader(ctx: TAGMLParser.HeaderContext): Map<String, Any> =
+            ctx.json_pair().map { toPair(it) }
+                    .toMap()
+
+    private fun toPair(ctx: TAGMLParser.Json_pairContext): Pair<String, Any> {
+        val key = ctx.JSON_STRING().text.trim('"')
+        val value = when (key) {
+            ":ontology" -> parseOntology(ctx.json_value())
+            else -> ctx.json_value().text.trim('"')
+        }
+        return (key to value)
+    }
+
+    private fun parseOntology(jsonValueCtx: TAGMLParser.Json_valueContext): Either<List<TAGError>, TAGOntology> {
+        val errors: MutableList<TAGError> = mutableListOf()
+        var root: String? = ""
+        val elements: MutableList<String> = mutableListOf()
+        val attributes: MutableList<String> = mutableListOf()
+        val rules: MutableList<String> = mutableListOf()
+        for (pair in jsonValueCtx.json_obj().json_pair()) {
+            val key = pair.JSON_STRING().text.trim('"')
+            when (key) {
+                "root" -> {
+                    root = pair.json_value().text.trim('"')
+                }
+                "elements" -> {
+                    elements.addAll(pair.json_value().json_obj().json_pair().map { it.text })
+                }
+                "attributes" -> {
+                    attributes.addAll(pair.json_value().json_obj().json_pair().map { it.text })
+                }
+                "rules" -> {
+                    rules.addAll(pair.json_value().json_arr().json_value().map { it.text })
+                }
+                else -> errors.add(CustomError(jsonValueCtx.getRange(), "Unexpected key $key"))
+            }
+        }
+        if (root == null) {
+            errors.add(CustomError(jsonValueCtx.getRange(), """Field "root" missing in ontology header."""))
+        }
+        return if (errors.isEmpty()) {
+            Either.right(TAGOntology(root!!, elements, attributes, rules))
+        } else {
+            Either.left(errors.toList())
+        }
+
     }
 
     override fun exitStartTag(ctx: TAGMLParser.StartTagContext) {
         val qName = ctx.markupName().text
+        val expectedRoot = context.ontology?.root
+        if (context.openMarkup.isEmpty() && expectedRoot != null && qName != expectedRoot) {
+            addError(ctx, """Root element "$qName" does not match the one defined in the header: "$expectedRoot"""")
+        }
         context.openMarkup += qName
         val token = MarkupOpenToken(ctx.getRange(), ctx.text, qName)
         _tokens += token

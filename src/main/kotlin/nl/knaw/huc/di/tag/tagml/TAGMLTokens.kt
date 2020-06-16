@@ -25,7 +25,7 @@ object TAGMLTokens {
         override fun toString(): String = "$range $rawContent"
     }
 
-    class HeaderToken(range: Range, rawContent: String) : TAGMLToken(range, rawContent)
+    class HeaderToken(range: Range, rawContent: String, val headerMap: Map<String, Any>) : TAGMLToken(range, rawContent)
 
     class MarkupOpenToken(range: Range, rawContent: String, val qName: String) : TAGMLToken(range, rawContent)
 
