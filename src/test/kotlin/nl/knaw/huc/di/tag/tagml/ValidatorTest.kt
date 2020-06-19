@@ -221,15 +221,35 @@ class ValidatorTest {
                         ),
                         ElementDefinition(
                                 name = "img",
-                                description = "",
+                                description = "Image; the (external) representation of the document containing the text",
                                 attributes = listOf(OptionalAttribute("source")),
                                 properties = listOf("milestone")
                         ),
-                        ElementDefinition(name = "chapter"),
-                        ElementDefinition(name = "par"),
-                        ElementDefinition(name = "s"),
-                        ElementDefinition(name = "sic"),
-                        ElementDefinition(name = "corr"),
+                        ElementDefinition(
+                                name = "chapter",
+                                description = "Main division of a text",
+                                attributes = listOf(OptionalAttribute("n"))
+                        ),
+                        ElementDefinition(
+                                name = "par",
+                                description = "A distinct section in a text, indicated by a new line or an indentation",
+                                attributes = listOf(OptionalAttribute("n"))
+                        ),
+                        ElementDefinition(
+                                name = "s",
+                                description = "contains a sentence-like division of a text",
+                                ref = "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-s.html"
+                        ),
+                        ElementDefinition(
+                                name = "sic",
+                                description = "contains text reproduced although apparently incorrect or inaccurate",
+                                ref = "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-sic.html"
+                        ),
+                        ElementDefinition(
+                                name = "corr",
+                                description = "contains the correct form of a passage apparently erroneous in the copy text",
+                                ref = "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-corr.html"
+                        ),
                         ElementDefinition(
                                 name = "said",
                                 description = "(speech or thought) indicates passages thought or spoken aloud",

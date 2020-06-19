@@ -80,8 +80,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         val attributes: MutableList<String> = mutableListOf()
         val rules: MutableList<String> = mutableListOf()
         for (pair in jsonValueCtx.json_obj().json_pair()) {
-            val key = pair.JSON_STRING().text.content()
-            when (key) {
+            when (val key = pair.JSON_STRING().text.content()) {
                 "root" -> {
                     root = pair.json_value().text.content()
                 }
