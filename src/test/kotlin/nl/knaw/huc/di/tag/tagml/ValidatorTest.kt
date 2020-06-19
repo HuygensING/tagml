@@ -63,7 +63,7 @@ class ValidatorTest {
             |          "year",
             |          "page",
             |          "persons",
-            |          "id"
+            |          "id!"
             |        ]
             |      },
             |      "img": {
@@ -195,6 +195,60 @@ class ValidatorTest {
             assertOntologyParses(headerToken) { ontology ->
                 assertThat(ontology)
                         .hasFieldOrPropertyWithValue("root", "excerpt")
+                        .hasFieldOrPropertyWithValue(
+                                "rules",
+                                listOf("excerpt > chapter+, img+",
+                                        "chapter > par+, said+",
+                                        "par > s+",
+                                        "s > (sic, corr)*",
+                                        "said > persName+, emph+, said*",
+                                        ":may-not-overlap(said,s)",
+                                        ":non-linear(sic,corr)")
+                        )
+                assertThat(ontology.elements).containsOnly(
+                        ElementDefinition(
+                                name = "excerpt",
+                                description = "A short extract from a text",
+                                attributes = listOf(
+                                        OptionalAttribute("type"),
+                                        OptionalAttribute("title"),
+                                        OptionalAttribute("author"),
+                                        OptionalAttribute("year"),
+                                        OptionalAttribute("page"),
+                                        OptionalAttribute("persons"),
+                                        RequiredAttribute("id")
+                                )
+                        ),
+                        ElementDefinition(
+                                name = "img",
+                                description = "",
+                                attributes = listOf(OptionalAttribute("source")),
+                                properties = listOf("milestone")
+                        ),
+                        ElementDefinition(name = "chapter"),
+                        ElementDefinition(name = "par"),
+                        ElementDefinition(name = "s"),
+                        ElementDefinition(name = "sic"),
+                        ElementDefinition(name = "corr"),
+                        ElementDefinition(
+                                name = "said",
+                                description = "(speech or thought) indicates passages thought or spoken aloud",
+                                attributes = listOf(OptionalAttribute("who")),
+                                properties = listOf("discontinuous"),
+                                ref = "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-said.html"
+                        ),
+                        ElementDefinition(
+                                name = "emph",
+                                description = "(emphasized) marks words or phrases which are stressed or emphasized for linguistic or rhetorical effect",
+                                ref = "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-emph.html"
+                        ),
+                        ElementDefinition(
+                                name = "persName",
+                                description = "personal name: contains a proper noun or proper noun phrase referring to a person",
+                                attributes = listOf(OptionalAttribute("id")),
+                                ref = "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-persName.html"
+                        )
+                )
             }
         }
     }

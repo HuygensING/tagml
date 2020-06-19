@@ -19,12 +19,10 @@
  */
 package nl.knaw.huc.di.tag.tagml
 
-data class TAGOntology(
-        val root: String,
-        val elements: List<ElementDefinition>,
-        val attributes: List<String>,
-        val rules: List<String>
-) {
-    fun hasElement(qName: String): Boolean = elements.map { it.name }.contains(qName)
-}
-
+data class ElementDefinition(
+        val name: String,
+        val description: String = "",
+        val attributes: List<AssignedAttribute> = listOf(),
+        val properties: List<String> = listOf(),
+        val ref: String = ""
+)

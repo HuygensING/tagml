@@ -21,6 +21,7 @@ package nl.knaw.huc.di.tag.tagml
  */
 
 import arrow.core.Either
+import arrow.core.Right
 import nl.knaw.huc.di.tag.tagml.ErrorListener.CustomError
 import nl.knaw.huc.di.tag.tagml.ErrorListener.TAGError
 import nl.knaw.huc.di.tag.tagml.ParserUtils.getRange
@@ -75,23 +76,30 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     private fun parseOntology(jsonValueCtx: TAGMLParser.Json_valueContext): Either<List<TAGError>, TAGOntology> {
         val errors: MutableList<TAGError> = mutableListOf()
         var root: String? = ""
-        val elements: MutableList<String> = mutableListOf()
+        val elements: MutableList<ElementDefinition> = mutableListOf()
         val attributes: MutableList<String> = mutableListOf()
         val rules: MutableList<String> = mutableListOf()
         for (pair in jsonValueCtx.json_obj().json_pair()) {
-            val key = pair.JSON_STRING().text.trim('"')
+            val key = pair.JSON_STRING().text.content()
             when (key) {
                 "root" -> {
-                    root = pair.json_value().text.trim('"')
+                    root = pair.json_value().text.content()
                 }
                 "elements" -> {
-                    elements.addAll(pair.json_value().json_obj().json_pair().map { it.text })
+                    pair.json_value().json_obj().json_pair()
+                            .map { parseElementDefinition(it) }
+                            .forEach { either ->
+                                either.fold(
+                                        { errors.addAll(it) },
+                                        { elements.add(it) }
+                                )
+                            }
                 }
                 "attributes" -> {
-                    attributes.addAll(pair.json_value().json_obj().json_pair().map { it.text })
+                    attributes.addAll(pair.json_value().json_obj().json_pair().map { it.text.content() })
                 }
                 "rules" -> {
-                    rules.addAll(pair.json_value().json_arr().json_value().map { it.text })
+                    rules.addAll(pair.json_value().json_arr().json_value().map { it.text.content() })
                 }
                 else -> errors.add(CustomError(jsonValueCtx.getRange(), format(UNEXPECTED_KEY, key)))
             }
@@ -107,11 +115,55 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
 
     }
 
+    private fun String.content() = this.trim('"')
+    private fun String.isValidName() = this.matches(Regex("[a-z][a-zA-Z_0-9]*"))
+
+    private fun parseElementDefinition(context: TAGMLParser.Json_pairContext): Either<List<TAGError>, ElementDefinition> {
+        val name = context.JSON_STRING().text.content()
+        var description = ""
+        val attributes = mutableListOf<AssignedAttribute>()
+        val properties: MutableList<String> = mutableListOf()
+        var ref = ""
+        val errors: MutableList<TAGError> = mutableListOf()
+        context.json_value().json_obj().json_pair().forEach { ctx ->
+            when (val elementField = ctx.JSON_STRING().text.content()) {
+                "description" -> description = ctx.json_value().text.content()
+                "attributes" -> {
+                    ctx.json_value().json_arr().json_value()
+                            .map { it.text.content() }
+                            .map {
+                                when {
+                                    it.endsWith("!") -> {
+                                        val fName = it.replace("!", "")
+                                        if (fName.isValidName()) {
+                                            attributes.add(RequiredAttribute(fName))
+                                        } else {
+                                            errors.add(CustomError(ctx.getRange(), "invalid attribute field name $it"))
+                                        }
+                                    }
+                                    it.isValidName() -> attributes.add(OptionalAttribute(it))
+                                    else -> errors.add(CustomError(ctx.getRange(), "invalid attribute field name $it"))
+                                }
+                            }
+
+                }
+                "properties" -> properties.addAll(ctx.json_value().json_arr().json_value().map { it.text.content() })
+                "ref" -> ref = ctx.json_value().text.content()
+                else -> errors.add(CustomError(ctx.getRange(), "unknown element field $elementField"))
+            }
+        }
+        return Right(ElementDefinition(name, description, attributes, properties, ref))
+    }
+
     override fun exitStartTag(ctx: TAGMLParser.StartTagContext) {
         val qName = ctx.markupName().text
         val expectedRoot = context.ontology?.root
         if (context.openMarkup.isEmpty() && expectedRoot != null && qName != expectedRoot) {
             addError(ctx, UNEXPECTED_ROOT, qName, expectedRoot)
+        }
+        val ontology = context.ontology
+        if (ontology != null && !ontology.hasElement(qName)) {
+            addWarning(ctx, UNDEFINED_ELEMENT, qName)
         }
         context.openMarkup += qName
         val token = MarkupOpenToken(ctx.getRange(), ctx.text, qName)
@@ -135,16 +187,19 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         _tokens += token
     }
 
+    private fun addWarning(
+            ctx: ParserRuleContext, messageTemplate: String, vararg messageArgs: Any) =
+            errorListener.addWarning(
+                    Position.startOf(ctx), Position.endOf(ctx), messageTemplate, *messageArgs)
+
     private fun addError(
-            ctx: ParserRuleContext, messageTemplate: String, vararg messageArgs: Any) {
-        errorListener.addError(
-                Position.startOf(ctx), Position.endOf(ctx), messageTemplate, *messageArgs)
-    }
+            ctx: ParserRuleContext, messageTemplate: String, vararg messageArgs: Any) =
+            errorListener.addError(
+                    Position.startOf(ctx), Position.endOf(ctx), messageTemplate, *messageArgs)
 
     fun addBreakingError(
-            ctx: ParserRuleContext, messageTemplate: String, vararg messageArgs: Any) {
-        errorListener.addBreakingError(
-                Position.startOf(ctx), Position.endOf(ctx), messageTemplate, *messageArgs)
-    }
+            ctx: ParserRuleContext, messageTemplate: String, vararg messageArgs: Any) =
+            errorListener.addBreakingError(
+                    Position.startOf(ctx), Position.endOf(ctx), messageTemplate, *messageArgs)
 
 }
