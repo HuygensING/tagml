@@ -22,15 +22,33 @@ package nl.knaw.huc.di.tag.tagml
 
 import nl.knaw.huc.di.tag.tagml.ErrorListener.TAGError
 import nl.knaw.huc.di.tag.tagml.ParserUtils.validate
-import nl.knaw.huc.di.tag.tagml.TAGMLTokens.HeaderToken
-import nl.knaw.huc.di.tag.tagml.TAGMLTokens.MarkupCloseToken
-import nl.knaw.huc.di.tag.tagml.TAGMLTokens.MarkupOpenToken
-import nl.knaw.huc.di.tag.tagml.TAGMLTokens.TextToken
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.fail
 import org.junit.Test
 
 class ValidatorTest {
+
+    @Test
+    fun test_milestone_elements_must_have_milestone_property() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |       "tagml": { "description": "The root element" },
+            |       "milestone": { "description": "A milestone element", "properties": ["milestone"] },
+            |       "not_a_milestone": { "description": "Non-milestone element" }
+            |    }
+            |  }
+            |}!]
+            |[tagml>[milestone][not_a_milestone]<tagml]
+            |""".trimMargin())
+        assertTAGMLHasErrors(tagml) { errors ->
+            assertThat(errors).hasSize(1)
+            assertThat(errors[0])
+                    .hasFieldOrPropertyWithValue("message", """Element "not_a_milestone" does not have the "milestone" property in its definition.""")
+        }
+    }
 
     @Test
     fun test_missing_required_attributes_gives_error() {
@@ -39,7 +57,9 @@ class ValidatorTest {
             |  ":ontology": {
             |    "root": "tagml",
             |    "elements": {
-            |       "tagml": {"description":"The root element","attributes":["a1!","a2","a3!"]}
+            |       "tagml": {
+            |           "description": "The root element",
+            |           "attributes": ["required1!","optional1","required2!"]}
             |    }
             |  }
             |}!]
@@ -48,9 +68,9 @@ class ValidatorTest {
         assertTAGMLHasErrors(tagml) { errors ->
             assertThat(errors).hasSize(2)
             assertThat(errors[0])
-                    .hasFieldOrPropertyWithValue("message", """Required attribute "a1" is missing on element "tagml".""")
+                    .hasFieldOrPropertyWithValue("message", """Required attribute "required1" is missing on element "tagml".""")
             assertThat(errors[1])
-                    .hasFieldOrPropertyWithValue("message", """Required attribute "a3" is missing on element "tagml".""")
+                    .hasFieldOrPropertyWithValue("message", """Required attribute "required2" is missing on element "tagml".""")
         }
     }
 
@@ -356,6 +376,14 @@ class ValidatorTest {
                                 ref = "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-persName.html"
                         )
                 )
+
+                val saidElementDefinition = ontology.elementDefinition("said")!!
+                assert(saidElementDefinition.isDiscontinuous)
+                assert(!saidElementDefinition.isMilestone)
+
+                val imgElementDefinition = ontology.elementDefinition("img")!!
+                assert(imgElementDefinition.isMilestone)
+                assert(!imgElementDefinition.isDiscontinuous)
             }
         }
     }
@@ -368,7 +396,7 @@ class ValidatorTest {
             |    "root": "tagml"
             |  }
             |}!]
-            |[tagml > body < somethingelse]
+            |[tagml>body<somethingelse]
             |""".trimMargin())
         assertTAGMLHasErrors(tagml) { errors ->
             assertThat(errors).hasSize(1)
@@ -385,7 +413,7 @@ class ValidatorTest {
             |    "root": "root"
             |   }
             |}!]
-            |[tagml > body < tagml]
+            |[tagml>body<tagml]
             |""".trimMargin())
         assertTAGMLHasErrors(tagml) { errors ->
             assertThat(errors).hasSize(1)

@@ -26,10 +26,6 @@ import arrow.core.Right
 import nl.knaw.huc.di.tag.tagml.ErrorListener.CustomError
 import nl.knaw.huc.di.tag.tagml.ErrorListener.TAGError
 import nl.knaw.huc.di.tag.tagml.ParserUtils.getRange
-import nl.knaw.huc.di.tag.tagml.TAGMLTokens.HeaderToken
-import nl.knaw.huc.di.tag.tagml.TAGMLTokens.MarkupCloseToken
-import nl.knaw.huc.di.tag.tagml.TAGMLTokens.MarkupOpenToken
-import nl.knaw.huc.di.tag.tagml.TAGMLTokens.TextToken
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParser
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
@@ -37,7 +33,7 @@ import java.lang.String.format
 
 class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseListener() {
 
-    private val _tokens: MutableList<TAGMLTokens.TAGMLToken> = mutableListOf()
+    private val _tokens: MutableList<TAGMLToken> = mutableListOf()
     private val context = ListenerContext()
 
     class ListenerContext {
@@ -45,7 +41,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         val openMarkup: MutableList<String> = mutableListOf()
     }
 
-    val tokens: List<TAGMLTokens.TAGMLToken>
+    val tokens: List<TAGMLToken>
         get() = _tokens.toList()
 
     override fun exitHeader(ctx: TAGMLParser.HeaderContext) {
@@ -112,7 +108,6 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         } else {
             Either.left(errors.toList())
         }
-
     }
 
     private fun String.content() = this.trim('"')
@@ -164,40 +159,66 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
 
     override fun exitStartTag(ctx: TAGMLParser.StartTagContext) {
         val qName = ctx.markupName().text
-        val expectedRoot = context.ontology?.root
-        if (context.openMarkup.isEmpty() && expectedRoot != null && qName != expectedRoot) {
-            addError(ctx, UNEXPECTED_ROOT, qName, expectedRoot)
-        }
-        context.openMarkup += qName
         if (context.ontology != null) {
             val ontology = context.ontology!!
+            checkExpectedRoot(ontology, qName, ctx)
             if (!ontology.hasElement(qName)) {
                 addWarning(ctx, UNDEFINED_ELEMENT, qName)
             } else {
-                val annotationContexts = ctx.annotation()
-                val attributesUsed = mutableListOf<String>()
-                val elementDefinition = ontology.elementDefinition(qName)!!
-                for (actx in annotationContexts) {
-                    when (actx) {
-                        is TAGMLParser.BasicAnnotationContext -> {
-                            val attributeName = actx.annotationName().text
-                            attributesUsed.add(attributeName)
-                            if (ontology.hasElement(qName) && !elementDefinition.hasAttribute(attributeName)) {
-                                addWarning(ctx, UNDEFINED_ATTRIBUTE, attributeName, qName)
-                            }
-                        }
-                        is TAGMLParser.IdentifyingAnnotationContext -> TODO()
-                        is TAGMLParser.RefAnnotationContext -> TODO()
+                checkAttributes(ctx, ontology, qName, ctx.annotation())
+            }
+        }
+        context.openMarkup += qName
+        val token = MarkupOpenToken(ctx.getRange(), ctx.text, qName)
+        _tokens += token
+    }
+
+    private fun checkAttributes(ctx: ParserRuleContext, ontology: TAGOntology, qName: String, annotationContexts: List<TAGMLParser.AnnotationContext>) {
+        val attributesUsed = mutableListOf<String>()
+        val elementDefinition = ontology.elementDefinition(qName)!!
+        for (actx in annotationContexts) {
+            when (actx) {
+                is TAGMLParser.BasicAnnotationContext -> {
+                    val attributeName = actx.annotationName().text
+                    attributesUsed.add(attributeName)
+                    if (ontology.hasElement(qName) && !elementDefinition.hasAttribute(attributeName)) {
+                        addWarning(ctx, UNDEFINED_ATTRIBUTE, attributeName, qName)
                     }
                 }
-                (elementDefinition.requiredAttributes - attributesUsed).forEach { mra ->
-                    addError(ctx, MISSING_ATTRIBUTE, mra, qName)
+                is TAGMLParser.IdentifyingAnnotationContext -> TODO()
+                is TAGMLParser.RefAnnotationContext -> TODO()
+            }
+        }
+        (elementDefinition.requiredAttributes - attributesUsed).forEach { mra ->
+            addError(ctx, MISSING_ATTRIBUTE, mra, qName)
+        }
+    }
+
+    private fun checkExpectedRoot(ontology: TAGOntology, qName: String, ctx: ParserRuleContext) {
+        val expectedRoot = ontology.root
+        if (context.openMarkup.isEmpty() && qName != expectedRoot) {
+            addError(ctx, UNEXPECTED_ROOT, qName, expectedRoot)
+        }
+    }
+
+    override fun exitMilestoneTag(ctx: TAGMLParser.MilestoneTagContext) {
+        val qName = ctx.name().text
+        if (context.ontology != null) {
+            val ontology = context.ontology!!
+            checkExpectedRoot(ontology, qName, ctx)
+            if (!ontology.hasElement(qName)) {
+                addWarning(ctx, UNDEFINED_ELEMENT, qName)
+            } else {
+                checkAttributes(ctx, ontology, qName, ctx.annotation())
+                if (!ontology.elementDefinition(qName)?.isMilestone!!) {
+                    addError(ctx, ILLEGAL_MILESTONE, qName)
                 }
             }
         }
 
-        val token = MarkupOpenToken(ctx.getRange(), ctx.text, qName)
+        val token = MarkupMilestoneToken(ctx.getRange(), ctx.text, qName)
         _tokens += token
+
     }
 
     override fun exitEndTag(ctx: TAGMLParser.EndTagContext) {

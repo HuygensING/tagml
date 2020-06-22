@@ -33,7 +33,7 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker
 
 sealed class TAGMLParseResult
 
-data class TAGMLParseSuccess(val tokens: List<TAGMLTokens.TAGMLToken>, val warnings: List<ErrorListener.TAGError>) : TAGMLParseResult()
+data class TAGMLParseSuccess(val tokens: List<TAGMLToken>, val warnings: List<ErrorListener.TAGError>) : TAGMLParseResult()
 
 data class TAGMLParseFailure(val errors: List<ErrorListener.TAGError>) : TAGMLParseResult()
 
@@ -56,10 +56,7 @@ object ParserUtils {
         val parseTree: ParseTree = parser.document()
         //    LOG.debug("parsetree: {}", parseTree.toStringTree(parser));
         val listener = TAGMLListener(errorListener)
-        try {
-            ParseTreeWalker.DEFAULT.walk(listener, parseTree)
-        } catch (ignored: TAGMLBreakingError) {
-        }
+        ParseTreeWalker.DEFAULT.walk(listener, parseTree)
 
         return if (errorListener.hasErrors) {
             TAGMLParseFailure(errorListener.orderedErrors)

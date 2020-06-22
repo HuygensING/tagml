@@ -1,3 +1,5 @@
+package nl.knaw.huc.di.tag.tagml
+
 /*-
  * #%L
  * tagml
@@ -17,7 +19,6 @@
  * limitations under the License.
  * #L%
  */
-package nl.knaw.huc.di.tag.tagml
 
 data class ElementDefinition(
         val name: String,
@@ -32,5 +33,10 @@ data class ElementDefinition(
             attributeNames.contains(attributeName)
 
     val requiredAttributes: List<String> by lazy { attributes.filterIsInstance<RequiredAttribute>().map { it.name } }
+
+    val isDiscontinuous: Boolean = hasProperty("discontinuous")
+    val isMilestone: Boolean = hasProperty("milestone")
+
+    private fun hasProperty(property: String) = properties.contains(property)
 
 }

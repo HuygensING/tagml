@@ -27,3 +27,4 @@ const val MISSING_OPEN_TAG = """Closing tag "%s" found without corresponding ope
 const val UNDEFINED_ELEMENT = """Element "%s" is not defined in the ontology."""
 const val UNDEFINED_ATTRIBUTE = """Attribute "%s" on element "%s" is not defined in the ontology."""
 const val MISSING_ATTRIBUTE = """Required attribute "%s" is missing on element "%s"."""
+const val ILLEGAL_MILESTONE = """Element "%s" does not have the "milestone" property in its definition."""
