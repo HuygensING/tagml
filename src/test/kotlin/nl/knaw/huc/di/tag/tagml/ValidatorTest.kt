@@ -29,126 +29,6 @@ import org.junit.Test
 class ValidatorTest {
 
     @Test
-    fun test_milestone_elements_must_have_milestone_property() {
-        val tagml = ("""
-            |[!{
-            |  ":ontology": {
-            |    "root": "tagml",
-            |    "elements": {
-            |       "tagml": { "description": "The root element" },
-            |       "milestone": { "description": "A milestone element", "properties": ["milestone"] },
-            |       "not_a_milestone": { "description": "Non-milestone element" }
-            |    }
-            |  }
-            |}!]
-            |[tagml>[milestone][not_a_milestone][undefined]<tagml]
-            |""".trimMargin())
-        assertTAGMLHasErrors(tagml) { errors ->
-            assertThat(errors).hasSize(1)
-            assertThat(errors[0])
-                    .hasFieldOrPropertyWithValue("message", """Element "not_a_milestone" does not have the "milestone" property in its definition.""")
-        }
-    }
-
-    @Test
-    fun test_missing_required_attributes_gives_error() {
-        val tagml = ("""
-            |[!{
-            |  ":ontology": {
-            |    "root": "tagml",
-            |    "elements": {
-            |       "tagml": {
-            |           "description": "The root element",
-            |           "attributes": ["required1!","optional1","required2!"]}
-            |    }
-            |  }
-            |}!]
-            |[tagml>body<tagml]
-            |""".trimMargin())
-        assertTAGMLHasErrors(tagml) { errors ->
-            assertThat(errors).hasSize(2)
-            assertThat(errors[0])
-                    .hasFieldOrPropertyWithValue("message", """Required attribute "required1" is missing on element "tagml".""")
-            assertThat(errors[1])
-                    .hasFieldOrPropertyWithValue("message", """Required attribute "required2" is missing on element "tagml".""")
-        }
-    }
-
-    @Test
-    fun test_using_undefined_element_gives_warning() {
-        val tagml = ("""
-            |[!{
-            |  ":ontology": {
-            |    "root": "tagml",
-            |    "elements": {
-            |       "tagml": {"description":"The root element"}
-            |    }
-            |  }
-            |}!]
-            |[tagml>body [new>text<new] bla<tagml]
-            |""".trimMargin())
-        assertTAGMLParses(tagml) { tokens, warnings ->
-            assertThat(warnings).hasSize(1)
-            assertThat(warnings[0])
-                    .hasFieldOrPropertyWithValue("message", """Element "new" is not defined in the ontology.""")
-        }
-    }
-
-    @Test
-    fun test_using_undefined_attribute_gives_warning() {
-        val tagml = ("""
-            |[!{
-            |  ":ontology": {
-            |    "root": "tagml",
-            |    "elements": {
-            |       "tagml": {"description":"The root element"}
-            |    }
-            |  }
-            |}!]
-            |[tagml a=true>body<tagml]
-            |""".trimMargin())
-        assertTAGMLParses(tagml) { tokens, warnings ->
-            assertThat(warnings).hasSize(1)
-            assertThat(warnings[0])
-                    .hasFieldOrPropertyWithValue("message", """Attribute "a" on element "tagml" is not defined in the ontology.""")
-        }
-    }
-
-    @Test
-    fun test_element_definition_is_required() {
-        val tagml = ("""
-            |[!{
-            |  ":ontology": {
-            |    "root": "tagml",
-            |    "elements": {
-            |       "tagml": {}
-            |    }
-            |  }
-            |}!]
-            |[tagml>body<tagml]
-            |""".trimMargin())
-        assertTAGMLHasErrors(tagml) { errors ->
-            assertThat(errors).hasSize(1)
-            assertThat(errors[0])
-                    .hasFieldOrPropertyWithValue("message", """Element "tagml" is missing a description.""")
-        }
-    }
-
-    @Test
-    fun test_header_without_root_creates_error() {
-        val tagml = ("""
-            |[!{
-            |}!]
-            |[tagml > body < tagml]
-            |""".trimMargin())
-        assertTAGMLHasErrors(tagml) { errors ->
-            assertThat(errors).hasSize(1)
-            assertThat(errors[0])
-                    .hasFieldOrPropertyWithValue("message", """Field ":ontology" missing in header.""")
-        }
-    }
-
-    @Test
     fun test_correct_tagml() {
         val tagml = ("""
             |[!{
@@ -385,19 +265,16 @@ class ValidatorTest {
     }
 
     @Test
-    fun test_illegal_closing_tag_error() {
+    fun test_header_without_root_creates_error() {
         val tagml = ("""
             |[!{
-            |  ":ontology": {
-            |    "root": "tagml"
-            |  }
             |}!]
-            |[tagml>body<somethingelse]
+            |[tagml > body < tagml]
             |""".trimMargin())
         assertTAGMLHasErrors(tagml) { errors ->
             assertThat(errors).hasSize(1)
             assertThat(errors[0])
-                    .hasFieldOrPropertyWithValue("message", """Closing tag "<somethingelse]" found without corresponding open tag.""")
+                    .hasFieldOrPropertyWithValue("message", """Field ":ontology" missing in header.""")
         }
     }
 
@@ -415,6 +292,129 @@ class ValidatorTest {
             assertThat(errors).hasSize(1)
             assertThat(errors[0])
                     .hasFieldOrPropertyWithValue("message", """Root element "tagml" does not match the one defined in the header: "root"""")
+        }
+    }
+
+    @Test
+    fun test_element_definition_is_required() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |       "tagml": {}
+            |    }
+            |  }
+            |}!]
+            |[tagml>body<tagml]
+            |""".trimMargin())
+        assertTAGMLHasErrors(tagml) { errors ->
+            assertThat(errors).hasSize(1)
+            assertThat(errors[0])
+                    .hasFieldOrPropertyWithValue("message", """Element "tagml" is missing a description.""")
+        }
+    }
+
+    @Test
+    fun test_using_undefined_element_gives_warning() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |       "tagml": {"description":"The root element"}
+            |    }
+            |  }
+            |}!]
+            |[tagml>body [new>text<new] bla<tagml]
+            |""".trimMargin())
+        assertTAGMLParses(tagml) { _, warnings ->
+            assertThat(warnings).hasSize(1)
+            assertThat(warnings[0])
+                    .hasFieldOrPropertyWithValue("message", """Element "new" is not defined in the ontology.""")
+        }
+    }
+
+    @Test
+    fun test_using_undefined_attribute_gives_warning() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |       "tagml": {"description":"The root element"}
+            |    }
+            |  }
+            |}!]
+            |[tagml a=true>body<tagml]
+            |""".trimMargin())
+        assertTAGMLParses(tagml) { _, warnings ->
+            assertThat(warnings).hasSize(1)
+            assertThat(warnings[0])
+                    .hasFieldOrPropertyWithValue("message", """Attribute "a" on element "tagml" is not defined in the ontology.""")
+        }
+    }
+
+    @Test
+    fun test_missing_required_attributes_gives_error() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |       "tagml": {
+            |           "description": "The root element",
+            |           "attributes": ["required1!","optional1","required2!"]}
+            |    }
+            |  }
+            |}!]
+            |[tagml>body<tagml]
+            |""".trimMargin())
+        assertTAGMLHasErrors(tagml) { errors ->
+            assertThat(errors).hasSize(2)
+            assertThat(errors[0])
+                    .hasFieldOrPropertyWithValue("message", """Required attribute "required1" is missing on element "tagml".""")
+            assertThat(errors[1])
+                    .hasFieldOrPropertyWithValue("message", """Required attribute "required2" is missing on element "tagml".""")
+        }
+    }
+
+    @Test
+    fun test_milestone_elements_must_have_milestone_property() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |       "tagml": { "description": "The root element" },
+            |       "milestone": { "description": "A milestone element", "properties": ["milestone"] },
+            |       "not_a_milestone": { "description": "Non-milestone element" }
+            |    }
+            |  }
+            |}!]
+            |[tagml>[milestone][not_a_milestone][undefined]<tagml]
+            |""".trimMargin())
+        assertTAGMLHasErrors(tagml) { errors ->
+            assertThat(errors).hasSize(1)
+            assertThat(errors[0])
+                    .hasFieldOrPropertyWithValue("message", """Element "not_a_milestone" does not have the "milestone" property in its definition.""")
+        }
+    }
+
+    @Test
+    fun test_illegal_closing_tag_error() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml"
+            |  }
+            |}!]
+            |[tagml>body<somethingelse]
+            |""".trimMargin())
+        assertTAGMLHasErrors(tagml) { errors ->
+            assertThat(errors).hasSize(1)
+            assertThat(errors[0])
+                    .hasFieldOrPropertyWithValue("message", """Closing tag "<somethingelse]" found without corresponding open tag.""")
         }
     }
 
