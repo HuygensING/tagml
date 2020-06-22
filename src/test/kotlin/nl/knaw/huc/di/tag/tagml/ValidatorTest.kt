@@ -34,11 +34,31 @@ import org.junit.Test
 class ValidatorTest {
 
     @Test
+    fun test_element_definition_is_required() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |       "tagml": {}
+            |    }
+            |  }
+            |}!]
+            |[tagml>body<tagml]
+            |""".trimMargin())
+        assertTAGMLHasErrors(tagml) { errors ->
+            assertThat(errors).hasSize(1)
+            assertThat(errors[0])
+                    .hasFieldOrPropertyWithValue("message", """Element "tagml" is missing a description.""")
+        }
+    }
+
+    @Test
     fun test_header_without_root_creates_error() {
         val tagml = ("""
             |[!{
             |}!]
-            |[tagml>body<tagml]
+            |[tagml > body < tagml]
             |""".trimMargin())
         assertTAGMLHasErrors(tagml) { errors ->
             assertThat(errors).hasSize(1)
@@ -65,92 +85,92 @@ class ValidatorTest {
             |          "persons",
             |          "id!"
             |        ]
-            |      },
+            |        },
             |      "img": {
             |        "description": "Image; the (external) representation of the document containing the text",
-            |        "properties": [ "milestone" ],
-            |        "attributes": [ "source" ]
-            |      },
+            |        "properties": ["milestone"],
+            |        "attributes": ["source"]
+            |        },
             |      "chapter": {
             |        "description": "Main division of a text",
-            |        "attributes": [ "n" ]
-            |      },
+            |        "attributes": ["n"]
+            |        },
             |      "par": {
             |        "description": "A distinct section in a text, indicated by a new line or an indentation",
-            |        "attributes": [ "n" ]
-            |      },
+            |        "attributes": ["n"]
+            |        },
             |      "s": {
             |        "description": "contains a sentence-like division of a text",
             |        "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-s.html"
-            |      },
+            |        },
             |      "sic": {
             |        "description": "contains text reproduced although apparently incorrect or inaccurate",
             |        "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-sic.html"
-            |      },
+            |        },
             |      "corr": {
             |        "description": "contains the correct form of a passage apparently erroneous in the copy text",
             |        "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-corr.html"
-            |      },
+            |        },
             |      "said": {
             |        "description": "(speech or thought) indicates passages thought or spoken aloud",
             |        "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-said.html",
-            |        "attributes": [ "who" ],
-            |        "properties": [ "discontinuous" ]
-            |      },
+            |        "attributes": ["who"],
+            |        "properties": ["discontinuous"]
+            |        },
             |      "persName": {
             |        "description": "personal name: contains a proper noun or proper noun phrase referring to a person",
             |        "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-persName.html",
-            |        "attributes": [ "id" ]
-            |      },
+            |        "attributes": ["id"]
+            |        },
             |      "emph": {
             |        "description": "(emphasized) marks words or phrases which are stressed or emphasized for linguistic or rhetorical effect",
             |        "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-emph.html"
-            |      }
-            |    },
+            |        }
+            |        },
             |    "attributes": {
             |      "type": {
             |        "description": "used to classify the source of the text in the document",
             |        "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-att.typed.html",
             |        "dataType": "String"
-            |      },
+            |        },
             |      "title": {
             |        "description": "used to indicate the title of the text in the document",
             |        "dataType": "String"
-            |      },
+            |        },
             |      "source": {
             |        "description": "refers to the source of the (external) representation of the document containing the text",
             |        "dataType": "URI"
-            |      },
+            |        },
             |      "author": {
             |        "description": "refers to the name of the author(s) of the text in the document",
             |        "dataType": "Pointer"
-            |      },
+            |        },
             |      "year": {
             |        "description": "refers to the year of publication of the text in the document",
             |        "dataType": "Integer"
-            |      },
+            |        },
             |      "page": {
             |        "description": "indicates the page(s) of the text in the document",
             |        "dataType": "IntegerList"
-            |      },
+            |        },
             |      "persons": {
             |        "description": "(fictional) persons mentioned in the document",
             |        "dataType": "StringList"
-            |      },
+            |        },
             |      "id": {
             |        "description": "points to a unique identifier for the element bearing the attribute",
             |        "dataType": "ID"
-            |      },
+            |        },
             |      "who": {
             |        "description": "points to the unique identifier of a person in the document",
             |        "dataType": "Pointer"
-            |      },
+            |        },
             |      "n": {
             |        "description": "gives a number for an element which is not necessarily unique in the document",
             |        "ref": "https://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-att.global.html",
             |        "dataType": "Integer"
-            |      }
-            |    },
+            |        }
+            |      },
             |    "rules": [
             |      "excerpt > chapter+, img+",
             |      "chapter > par+, said+",
@@ -161,7 +181,7 @@ class ValidatorTest {
             |      ":non-linear(sic,corr)"
             |    ]
             |  },
-            |  ":authors": [ "me", "you", "them" ],
+            |  ":authors": ["me", "you", "them"],
             |  "title": "test",
             |  "version": 0.2
             |}!]
@@ -281,7 +301,7 @@ class ValidatorTest {
             |    "root": "tagml"
             |  }
             |}!]
-            |[tagml>body<somethingelse]
+            |[tagml > body < somethingelse]
             |""".trimMargin())
         assertTAGMLHasErrors(tagml) { errors ->
             assertThat(errors).hasSize(1)
@@ -296,9 +316,9 @@ class ValidatorTest {
             |[!{
             |  ":ontology": {
             |    "root": "root"
-            |  }
+            |   }
             |}!]
-            |[tagml>body<tagml]
+            |[tagml > body < tagml]
             |""".trimMargin())
         assertTAGMLHasErrors(tagml) { errors ->
             assertThat(errors).hasSize(1)

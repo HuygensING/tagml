@@ -21,6 +21,7 @@ package nl.knaw.huc.di.tag.tagml
  */
 
 import arrow.core.Either
+import arrow.core.Left
 import arrow.core.Right
 import nl.knaw.huc.di.tag.tagml.ErrorListener.CustomError
 import nl.knaw.huc.di.tag.tagml.ErrorListener.TAGError
@@ -137,21 +138,28 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                                         if (fName.isValidName()) {
                                             attributes.add(RequiredAttribute(fName))
                                         } else {
-                                            errors.add(CustomError(ctx.getRange(), "invalid attribute field name $it"))
+                                            errors.add(CustomError(ctx.getRange(), "Invalid attribute field name $it"))
                                         }
                                     }
                                     it.isValidName() -> attributes.add(OptionalAttribute(it))
-                                    else -> errors.add(CustomError(ctx.getRange(), "invalid attribute field name $it"))
+                                    else -> errors.add(CustomError(ctx.getRange(), "Invalid attribute field name $it"))
                                 }
                             }
 
                 }
                 "properties" -> properties.addAll(ctx.json_value().json_arr().json_value().map { it.text.content() })
                 "ref" -> ref = ctx.json_value().text.content()
-                else -> errors.add(CustomError(ctx.getRange(), "unknown element field $elementField"))
+                else -> errors.add(CustomError(ctx.getRange(), "Unknown element field $elementField"))
             }
         }
-        return Right(ElementDefinition(name, description, attributes, properties, ref))
+        if (description.isEmpty()) {
+            errors.add(CustomError(context.getRange(), """Element "$name" is missing a description."""))
+        }
+        return if (errors.isEmpty()) {
+            Right(ElementDefinition(name, description, attributes, properties, ref))
+        } else {
+            Left(errors)
+        }
     }
 
     override fun exitStartTag(ctx: TAGMLParser.StartTagContext) {
