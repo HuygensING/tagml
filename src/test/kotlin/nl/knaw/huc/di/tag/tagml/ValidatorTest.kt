@@ -369,6 +369,11 @@ class ValidatorTest {
             |       "tagml": {
             |           "description": "The root element",
             |           "attributes": ["required1!","optional1","required2!"]}
+            |    },
+            |    "attributes": {
+            |       "required1": { "description": "something" },
+            |       "required2": { "description": "something" },
+            |       "optional1": { "description": "something" }
             |    }
             |  }
             |}!]
