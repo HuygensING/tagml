@@ -20,7 +20,6 @@ package nl.knaw.huc.di.tag.tagml
  * #L%
  */
 
-import arrow.core.Either
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLLexer
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParser
 import org.antlr.v4.runtime.CharStream
@@ -30,12 +29,20 @@ import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 
+//typealias TAGMLParseResult = Either<List<ErrorListener.TAGError>, List<TAGMLTokens.TAGMLToken>>
+
+sealed class TAGMLParseResult
+
+data class TAGMLParseSuccess(val tokens: List<TAGMLTokens.TAGMLToken>, val warnings: List<ErrorListener.TAGError>) : TAGMLParseResult()
+
+data class TAGMLParseFailure(val errors: List<ErrorListener.TAGError>) : TAGMLParseResult()
+
 object ParserUtils {
 
     fun ParserRuleContext.getRange(): Range =
             Range(Position.startOf(this), Position.endOf(this))
 
-    fun validate(tagml: String): Either<List<ErrorListener.TAGError>, List<TAGMLTokens.TAGMLToken>> {
+    fun validate(tagml: String): TAGMLParseResult {
         val antlrInputStream: CharStream = CharStreams.fromString(tagml)
         val errorListener = ErrorListener()
         val lexer = TAGMLLexer(antlrInputStream)
@@ -55,9 +62,9 @@ object ParserUtils {
         }
 
         return if (errorListener.hasErrors) {
-            Either.left(errorListener.orderedErrors)
+            TAGMLParseFailure(errorListener.orderedErrors)
         } else {
-            Either.right(listener.tokens)
+            TAGMLParseSuccess(listener.tokens, errorListener.orderedWarnings)
         }
 
     }

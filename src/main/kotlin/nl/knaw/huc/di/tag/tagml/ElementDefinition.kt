@@ -25,4 +25,10 @@ data class ElementDefinition(
         val attributes: List<AssignedAttribute> = listOf(),
         val properties: List<String> = listOf(),
         val ref: String = ""
-)
+) {
+    private val attributeNames: List<String> by lazy { attributes.map { it.name } }
+
+    fun hasAttribute(attributeName: String): Boolean =
+            attributeNames.contains(attributeName)
+
+}

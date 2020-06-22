@@ -173,6 +173,20 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
             addWarning(ctx, UNDEFINED_ELEMENT, qName)
         }
         context.openMarkup += qName
+        val annotationContexts = ctx.annotation()
+        for (actx in annotationContexts) {
+            when (actx) {
+                is TAGMLParser.BasicAnnotationContext -> {
+                    val attributeName = actx.annotationName().text
+                    if (ontology != null && ontology.hasElement(qName) && !ontology.elementDefinition(qName)!!.hasAttribute(attributeName)) {
+                        addWarning(ctx, UNDEFINED_ATTRIBUTE, attributeName, qName)
+                    }
+                }
+
+                is TAGMLParser.IdentifyingAnnotationContext -> TODO()
+                is TAGMLParser.RefAnnotationContext -> TODO()
+            }
+        }
         val token = MarkupOpenToken(ctx.getRange(), ctx.text, qName)
         _tokens += token
     }

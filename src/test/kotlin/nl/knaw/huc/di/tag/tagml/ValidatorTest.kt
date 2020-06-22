@@ -25,13 +25,54 @@ import nl.knaw.huc.di.tag.tagml.ParserUtils.validate
 import nl.knaw.huc.di.tag.tagml.TAGMLTokens.HeaderToken
 import nl.knaw.huc.di.tag.tagml.TAGMLTokens.MarkupCloseToken
 import nl.knaw.huc.di.tag.tagml.TAGMLTokens.MarkupOpenToken
-import nl.knaw.huc.di.tag.tagml.TAGMLTokens.TAGMLToken
 import nl.knaw.huc.di.tag.tagml.TAGMLTokens.TextToken
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.fail
 import org.junit.Test
 
 class ValidatorTest {
+
+    @Test
+    fun test_using_undefined_element_gives_warning() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |       "tagml": {"description":"The root element"}
+            |    }
+            |  }
+            |}!]
+            |[tagml>body [new>text<new] bla<tagml]
+            |""".trimMargin())
+        assertTAGMLParses(tagml) { result ->
+            val warnings = result.warnings
+            assertThat(warnings).hasSize(1)
+            assertThat(warnings[0])
+                    .hasFieldOrPropertyWithValue("message", """Element "new" is not defined in the ontology.""")
+        }
+    }
+
+    @Test
+    fun test_using_undefined_attribute_gives_warning() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |       "tagml": {"description":"The root element"}
+            |    }
+            |  }
+            |}!]
+            |[tagml a=true>body<tagml]
+            |""".trimMargin())
+        assertTAGMLParses(tagml) { result ->
+            val warnings = result.warnings
+            assertThat(warnings).hasSize(1)
+            assertThat(warnings[0])
+                    .hasFieldOrPropertyWithValue("message", """Attribute "a" on element "tagml" is not defined in the ontology.""")
+        }
+    }
 
     @Test
     fun test_element_definition_is_required() {
@@ -188,7 +229,11 @@ class ValidatorTest {
             |[excerpt>body<excerpt]
             |""".trimMargin())
 
-        assertTAGMLParses(tagml) { tokens ->
+        assertTAGMLParses(tagml) { result ->
+            val warnings = result.warnings
+            assertThat(warnings).isEmpty()
+
+            val tokens = result.tokens
             println(tokens)
             assertThat(tokens).hasSize(5)
             assertThat(tokens[0])
@@ -306,7 +351,7 @@ class ValidatorTest {
         assertTAGMLHasErrors(tagml) { errors ->
             assertThat(errors).hasSize(1)
             assertThat(errors[0])
-                    .hasFieldOrPropertyWithValue("message", "Closing tag found without corresponding open tag: <somethingelse]")
+                    .hasFieldOrPropertyWithValue("message", """Closing tag "<somethingelse]" found without corresponding open tag.""")
         }
     }
 
@@ -327,22 +372,20 @@ class ValidatorTest {
         }
     }
 
-    private fun assertTAGMLParses(tagml: String, tokenListAssert: (List<TAGMLToken>) -> Unit) {
-        validate(tagml).fold(
-                { errorList ->
-                    val errors = errorList.joinToString("\n")
+    private fun assertTAGMLParses(tagml: String, tokenListAssert: (TAGMLParseSuccess) -> Unit) =
+            when (val result = validate(tagml)) {
+                is TAGMLParseSuccess -> tokenListAssert(result)
+                is TAGMLParseFailure -> {
+                    val errors = result.errors.joinToString("\n")
                     fail("parsing errors:\n$errors")
-                },
-                { tokenListAssert(it) }
-        )
-    }
+                }
+            }
 
-    private fun assertTAGMLHasErrors(tagml: String, errorListAssert: (List<TAGError>) -> Unit) {
-        validate(tagml).fold(
-                { errorListAssert(it) },
-                { fail("expected parsing to fail") }
-        )
-    }
+    private fun assertTAGMLHasErrors(tagml: String, errorListAssert: (List<TAGError>) -> Unit) =
+            when (val result = validate(tagml)) {
+                is TAGMLParseSuccess -> fail("expected parsing to fail")
+                is TAGMLParseFailure -> errorListAssert(result.errors)
+            }
 
     private fun assertOntologyParses(headerToken: HeaderToken, ontologyAssert: (TAGOntology) -> Unit) {
         headerToken.ontologyParseResult.fold(

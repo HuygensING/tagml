@@ -26,5 +26,9 @@ data class TAGOntology(
         val rules: List<String>
 ) {
     fun hasElement(qName: String): Boolean = elements.map { it.name }.contains(qName)
+
+    fun elementDefinition(qName: String): ElementDefinition? =
+            elements.find { it.name == qName }
+
 }
 

@@ -44,37 +44,31 @@ object TAGML {
     const val BRANCHES_END = CLOSE_TAG_STARTCHAR + BRANCHES + CLOSE_TAG_ENDCHAR
 
     @JvmStatic
-    fun escapeRegularText(content: String): String {
-        return content.replace("\\", "\\\\").replace("<", "\\<").replace("[", "\\[")
-    }
+    fun escapeRegularText(content: String): String =
+            content.replace("\\", "\\\\").replace("<", "\\<").replace("[", "\\[")
 
     @JvmStatic
-    fun escapeVariantText(content: String): String {
-        return content
-                .replace("\\", "\\\\")
-                .replace("<", "\\<")
-                .replace("[", "\\[")
-                .replace("|", "\\|")
-    }
+    fun escapeVariantText(content: String): String =
+            content.replace("\\", "\\\\")
+                    .replace("<", "\\<")
+                    .replace("[", "\\[")
+                    .replace("|", "\\|")
 
     @JvmStatic
-    fun escapeSingleQuotedText(content: String): String {
-        return content.replace("\\", "\\\\").replace("'", "\\'")
-    }
+    fun escapeSingleQuotedText(content: String): String =
+            content.replace("\\", "\\\\").replace("'", "\\'")
 
     @JvmStatic
-    fun escapeDoubleQuotedText(content: String): String {
-        return content.replace("\\", "\\\\").replace("\"", "\\\"")
-    }
+    fun escapeDoubleQuotedText(content: String): String =
+            content.replace("\\", "\\\\").replace("\"", "\\\"")
 
     @JvmStatic
-    fun unEscape(text: String): String {
-        return text.replace(Pattern.quote("\\<").toRegex(), "<")
-                .replace(Pattern.quote("\\[").toRegex(), "[")
-                .replace(Pattern.quote("\\|").toRegex(), "|")
-                .replace(Pattern.quote("\\!").toRegex(), "!")
-                .replace(Pattern.quote("\\\"").toRegex(), "\"")
-                .replace(Pattern.quote("\\'").toRegex(), "'")
-                .replace("\\\\", "\\")
-    }
+    fun unEscape(text: String): String =
+            text.replace(Pattern.quote("\\<").toRegex(), "<")
+                    .replace(Pattern.quote("\\[").toRegex(), "[")
+                    .replace(Pattern.quote("\\|").toRegex(), "|")
+                    .replace(Pattern.quote("\\!").toRegex(), "!")
+                    .replace(Pattern.quote("\\\"").toRegex(), "\"")
+                    .replace(Pattern.quote("\\'").toRegex(), "'")
+                    .replace("\\\\", "\\")
 }
