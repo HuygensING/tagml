@@ -25,7 +25,6 @@ import arrow.core.Left
 import arrow.core.Right
 import nl.knaw.huc.di.tag.tagml.ErrorListener.CustomError
 import nl.knaw.huc.di.tag.tagml.ErrorListener.TAGError
-import nl.knaw.huc.di.tag.tagml.ParserUtils.getRange
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParser
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext

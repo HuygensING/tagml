@@ -29,41 +29,36 @@ import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 
-//typealias TAGMLParseResult = Either<List<ErrorListener.TAGError>, List<TAGMLTokens.TAGMLToken>>
+sealed class TAGMLParseResult(val warnings: List<ErrorListener.TAGError>)
 
-sealed class TAGMLParseResult
+class TAGMLParseSuccess(val tokens: List<TAGMLToken>, warnings: List<ErrorListener.TAGError>) : TAGMLParseResult(warnings)
 
-data class TAGMLParseSuccess(val tokens: List<TAGMLToken>, val warnings: List<ErrorListener.TAGError>) : TAGMLParseResult()
+class TAGMLParseFailure(val errors: List<ErrorListener.TAGError>, warnings: List<ErrorListener.TAGError>) : TAGMLParseResult(warnings)
 
-data class TAGMLParseFailure(val errors: List<ErrorListener.TAGError>) : TAGMLParseResult()
+fun ParserRuleContext.getRange(): Range =
+        Range(Position.startOf(this), Position.endOf(this))
 
-object ParserUtils {
+fun validate(tagml: String): TAGMLParseResult {
+    val antlrInputStream: CharStream = CharStreams.fromString(tagml)
+    val errorListener = ErrorListener()
+    val lexer = TAGMLLexer(antlrInputStream)
+            .apply { addErrorListener(errorListener) }
+    val tokens = CommonTokenStream(lexer)
+    val parser = TAGMLParser(tokens)
+            .apply {
+                addErrorListener(errorListener)
+                buildParseTree = true
+            }
+    val parseTree: ParseTree = parser.document()
+    //    LOG.debug("parsetree: {}", parseTree.toStringTree(parser));
+    val listener = TAGMLListener(errorListener)
+    ParseTreeWalker.DEFAULT.walk(listener, parseTree)
 
-    fun ParserRuleContext.getRange(): Range =
-            Range(Position.startOf(this), Position.endOf(this))
-
-    fun validate(tagml: String): TAGMLParseResult {
-        val antlrInputStream: CharStream = CharStreams.fromString(tagml)
-        val errorListener = ErrorListener()
-        val lexer = TAGMLLexer(antlrInputStream)
-                .apply { addErrorListener(errorListener) }
-        val tokens = CommonTokenStream(lexer)
-        val parser = TAGMLParser(tokens)
-                .apply {
-                    addErrorListener(errorListener)
-                    buildParseTree = true
-                }
-        val parseTree: ParseTree = parser.document()
-        //    LOG.debug("parsetree: {}", parseTree.toStringTree(parser));
-        val listener = TAGMLListener(errorListener)
-        ParseTreeWalker.DEFAULT.walk(listener, parseTree)
-
-        return if (errorListener.hasErrors) {
-            TAGMLParseFailure(errorListener.orderedErrors)
-        } else {
-            TAGMLParseSuccess(listener.tokens, errorListener.orderedWarnings)
-        }
-
+    return if (errorListener.hasErrors) {
+        TAGMLParseFailure(errorListener.orderedErrors, errorListener.orderedWarnings)
+    } else {
+        TAGMLParseSuccess(listener.tokens, errorListener.orderedWarnings)
     }
 
 }
+
