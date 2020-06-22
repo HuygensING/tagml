@@ -31,4 +31,6 @@ data class ElementDefinition(
     fun hasAttribute(attributeName: String): Boolean =
             attributeNames.contains(attributeName)
 
+    val requiredAttributes: List<String> by lazy { attributes.filterIsInstance<RequiredAttribute>().map { it.name } }
+
 }

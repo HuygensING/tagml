@@ -33,6 +33,28 @@ import org.junit.Test
 class ValidatorTest {
 
     @Test
+    fun test_missing_required_attributes_gives_error() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |       "tagml": {"description":"The root element","attributes":["a1!","a2","a3!"]}
+            |    }
+            |  }
+            |}!]
+            |[tagml>body<tagml]
+            |""".trimMargin())
+        assertTAGMLHasErrors(tagml) { errors ->
+            assertThat(errors).hasSize(2)
+            assertThat(errors[0])
+                    .hasFieldOrPropertyWithValue("message", """Required attribute "a1" is missing on element "tagml".""")
+            assertThat(errors[1])
+                    .hasFieldOrPropertyWithValue("message", """Required attribute "a3" is missing on element "tagml".""")
+        }
+    }
+
+    @Test
     fun test_using_undefined_element_gives_warning() {
         val tagml = ("""
             |[!{
@@ -226,7 +248,7 @@ class ValidatorTest {
             |  "title": "test",
             |  "version": 0.2
             |}!]
-            |[excerpt>body<excerpt]
+            |[excerpt id="test001">body<excerpt]
             |""".trimMargin())
 
         assertTAGMLParses(tagml) { result ->

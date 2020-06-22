@@ -168,25 +168,34 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         if (context.openMarkup.isEmpty() && expectedRoot != null && qName != expectedRoot) {
             addError(ctx, UNEXPECTED_ROOT, qName, expectedRoot)
         }
-        val ontology = context.ontology
-        if (ontology != null && !ontology.hasElement(qName)) {
-            addWarning(ctx, UNDEFINED_ELEMENT, qName)
-        }
         context.openMarkup += qName
-        val annotationContexts = ctx.annotation()
-        for (actx in annotationContexts) {
-            when (actx) {
-                is TAGMLParser.BasicAnnotationContext -> {
-                    val attributeName = actx.annotationName().text
-                    if (ontology != null && ontology.hasElement(qName) && !ontology.elementDefinition(qName)!!.hasAttribute(attributeName)) {
-                        addWarning(ctx, UNDEFINED_ATTRIBUTE, attributeName, qName)
+        if (context.ontology != null) {
+            val ontology = context.ontology!!
+            if (!ontology.hasElement(qName)) {
+                addWarning(ctx, UNDEFINED_ELEMENT, qName)
+            } else {
+                val annotationContexts = ctx.annotation()
+                val attributesUsed = mutableListOf<String>()
+                val elementDefinition = ontology.elementDefinition(qName)!!
+                for (actx in annotationContexts) {
+                    when (actx) {
+                        is TAGMLParser.BasicAnnotationContext -> {
+                            val attributeName = actx.annotationName().text
+                            attributesUsed.add(attributeName)
+                            if (ontology.hasElement(qName) && !elementDefinition.hasAttribute(attributeName)) {
+                                addWarning(ctx, UNDEFINED_ATTRIBUTE, attributeName, qName)
+                            }
+                        }
+                        is TAGMLParser.IdentifyingAnnotationContext -> TODO()
+                        is TAGMLParser.RefAnnotationContext -> TODO()
                     }
                 }
-
-                is TAGMLParser.IdentifyingAnnotationContext -> TODO()
-                is TAGMLParser.RefAnnotationContext -> TODO()
+                (elementDefinition.requiredAttributes - attributesUsed).forEach { mra ->
+                    addError(ctx, MISSING_ATTRIBUTE, mra, qName)
+                }
             }
         }
+
         val token = MarkupOpenToken(ctx.getRange(), ctx.text, qName)
         _tokens += token
     }
