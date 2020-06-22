@@ -1,3 +1,5 @@
+package nl.knaw.huc.di.tag.tagml
+
 /*-
  * #%L
  * tagml
@@ -17,7 +19,6 @@
  * limitations under the License.
  * #L%
  */
-package nl.knaw.huc.di.tag.tagml
 
 const val MISSING_ONTOLOGY_FIELD = """Field ":ontology" missing in header."""
 const val MISSING_ONTOLOGY_ROOT = """Field "root" missing in ontology header."""
