@@ -20,13 +20,18 @@ package nl.knaw.huc.di.tag.tagml
  * #L%
  */
 
+const val ILLEGAL_MILESTONE = """Element "%s" does not have the "milestone" property in its definition."""
+const val MISSING_ATTRIBUTE = """Required attribute "%s" is missing on element "%s"."""
+const val MISSING_ATTRIBUTE_DATATYPE = """Attribute "%s" is missing a dataType."""
+const val MISSING_ATTRIBUTE_DESCRIPTION = """Attribute "%s" is missing a description."""
+const val MISSING_ELEMENT_DESCRIPTION = """Element "%s" is missing a description."""
 const val MISSING_ONTOLOGY_FIELD = """Field ":ontology" missing in header."""
 const val MISSING_ONTOLOGY_ROOT = """Field "root" missing in ontology header."""
+const val MISSING_OPEN_TAG = """Closing tag "%s" found without corresponding open tag."""
+const val UNDEFINED_ATTRIBUTE = """Attribute "%s" on element "%s" is not defined in the ontology."""
+const val UNDEFINED_ELEMENT = """Element "%s" is not defined in the ontology."""
 const val UNEXPECTED_KEY = "Unexpected key %s"
 const val UNEXPECTED_ROOT = """Root element "%s" does not match the one defined in the header: "%s""""
-const val MISSING_OPEN_TAG = """Closing tag "%s" found without corresponding open tag."""
-const val UNDEFINED_ELEMENT = """Element "%s" is not defined in the ontology."""
-const val UNDEFINED_ATTRIBUTE = """Attribute "%s" on element "%s" is not defined in the ontology."""
+const val UNKNOWN_ATTRIBUTE_FIELD = """Unknown attribute field "%s""""
+const val UNKNOWN_ELEMENT_FIELD = """Unknown element field "%s""""
 const val USED_UNDEFINED_ATTRIBUTE = """Attribute "%s" is used on an elementDefinition, but has no valid definition in the ontology."""
-const val MISSING_ATTRIBUTE = """Required attribute "%s" is missing on element "%s"."""
-const val ILLEGAL_MILESTONE = """Element "%s" does not have the "milestone" property in its definition."""

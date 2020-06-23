@@ -372,9 +372,9 @@ class ValidatorTest {
             |           "attributes": ["required1!","optional1","required2!"]}
             |    },
             |    "attributes": {
-            |       "required1": { "description": "something" },
-            |       "required2": { "description": "something" },
-            |       "optional1": { "description": "something" }
+            |       "required1": { "description": "something", "dataType": "String" },
+            |       "required2": { "description": "something", "dataType": "String" },
+            |       "optional1": { "description": "something", "dataType": "String" }
             |    }
             |  }
             |}!]
@@ -416,7 +416,7 @@ class ValidatorTest {
     }
 
     @Test
-    fun test_attribute_description_is_required() {
+    fun test_attribute_description_and_datatype_are_required() {
         val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -434,10 +434,12 @@ class ValidatorTest {
             |[tagml>body<tagml]
             |""".trimMargin())
         assertTAGMLHasErrors(tagml) { errors, warnings ->
-            assertThat(errors).hasSize(2)
+            assertThat(errors).hasSize(3)
             assertThat(errors[0])
                     .hasFieldOrPropertyWithValue("message", """Attribute "id" is used on an elementDefinition, but has no valid definition in the ontology.""")
             assertThat(errors[1])
+                    .hasFieldOrPropertyWithValue("message", """Attribute "id" is missing a dataType.""")
+            assertThat(errors[2])
                     .hasFieldOrPropertyWithValue("message", """Attribute "id" is missing a description.""")
             assertThat(warnings).isEmpty()
         }

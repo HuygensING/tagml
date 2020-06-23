@@ -106,7 +106,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                         "rules" -> {
                             rules.addAll(pair.json_value().json_arr().json_value().map { it.text.content() })
                         }
-                        else -> errors.add(CustomError(jsonValueCtx.getRange(), format(UNEXPECTED_KEY, key)))
+                        else -> errors.add(error(jsonValueCtx, UNEXPECTED_KEY, key))
                     }
                 }
         checkMissingRootDefinition(root, errors, jsonValueCtx)
@@ -128,13 +128,13 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         val definedAttributes = attributes.map { it.name }
         val usedButUndefinedAttributes = elementAttributes - definedAttributes
         usedButUndefinedAttributes.forEach {
-            errors.add(CustomError(jsonValueCtx.getRange(), format(USED_UNDEFINED_ATTRIBUTE, it)))
+            errors.add(error(jsonValueCtx, USED_UNDEFINED_ATTRIBUTE, it))
         }
     }
 
     private fun checkMissingRootDefinition(root: String?, errors: MutableList<TAGError>, jsonValueCtx: TAGMLParser.Json_valueContext) {
         if (root == null) {
-            errors.add(CustomError(jsonValueCtx.getRange(), MISSING_ONTOLOGY_ROOT))
+            errors.add(error(jsonValueCtx, MISSING_ONTOLOGY_ROOT))
         }
     }
 
@@ -163,22 +163,22 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                                                 if (fName.isValidName()) {
                                                     attributes.add(RequiredAttribute(fName))
                                                 } else {
-                                                    errors.add(CustomError(ctx.getRange(), "Invalid attribute field name $it"))
+                                                    errors.add(error(ctx, "Invalid attribute field name $it"))
                                                 }
                                             }
                                             it.isValidName() -> attributes.add(OptionalAttribute(it))
-                                            else -> errors.add(CustomError(ctx.getRange(), "Invalid attribute field name $it"))
+                                            else -> errors.add(error(ctx, "Invalid attribute field name $it"))
                                         }
                                     }
 
                         }
                         "properties" -> properties.addAll(ctx.json_value().json_arr().json_value().map { it.text.content() })
                         "ref" -> ref = ctx.json_value().text.content()
-                        else -> errors.add(CustomError(ctx.getRange(), "Unknown element field $elementField"))
+                        else -> errors.add(error(ctx, UNKNOWN_ELEMENT_FIELD, elementField))
                     }
                 }
         if (description.isEmpty()) {
-            errors.add(CustomError(context.getRange(), """Element "$name" is missing a description."""))
+            errors.add(error(context, MISSING_ELEMENT_DESCRIPTION, name))
         }
         return if (errors.isEmpty()) {
             Right(ElementDefinition(name, description, attributes, properties, ref))
@@ -200,11 +200,14 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                         "description" -> description = ctx.json_value().text.content()
                         "dataType" -> dataType = ctx.json_value().text.content()
                         "ref" -> ref = ctx.json_value().text.content()
-                        else -> errors.add(CustomError(ctx.getRange(), "Unknown attribute field $attributeField"))
+                        else -> errors.add(error(ctx, UNKNOWN_ATTRIBUTE_FIELD, attributeField))
                     }
                 }
         if (description.isEmpty()) {
-            errors.add(CustomError(context.getRange(), """Attribute "$name" is missing a description."""))
+            errors.add(error(context, MISSING_ATTRIBUTE_DESCRIPTION, name))
+        }
+        if (dataType.isEmpty()) {
+            errors.add(error(context, MISSING_ATTRIBUTE_DATATYPE, name))
         }
         return if (errors.isEmpty()) {
             Right(AttributeDefinition(name, description, dataType, ref))
@@ -295,6 +298,9 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         val token = TextToken(ctx.getRange(), ctx.text)
         _tokens += token
     }
+
+    private fun error(ctx: ParserRuleContext, messageTemplate: String, vararg messageArgs: Any) =
+            CustomError(ctx.getRange(), format(messageTemplate, *messageArgs))
 
     private fun addWarning(
             ctx: ParserRuleContext, messageTemplate: String, vararg messageArgs: Any) =
