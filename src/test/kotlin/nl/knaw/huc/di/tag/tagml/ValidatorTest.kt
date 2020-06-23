@@ -263,6 +263,7 @@ class ValidatorTest {
         }
     }
 
+    // TAGML header tests
     @Test
     fun test_header_without_root_creates_error() {
         val tagml = ("""
@@ -414,6 +415,35 @@ class ValidatorTest {
         }
     }
 
+    @Test
+    fun test_attribute_description_is_required() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |       "tagml": {
+            |           "description": "The root element",
+            |           "attributes": ["id"]}
+            |    },
+            |    "attributes": {
+            |       "id": {  }
+            |    }
+            |  }
+            |}!]
+            |[tagml>body<tagml]
+            |""".trimMargin())
+        assertTAGMLHasErrors(tagml) { errors, warnings ->
+            assertThat(errors).hasSize(2)
+            assertThat(errors[0])
+                    .hasFieldOrPropertyWithValue("message", """Attribute "id" is used on an elementDefinition, but has no valid definition in the ontology.""")
+            assertThat(errors[1])
+                    .hasFieldOrPropertyWithValue("message", """Attribute "id" is missing a description.""")
+            assertThat(warnings).isEmpty()
+        }
+    }
+
+    // TAGML body tests
     @Test
     fun test_illegal_closing_tag_error() {
         val tagml = ("""

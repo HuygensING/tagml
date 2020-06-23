@@ -74,37 +74,41 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         val elements: MutableList<ElementDefinition> = mutableListOf()
         val attributes: MutableList<AttributeDefinition> = mutableListOf()
         val rules: MutableList<String> = mutableListOf()
-        for (pair in jsonValueCtx.json_obj().json_pair()) {
-            when (val key = pair.JSON_STRING().text.content()) {
-                "root" -> {
-                    root = pair.json_value().text.content()
+        jsonValueCtx.json_obj().json_pair()
+                .filterNotNull()
+                .forEach { pair ->
+                    when (val key = pair.JSON_STRING().text.content()) {
+                        "root" -> {
+                            root = pair.json_value().text.content()
+                        }
+                        "elements" -> {
+                            pair.json_value().json_obj().json_pair()
+                                    .filter { it.JSON_STRING() != null }
+                                    .map { parseElementDefinition(it) }
+                                    .forEach { either ->
+                                        either.fold(
+                                                { errors.addAll(it) },
+                                                { elements.add(it) }
+                                        )
+                                    }
+                        }
+                        "attributes" -> {
+                            pair.json_value().json_obj().json_pair()
+                                    .filter { it.JSON_STRING() != null }
+                                    .map { parseAttributeDefinition(it) }
+                                    .forEach { either ->
+                                        either.fold(
+                                                { errors.addAll(it) },
+                                                { attributes.add(it) }
+                                        )
+                                    }
+                        }
+                        "rules" -> {
+                            rules.addAll(pair.json_value().json_arr().json_value().map { it.text.content() })
+                        }
+                        else -> errors.add(CustomError(jsonValueCtx.getRange(), format(UNEXPECTED_KEY, key)))
+                    }
                 }
-                "elements" -> {
-                    pair.json_value().json_obj().json_pair()
-                            .map { parseElementDefinition(it) }
-                            .forEach { either ->
-                                either.fold(
-                                        { errors.addAll(it) },
-                                        { elements.add(it) }
-                                )
-                            }
-                }
-                "attributes" -> {
-                    pair.json_value().json_obj().json_pair()
-                            .map { parseAttributeDefinition(it) }
-                            .forEach { either ->
-                                either.fold(
-                                        { errors.addAll(it) },
-                                        { attributes.add(it) }
-                                )
-                            }
-                }
-                "rules" -> {
-                    rules.addAll(pair.json_value().json_arr().json_value().map { it.text.content() })
-                }
-                else -> errors.add(CustomError(jsonValueCtx.getRange(), format(UNEXPECTED_KEY, key)))
-            }
-        }
         checkMissingRootDefinition(root, errors, jsonValueCtx)
         checkMissingAttributeDefinitions(elements, attributes, errors, jsonValueCtx)
         return if (errors.isEmpty()) {
@@ -114,7 +118,12 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         }
     }
 
-    private fun checkMissingAttributeDefinitions(elements: MutableList<ElementDefinition>, attributes: MutableList<AttributeDefinition>, errors: MutableList<TAGError>, jsonValueCtx: TAGMLParser.Json_valueContext) {
+    private fun checkMissingAttributeDefinitions(
+            elements: MutableList<ElementDefinition>,
+            attributes: MutableList<AttributeDefinition>,
+            errors: MutableList<TAGError>,
+            jsonValueCtx: TAGMLParser.Json_valueContext
+    ) {
         val elementAttributes = elements.map { it.attributes }.flatten().distinct().map { it.name }
         val definedAttributes = attributes.map { it.name }
         val usedButUndefinedAttributes = elementAttributes - definedAttributes
@@ -139,33 +148,35 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         val properties: MutableList<String> = mutableListOf()
         var ref = ""
         val errors: MutableList<TAGError> = mutableListOf()
-        context.json_value().json_obj().json_pair().forEach { ctx ->
-            when (val elementField = ctx.JSON_STRING().text.content()) {
-                "description" -> description = ctx.json_value().text.content()
-                "attributes" -> {
-                    ctx.json_value().json_arr().json_value()
-                            .map { it.text.content() }
-                            .map {
-                                when {
-                                    it.endsWith("!") -> {
-                                        val fName = it.replace("!", "")
-                                        if (fName.isValidName()) {
-                                            attributes.add(RequiredAttribute(fName))
-                                        } else {
-                                            errors.add(CustomError(ctx.getRange(), "Invalid attribute field name $it"))
+        context.json_value().json_obj().json_pair()
+                .filterNotNull()
+                .forEach { ctx ->
+                    when (val elementField = ctx.JSON_STRING().text.content()) {
+                        "description" -> description = ctx.json_value().text.content()
+                        "attributes" -> {
+                            ctx.json_value().json_arr().json_value()
+                                    .map { it.text.content() }
+                                    .map {
+                                        when {
+                                            it.endsWith("!") -> {
+                                                val fName = it.replace("!", "")
+                                                if (fName.isValidName()) {
+                                                    attributes.add(RequiredAttribute(fName))
+                                                } else {
+                                                    errors.add(CustomError(ctx.getRange(), "Invalid attribute field name $it"))
+                                                }
+                                            }
+                                            it.isValidName() -> attributes.add(OptionalAttribute(it))
+                                            else -> errors.add(CustomError(ctx.getRange(), "Invalid attribute field name $it"))
                                         }
                                     }
-                                    it.isValidName() -> attributes.add(OptionalAttribute(it))
-                                    else -> errors.add(CustomError(ctx.getRange(), "Invalid attribute field name $it"))
-                                }
-                            }
 
+                        }
+                        "properties" -> properties.addAll(ctx.json_value().json_arr().json_value().map { it.text.content() })
+                        "ref" -> ref = ctx.json_value().text.content()
+                        else -> errors.add(CustomError(ctx.getRange(), "Unknown element field $elementField"))
+                    }
                 }
-                "properties" -> properties.addAll(ctx.json_value().json_arr().json_value().map { it.text.content() })
-                "ref" -> ref = ctx.json_value().text.content()
-                else -> errors.add(CustomError(ctx.getRange(), "Unknown element field $elementField"))
-            }
-        }
         if (description.isEmpty()) {
             errors.add(CustomError(context.getRange(), """Element "$name" is missing a description."""))
         }
@@ -182,14 +193,16 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         var dataType = ""
         var ref = ""
         val errors: MutableList<TAGError> = mutableListOf()
-        context.json_value().json_obj().json_pair().forEach { ctx ->
-            when (val attributeField = ctx.JSON_STRING().text.content()) {
-                "description" -> description = ctx.json_value().text.content()
-                "dataType" -> dataType = ctx.json_value().text.content()
-                "ref" -> ref = ctx.json_value().text.content()
-                else -> errors.add(CustomError(ctx.getRange(), "Unknown attribute field $attributeField"))
-            }
-        }
+        context.json_value().json_obj().json_pair()
+                .filterNotNull()
+                .forEach { ctx ->
+                    when (val attributeField = ctx.JSON_STRING().text.content()) {
+                        "description" -> description = ctx.json_value().text.content()
+                        "dataType" -> dataType = ctx.json_value().text.content()
+                        "ref" -> ref = ctx.json_value().text.content()
+                        else -> errors.add(CustomError(ctx.getRange(), "Unknown attribute field $attributeField"))
+                    }
+                }
         if (description.isEmpty()) {
             errors.add(CustomError(context.getRange(), """Attribute "$name" is missing a description."""))
         }
