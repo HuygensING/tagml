@@ -23,13 +23,24 @@ package nl.knaw.huc.di.tag.tagml
 import arrow.core.Either
 import arrow.core.Left
 import arrow.core.Right
+import nl.knaw.huc.di.tag.tagml.AssignedAttribute.OptionalAttribute
+import nl.knaw.huc.di.tag.tagml.AssignedAttribute.RequiredAttribute
+import nl.knaw.huc.di.tag.tagml.OntologyRule.*
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParser
+import nl.knaw.huc.di.tag.tagorl.TAGORLLexer
+import nl.knaw.huc.di.tag.tagorl.TAGORLParser
+import org.antlr.v4.runtime.CharStream
+import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.ParserRuleContext
+import org.antlr.v4.runtime.tree.ParseTree
+import java.lang.String.format
 
 fun parseHeader(ctx: TAGMLParser.HeaderContext): Map<String, Any> =
         ctx.json_pair().map { toPair(it) }
                 .toMap()
 
+@Suppress("IMPLICIT_CAST_TO_ANY")
 private fun toPair(ctx: TAGMLParser.Json_pairContext): Pair<String, Any> {
     val key = ctx.JSON_STRING().text.trim('"')
     val value = when (key) {
@@ -44,7 +55,7 @@ private fun parseOntology(jsonValueCtx: TAGMLParser.Json_valueContext): Either<L
     var root: String? = ""
     val elements: MutableList<ElementDefinition> = mutableListOf()
     val attributes: MutableList<AttributeDefinition> = mutableListOf()
-    val rules: MutableList<String> = mutableListOf()
+    val rules: MutableList<OntologyRule> = mutableListOf()
     jsonValueCtx.json_obj().json_pair()
             .filterNotNull()
             .forEach { pair ->
@@ -58,8 +69,8 @@ private fun parseOntology(jsonValueCtx: TAGMLParser.Json_valueContext): Either<L
                                 .map { parseElementDefinition(it) }
                                 .forEach { either ->
                                     either.fold(
-                                            { errors.addAll(it) },
-                                            { elements.add(it) }
+                                            { errors += it },
+                                            { elements += it }
                                     )
                                 }
                     }
@@ -69,15 +80,24 @@ private fun parseOntology(jsonValueCtx: TAGMLParser.Json_valueContext): Either<L
                                 .map { parseAttributeDefinition(it) }
                                 .forEach { either ->
                                     either.fold(
-                                            { errors.addAll(it) },
-                                            { attributes.add(it) }
+                                            { errors += it },
+                                            { attributes += it }
                                     )
                                 }
                     }
                     "rules" -> {
-                        rules.addAll(pair.json_value().json_arr().json_value().map { it.text.content() })
+                        pair.json_value().json_arr().json_value()
+                                .map { it.text.content() }
+                                .map { parseRule(it) }
+                                .forEach { either ->
+                                    either.fold(
+                                            { errors += it },
+                                            { rules += it }
+                                    )
+                                }
+
                     }
-                    else -> errors.add(error(jsonValueCtx, UNEXPECTED_KEY, key))
+                    else -> errors += error(jsonValueCtx, UNEXPECTED_KEY, key)
                 }
             }
     checkMissingRootDefinition(root, errors, jsonValueCtx)
@@ -99,13 +119,13 @@ private fun checkMissingAttributeDefinitions(
     val definedAttributes = attributes.map { it.name }
     val usedButUndefinedAttributes = elementAttributes - definedAttributes
     usedButUndefinedAttributes.forEach {
-        errors.add(error(jsonValueCtx, USED_UNDEFINED_ATTRIBUTE, it))
+        errors += error(jsonValueCtx, USED_UNDEFINED_ATTRIBUTE, it)
     }
 }
 
 private fun checkMissingRootDefinition(root: String?, errors: MutableList<ErrorListener.TAGError>, jsonValueCtx: TAGMLParser.Json_valueContext) {
     if (root == null) {
-        errors.add(error(jsonValueCtx, MISSING_ONTOLOGY_ROOT))
+        errors += error(jsonValueCtx, MISSING_ONTOLOGY_ROOT)
     }
 }
 
@@ -132,24 +152,24 @@ private fun parseElementDefinition(context: TAGMLParser.Json_pairContext): Eithe
                                         it.endsWith("!") -> {
                                             val fName = it.replace("!", "")
                                             if (fName.isValidName()) {
-                                                attributes.add(RequiredAttribute(fName))
+                                                attributes += RequiredAttribute(fName)
                                             } else {
-                                                errors.add(error(ctx, "Invalid attribute field name $it"))
+                                                errors += error(ctx, "Invalid attribute field name $it")
                                             }
                                         }
-                                        it.isValidName() -> attributes.add(OptionalAttribute(it))
-                                        else -> errors.add(error(ctx, "Invalid attribute field name $it"))
+                                        it.isValidName() -> attributes += OptionalAttribute(it)
+                                        else -> errors += error(ctx, "Invalid attribute field name $it")
                                     }
                                 }
 
                     }
-                    "properties" -> properties.addAll(ctx.json_value().json_arr().json_value().map { it.text.content() })
+                    "properties" -> properties += ctx.json_value().json_arr().json_value().map { it.text.content() }
                     "ref" -> ref = ctx.json_value().text.content()
-                    else -> errors.add(error(ctx, UNKNOWN_ELEMENT_FIELD, elementField))
+                    else -> errors += error(ctx, UNKNOWN_ELEMENT_FIELD, elementField)
                 }
             }
     if (description.isEmpty()) {
-        errors.add(error(context, MISSING_ELEMENT_DESCRIPTION, name))
+        errors += error(context, MISSING_ELEMENT_DESCRIPTION, name)
     }
     return if (errors.isEmpty()) {
         Right(ElementDefinition(name, description, attributes, properties, ref))
@@ -171,14 +191,14 @@ private fun parseAttributeDefinition(context: TAGMLParser.Json_pairContext): Eit
                     "description" -> description = ctx.json_value().text.content()
                     "dataType" -> dataType = ctx.json_value().text.content()
                     "ref" -> ref = ctx.json_value().text.content()
-                    else -> errors.add(error(ctx, UNKNOWN_ATTRIBUTE_FIELD, attributeField))
+                    else -> errors += error(ctx, UNKNOWN_ATTRIBUTE_FIELD, attributeField)
                 }
             }
     if (description.isEmpty()) {
-        errors.add(error(context, MISSING_ATTRIBUTE_DESCRIPTION, name))
+        errors += error(context, MISSING_ATTRIBUTE_DESCRIPTION, name)
     }
     if (dataType.isEmpty()) {
-        errors.add(error(context, MISSING_ATTRIBUTE_DATATYPE, name))
+        errors += error(context, MISSING_ATTRIBUTE_DATATYPE, name)
     }
     return if (errors.isEmpty()) {
         Right(AttributeDefinition(name, description, dataType, ref))
@@ -187,5 +207,48 @@ private fun parseAttributeDefinition(context: TAGMLParser.Json_pairContext): Eit
     }
 }
 
+private fun parseRule(tagorl: String): Either<List<ErrorListener.TAGError>, OntologyRule> {
+    val antlrInputStream: CharStream = CharStreams.fromString(tagorl)
+    val errorListener = ErrorListener()
+    val lexer = TAGORLLexer(antlrInputStream).apply {
+        addErrorListener(errorListener)
+    }
+    val tokens = CommonTokenStream(lexer)
+    val parser = TAGORLParser(tokens).apply {
+        addErrorListener(errorListener)
+        buildParseTree = true
+    }
+    if (errorListener.hasErrors) {
+        return Left(errorListener.orderedErrors)
+    }
+    return when (val ruleContext: ParseTree = parser.ontologyRule().getChild(0)) {
+        is TAGORLParser.HierarchyRuleContext -> parseHierarchyRule(ruleContext)
+        is TAGORLParser.SetRuleContext -> parseSetRule(ruleContext)
+        is TAGORLParser.TripleRuleContext -> parseTripleRule(ruleContext)
+        is ParserRuleContext -> Left(listOf(ErrorListener.CustomError(Position.startOf(ruleContext), Position.endOf(ruleContext), "unexpected context")))
+        else -> error("unexpected ruleContext")
+    }
+}
+
+fun parseHierarchyRule(ruleContext: TAGORLParser.HierarchyRuleContext): Either<List<ErrorListener.TAGError>, HierarchyRule> {
+    return Right(HierarchyRule(ruleContext.text))
+}
+
+fun parseSetRule(ruleContext: TAGORLParser.SetRuleContext): Either<List<ErrorListener.TAGError>, SetRule> =
+        Right(SetRule(
+                raw = ruleContext.text,
+                setName = ruleContext.Name().text,
+                elements = ruleContext.child().map { it.text }
+        ))
+
+fun parseTripleRule(ruleContext: TAGORLParser.TripleRuleContext): Either<List<ErrorListener.TAGError>, TripleRule> {
+    return Right(TripleRule(
+            raw = ruleContext.text,
+            subject = ruleContext.subject().text,
+            predicate = ruleContext.predicate().text,
+            objects = ruleContext.`object`().children.map { it.text }
+    ))
+}
+
 private fun error(ctx: ParserRuleContext, messageTemplate: String, vararg messageArgs: Any) =
-        ErrorListener.CustomError(ctx.getRange(), java.lang.String.format(messageTemplate, *messageArgs))
+        ErrorListener.CustomError(ctx.getRange(), format(messageTemplate, *messageArgs))

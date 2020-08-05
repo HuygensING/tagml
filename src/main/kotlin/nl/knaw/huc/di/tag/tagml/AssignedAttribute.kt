@@ -19,25 +19,26 @@
  */
 package nl.knaw.huc.di.tag.tagml
 
-sealed class AssignedAttribute(val name: String)
+sealed class AssignedAttribute(val name: String) {
 
-class OptionalAttribute(name: String) : AssignedAttribute(name) {
-    override fun toString(): String = name
+    class OptionalAttribute(name: String) : AssignedAttribute(name) {
+        override fun toString(): String = name
 
-    override fun equals(other: Any?): Boolean =
-            other != null && other is OptionalAttribute && other.name == name
+        override fun equals(other: Any?): Boolean =
+                other != null && other is OptionalAttribute && other.name == name
 
-    override fun hashCode(): Int =
-            javaClass.hashCode() + name.hashCode()
-}
+        override fun hashCode(): Int =
+                javaClass.hashCode() + name.hashCode()
+    }
 
-class RequiredAttribute(name: String) : AssignedAttribute(name) {
-    override fun toString(): String = "$name!"
+    class RequiredAttribute(name: String) : AssignedAttribute(name) {
+        override fun toString(): String = "$name!"
 
-    override fun equals(other: Any?): Boolean =
-            other != null && other is RequiredAttribute && other.name == name
+        override fun equals(other: Any?): Boolean =
+                other != null && other is RequiredAttribute && other.name == name
 
-    override fun hashCode(): Int =
-            javaClass.hashCode() + name.hashCode()
+        override fun hashCode(): Int =
+                javaClass.hashCode() + name.hashCode()
 
+    }
 }

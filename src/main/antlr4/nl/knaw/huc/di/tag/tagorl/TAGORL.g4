@@ -16,9 +16,12 @@ Name
   ;
 
 children
-  : child
-  | child (',' child)+
-  | '(' child (',' child)+ ')'
+  : child                       # singleChild
+  | child (',' child)+          # childrenList
+  | '(' child (',' child)+ ')'  # childrenGroup
+  | '(' child (',' child)+ ')?' # optionalChildrenGroup
+  | '(' child (',' child)+ ')*' # zeroOrMoreChildrenGroup
+  | '(' child (',' child)+ ')+' # oneOrMoreChildrenGroup
   ;
 
 child
@@ -61,7 +64,7 @@ fragment DIGIT
 
 fragment
 NameChar
-  : NameStartChar
+  : LETTER
   | '-'
   | '_'
   | DIGIT
@@ -74,6 +77,7 @@ NameChar
 fragment
 NameStartChar
   : [a-z]
+  | ':'
   ;
 
 fragment

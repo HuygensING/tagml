@@ -231,7 +231,7 @@ class TestErrorListener : ANTLRErrorListener {
 
     override fun reportAmbiguity(recognizer: Parser, dfa: DFA, startIndex: Int, stopIndex: Int, exact: Boolean, ambigAlts: BitSet, configs: ATNConfigSet) {
         if (reportAmbiguity) {
-            errors.add("ambiguity:\n recognizer=" + recognizer //
+            errors += ("ambiguity:\n recognizer=" + recognizer //
                     + ",\n dfa=" + dfa //
                     + ",\n startIndex=" + startIndex //
                     + ",\n stopIndex=" + stopIndex //
@@ -243,7 +243,7 @@ class TestErrorListener : ANTLRErrorListener {
 
     override fun reportAttemptingFullContext(recognizer: Parser, dfa: DFA, startIndex: Int, stopIndex: Int, conflictingAlts: BitSet, configs: ATNConfigSet) {
         if (reportAttemptingFullContext) {
-            errors.add("attempting full context error:\n recognizer=" + recognizer //
+            errors += ("attempting full context error:\n recognizer=" + recognizer //
                     + ",\n dfa=" + dfa //
                     + ",\n startIndex=" + startIndex //
                     + ",\n stopIndex=" + stopIndex //
@@ -254,7 +254,7 @@ class TestErrorListener : ANTLRErrorListener {
 
     override fun reportContextSensitivity(recognizer: Parser, dfa: DFA, startIndex: Int, stopIndex: Int, prediction: Int, configs: ATNConfigSet) {
         if (reportContextSensitivity) {
-            errors.add("context sensitivity error:\n recognizer=" + recognizer //
+            errors += ("context sensitivity error:\n recognizer=" + recognizer //
                     + ",\n dfa=" + dfa //
                     + ",\n startIndex=" + startIndex //
                     + ",\n stopIndex=" + stopIndex //
@@ -264,7 +264,7 @@ class TestErrorListener : ANTLRErrorListener {
     }
 
     fun addError(messageTemplate: String, vararg messageArgs: Any) {
-        errors.add(String.format(messageTemplate, *messageArgs))
+        errors += String.format(messageTemplate, *messageArgs)
     }
 
 }

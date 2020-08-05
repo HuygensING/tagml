@@ -20,6 +20,8 @@ package nl.knaw.huc.di.tag.tagml
  * #L%
  */
 
+import nl.knaw.huc.di.tag.tagml.AssignedAttribute.RequiredAttribute
+
 data class ElementDefinition(
         val name: String,
         val description: String = "",
@@ -30,13 +32,13 @@ data class ElementDefinition(
     private val attributeNames: List<String> by lazy { attributes.map { it.name } }
 
     fun hasAttribute(attributeName: String): Boolean =
-            attributeNames.contains(attributeName)
+            attributeName in attributeNames
 
     val requiredAttributes: List<String> by lazy { attributes.filterIsInstance<RequiredAttribute>().map { it.name } }
 
     val isDiscontinuous: Boolean = hasProperty("discontinuous")
     val isMilestone: Boolean = hasProperty("milestone")
 
-    private fun hasProperty(property: String) = properties.contains(property)
-
+    private fun hasProperty(property: String): Boolean =
+            property in properties
 }

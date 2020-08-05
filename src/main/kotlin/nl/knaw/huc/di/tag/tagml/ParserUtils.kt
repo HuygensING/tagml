@@ -20,6 +20,8 @@ package nl.knaw.huc.di.tag.tagml
  * #L%
  */
 
+import nl.knaw.huc.di.tag.tagml.TAGMLParseResult.TAGMLParseFailure
+import nl.knaw.huc.di.tag.tagml.TAGMLParseResult.TAGMLParseSuccess
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLLexer
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParser
 import org.antlr.v4.runtime.CharStream
@@ -29,11 +31,10 @@ import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 
-sealed class TAGMLParseResult(val warnings: List<ErrorListener.TAGError>)
-
-class TAGMLParseSuccess(val tokens: List<TAGMLToken>, warnings: List<ErrorListener.TAGError>) : TAGMLParseResult(warnings)
-
-class TAGMLParseFailure(val errors: List<ErrorListener.TAGError>, warnings: List<ErrorListener.TAGError>) : TAGMLParseResult(warnings)
+sealed class TAGMLParseResult(val warnings: List<ErrorListener.TAGError>) {
+    class TAGMLParseSuccess(val tokens: List<TAGMLToken>, warnings: List<ErrorListener.TAGError>) : TAGMLParseResult(warnings)
+    class TAGMLParseFailure(val errors: List<ErrorListener.TAGError>, warnings: List<ErrorListener.TAGError>) : TAGMLParseResult(warnings)
+}
 
 fun ParserRuleContext.getRange(): Range =
         Range(Position.startOf(this), Position.endOf(this))

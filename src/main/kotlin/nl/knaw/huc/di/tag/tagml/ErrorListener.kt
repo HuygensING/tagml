@@ -98,7 +98,7 @@ class ErrorListener : ANTLRErrorListener {
                  exact=$exact,
                  ambigAlts=$ambigAlts,
                  configs=$configs""".trimIndent()
-            errors.add(TAGAmbiguityError(message))
+            errors += TAGAmbiguityError(message)
         }
     }
 
@@ -118,7 +118,7 @@ class ErrorListener : ANTLRErrorListener {
                  stopIndex=$stopIndex,
                  conflictingAlts=$conflictingAlts,
                  configs=$configs""".trimIndent()
-            errors.add(TAGAttemptingFullContextError(message))
+            errors += TAGAttemptingFullContextError(message)
         }
     }
 
@@ -138,7 +138,7 @@ class ErrorListener : ANTLRErrorListener {
                  stopIndex=$stopIndex,
                  prediction=$prediction,
                  configs=$configs""".trimIndent()
-            errors.add(TAGContextSensitivityError(message))
+            errors += TAGContextSensitivityError(message)
         }
     }
 
@@ -150,7 +150,7 @@ class ErrorListener : ANTLRErrorListener {
             msg: String,
             e: RecognitionException?) {
         val message = format("syntax error: %s", msg.replace("token recognition error at", "unexpected token"))
-        errors.add(TAGSyntaxError(message, line, charPositionInLine))
+        errors += TAGSyntaxError(message, line, charPositionInLine)
     }
 
     val prefixedErrorMessagesAsString: String
@@ -171,12 +171,12 @@ class ErrorListener : ANTLRErrorListener {
 
     fun addError(
             startPos: Position, endPos: Position, messageTemplate: String, vararg messageArgs: Any) {
-        errors.add(CustomError(startPos, endPos, format(messageTemplate, *messageArgs)))
+        errors += CustomError(startPos, endPos, format(messageTemplate, *messageArgs))
     }
 
     fun addWarning(
             startPos: Position, endPos: Position, messageTemplate: String, vararg messageArgs: Any) {
-        warnings.add(CustomError(startPos, endPos, format(messageTemplate, *messageArgs)))
+        warnings += CustomError(startPos, endPos, format(messageTemplate, *messageArgs))
     }
 
     fun addBreakingError(
@@ -194,7 +194,7 @@ class ErrorListener : ANTLRErrorListener {
     }
 
     fun addErrors(list: List<TAGError>) {
-        errors.addAll(list)
+        errors += list
     }
 
     abstract class TAGError(val message: String)

@@ -22,6 +22,7 @@ package nl.knaw.huc.di.tag.tagml
 
 import arrow.core.Either
 import nl.knaw.huc.di.tag.tagml.ErrorListener.TAGError
+import nl.knaw.huc.di.tag.tagml.TAGMLToken.*
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParser
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
@@ -36,7 +37,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     }
 
     val tokens: List<TAGMLToken>
-        get() = _tokens.toList()
+        get() = _tokens
 
     override fun exitHeader(ctx: TAGMLParser.HeaderContext) {
         val headerMap: Map<String, Any> = parseHeader(ctx)
@@ -67,14 +68,19 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         _tokens += token
     }
 
-    private fun checkAttributes(ctx: ParserRuleContext, ontology: TAGOntology, qName: String, annotationContexts: List<TAGMLParser.AnnotationContext>) {
+    private fun checkAttributes(
+            ctx: ParserRuleContext,
+            ontology: TAGOntology,
+            qName: String,
+            annotationContexts: List<TAGMLParser.AnnotationContext>
+    ) {
         val attributesUsed = mutableListOf<String>()
         val elementDefinition = ontology.elementDefinition(qName)!!
         for (actx in annotationContexts) {
             when (actx) {
                 is TAGMLParser.BasicAnnotationContext -> {
                     val attributeName = actx.annotationName().text
-                    attributesUsed.add(attributeName)
+                    attributesUsed += attributeName
                     if (ontology.hasElement(qName) && !elementDefinition.hasAttribute(attributeName)) {
                         addWarning(ctx, UNDEFINED_ATTRIBUTE, attributeName, qName)
                     }
@@ -112,14 +118,13 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
 
         val token = MarkupMilestoneToken(ctx.getRange(), ctx.text, qName)
         _tokens += token
-
     }
 
     override fun exitEndTag(ctx: TAGMLParser.EndTagContext) {
         val rawContent = ctx.text
         val qName = ctx.markupName().text
         if (context != null) {
-            if (!context!!.openMarkup.contains(qName)) {
+            if (qName !in context!!.openMarkup) {
                 addError(ctx, MISSING_OPEN_TAG, rawContent)
             } else {
                 context!!.openMarkup.remove(qName)

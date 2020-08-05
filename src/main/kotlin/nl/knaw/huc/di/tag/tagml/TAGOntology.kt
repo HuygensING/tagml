@@ -24,11 +24,12 @@ data class TAGOntology(
         val root: String,
         val elements: List<ElementDefinition>,
         val attributes: List<AttributeDefinition>,
-        val rules: List<String>
+        val rules: List<OntologyRule>
 )
 
 fun TAGOntology.elementDefinition(qName: String): ElementDefinition? =
         elements.find { it.name == qName }
 
-fun TAGOntology.hasElement(qName: String): Boolean = elements.map { it.name }.contains(qName)
+fun TAGOntology.hasElement(qName: String): Boolean =
+        qName in elements.map { it.name }
 

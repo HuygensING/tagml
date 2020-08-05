@@ -20,7 +20,13 @@ package nl.knaw.huc.di.tag.tagml
  * #L%
  */
 
+import nl.knaw.huc.di.tag.tagml.AssignedAttribute.OptionalAttribute
+import nl.knaw.huc.di.tag.tagml.AssignedAttribute.RequiredAttribute
 import nl.knaw.huc.di.tag.tagml.ErrorListener.TAGError
+import nl.knaw.huc.di.tag.tagml.OntologyRule.*
+import nl.knaw.huc.di.tag.tagml.TAGMLParseResult.TAGMLParseFailure
+import nl.knaw.huc.di.tag.tagml.TAGMLParseResult.TAGMLParseSuccess
+import nl.knaw.huc.di.tag.tagml.TAGMLToken.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.fail
 import org.junit.Test
@@ -138,7 +144,8 @@ class ValidatorTest {
             |      "s > (sic, corr)*",
             |      "said > persName+, emph+, said*",
             |      ":may-not-overlap(said,s)",
-            |      ":non-linear(sic,corr)"
+            |      ":non-linear(sic,corr)",
+            |      "elmo is-colored red"
             |    ]
             |  },
             |  ":authors": ["me", "you", "them"],
@@ -179,13 +186,16 @@ class ValidatorTest {
                         .hasFieldOrPropertyWithValue("root", "excerpt")
                         .hasFieldOrPropertyWithValue(
                                 "rules",
-                                listOf("excerpt > chapter+, img+",
-                                        "chapter > par+, said+",
-                                        "par > s+",
-                                        "s > (sic, corr)*",
-                                        "said > persName+, emph+, said*",
-                                        ":may-not-overlap(said,s)",
-                                        ":non-linear(sic,corr)")
+                                listOf(HierarchyRule("excerpt>chapter+,img+"),
+                                        HierarchyRule("chapter>par+,said+"),
+                                        HierarchyRule("par>s+"),
+                                        HierarchyRule("s>(sic,corr)*"),
+                                        HierarchyRule("said>persName+,emph+,said*"),
+                                        SetRule(":may-not-overlap(said,s)", ":may-not-overlap", listOf("said", "s")),
+                                        SetRule(":non-linear(sic,corr)", ":non-linear", listOf("sic", "corr")),
+                                        TripleRule("elmois-coloredred", "elmo", "is-colored", listOf("red"))
+                                )
+
                         )
                 assertThat(ontology.elements).containsOnly(
                         ElementDefinition(
@@ -487,7 +497,7 @@ class ValidatorTest {
                     val errors = errorList.joinToString("\n")
                     fail("parsing errors:\n$errors")
                 },
-                { ontologyAssert(it) }
+                { tagOntology -> ontologyAssert(tagOntology) }
         )
     }
 

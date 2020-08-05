@@ -24,23 +24,23 @@ import arrow.core.Either
 
 sealed class TAGMLToken(internal val range: Range, private val rawContent: String) {
     override fun toString(): String = "$range $rawContent"
+
+    class HeaderToken(range: Range, rawContent: String, val headerMap: Map<String, Any>) : TAGMLToken(range, rawContent) {
+        val ontologyParseResult: Either<List<ErrorListener.TAGError>, TAGOntology>
+            get() = headerMap.getOrElse(":ontology")
+            { Either.left(listOf(ErrorListener.CustomError(range, MISSING_ONTOLOGY_FIELD))) }
+                    as Either<List<ErrorListener.TAGError>, TAGOntology>
+    }
+
+    class MarkupOpenToken(range: Range, rawContent: String, val qName: String) : TAGMLToken(range, rawContent)
+
+    class MarkupCloseToken(range: Range, rawContent: String, val qName: String) : TAGMLToken(range, rawContent)
+
+    class MarkupMilestoneToken(range: Range, rawContent: String, val qName: String) : TAGMLToken(range, rawContent)
+
+    class TextToken(range: Range, rawContent: String) : TAGMLToken(range, rawContent) {
+        val isWhiteSpace: Boolean =
+                rawContent.isBlank()
+    }
+
 }
-
-class HeaderToken(range: Range, rawContent: String, val headerMap: Map<String, Any>) : TAGMLToken(range, rawContent) {
-    val ontologyParseResult: Either<List<ErrorListener.TAGError>, TAGOntology>
-        get() = headerMap.getOrElse(":ontology")
-        { Either.left(listOf(ErrorListener.CustomError(range, MISSING_ONTOLOGY_FIELD))) }
-                as Either<List<ErrorListener.TAGError>, TAGOntology>
-}
-
-class MarkupOpenToken(range: Range, rawContent: String, val qName: String) : TAGMLToken(range, rawContent)
-
-class MarkupCloseToken(range: Range, rawContent: String, val qName: String) : TAGMLToken(range, rawContent)
-
-class MarkupMilestoneToken(range: Range, rawContent: String, val qName: String) : TAGMLToken(range, rawContent)
-
-class TextToken(range: Range, rawContent: String) : TAGMLToken(range, rawContent) {
-    val isWhiteSpace: Boolean =
-            rawContent.isBlank()
-}
-
