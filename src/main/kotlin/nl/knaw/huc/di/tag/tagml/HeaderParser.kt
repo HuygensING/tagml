@@ -86,16 +86,20 @@ private fun parseOntology(jsonValueCtx: TAGMLParser.Json_valueContext): Either<L
                                 }
                     }
                     "rules" -> {
+                        val definedElements = elements.map { it.name }
                         pair.json_value().json_arr().json_value()
-                                .map { it.text.content() }
-                                .map { parseRule(it) }
-                                .forEach { either ->
+                                .map { Pair(it, it.text.content()) }
+                                .map { (ctx, string) -> Pair(ctx, parseRule(string, definedElements)) }
+                                .forEach { (ctx, either) ->
                                     either.fold(
-                                            { errors += it },
-                                            { rules += it }
+                                            { errorMessage ->
+                                                errors += errorMessage.map {
+                                                    ErrorListener.CustomError(ctx.getRange(), format(it, ctx.text))
+                                                }
+                                            },
+                                            { ontologyRule -> rules += ontologyRule }
                                     )
                                 }
-
                     }
                     else -> errors += error(jsonValueCtx, UNEXPECTED_KEY, key)
                 }
@@ -207,7 +211,7 @@ private fun parseAttributeDefinition(context: TAGMLParser.Json_pairContext): Eit
     }
 }
 
-private fun parseRule(tagorl: String): Either<List<ErrorListener.TAGError>, OntologyRule> {
+private fun parseRule(tagorl: String, definedElements: List<String>): Either<List<String>, OntologyRule> {
     val antlrInputStream: CharStream = CharStreams.fromString(tagorl)
     val errorListener = ErrorListener()
     val lexer = TAGORLLexer(antlrInputStream).apply {
@@ -219,35 +223,49 @@ private fun parseRule(tagorl: String): Either<List<ErrorListener.TAGError>, Onto
         buildParseTree = true
     }
     if (errorListener.hasErrors) {
-        return Left(errorListener.orderedErrors)
+        return Left(errorListener.orderedErrors.map { it.message })
     }
     return when (val ruleContext: ParseTree = parser.ontologyRule().getChild(0)) {
-        is TAGORLParser.HierarchyRuleContext -> parseHierarchyRule(ruleContext)
-        is TAGORLParser.SetRuleContext -> parseSetRule(ruleContext)
-        is TAGORLParser.TripleRuleContext -> parseTripleRule(ruleContext)
-        is ParserRuleContext -> Left(listOf(ErrorListener.CustomError(Position.startOf(ruleContext), Position.endOf(ruleContext), "unexpected context")))
+        is TAGORLParser.HierarchyRuleContext -> parseHierarchyRule(ruleContext, definedElements)
+        is TAGORLParser.SetRuleContext -> parseSetRule(ruleContext, definedElements)
+        is TAGORLParser.TripleRuleContext -> parseTripleRule(ruleContext, definedElements)
+        is ParserRuleContext -> Left(listOf("unexpected context"))
         else -> error("unexpected ruleContext")
     }
 }
 
-fun parseHierarchyRule(ruleContext: TAGORLParser.HierarchyRuleContext): Either<List<ErrorListener.TAGError>, HierarchyRule> {
+fun parseHierarchyRule(ruleContext: TAGORLParser.HierarchyRuleContext, definedElements: List<String>): Either<List<String>, HierarchyRule> {
     return Right(HierarchyRule(ruleContext.text))
 }
 
-fun parseSetRule(ruleContext: TAGORLParser.SetRuleContext): Either<List<ErrorListener.TAGError>, SetRule> =
+fun parseSetRule(ruleContext: TAGORLParser.SetRuleContext, definedElements: List<String>): Either<List<String>, SetRule> {
+    val elements = ruleContext.child().map { it.text }
+    val undefinedElements = elements - definedElements
+    return if (undefinedElements.isEmpty()) {
         Right(SetRule(
                 raw = ruleContext.text,
                 setName = ruleContext.Name().text,
-                elements = ruleContext.child().map { it.text }
+                elements = elements
         ))
+    } else {
+        Left(listOf(format(UNDEFINED_RULE_ELEMENT, "%s", undefinedElements.joinToString())))
+    }
+}
 
-fun parseTripleRule(ruleContext: TAGORLParser.TripleRuleContext): Either<List<ErrorListener.TAGError>, TripleRule> {
-    return Right(TripleRule(
-            raw = ruleContext.text,
-            subject = ruleContext.subject().text,
-            predicate = ruleContext.predicate().text,
-            objects = ruleContext.`object`().children.map { it.text }
-    ))
+fun parseTripleRule(ruleContext: TAGORLParser.TripleRuleContext, definedElements: List<String>): Either<List<String>, TripleRule> {
+    val subject = ruleContext.subject().text
+    val objects = ruleContext.`object`().children.map { it.text }
+    val undefinedElements = listOf(subject) + objects - definedElements
+    return if (undefinedElements.isEmpty()) {
+        Right(TripleRule(
+                raw = ruleContext.text,
+                subject = subject,
+                predicate = ruleContext.predicate().text,
+                objects = objects
+        ))
+    } else {
+        Left(listOf(format(UNDEFINED_RULE_ELEMENT, "%s", undefinedElements.joinToString())))
+    }
 }
 
 private fun error(ctx: ParserRuleContext, messageTemplate: String, vararg messageArgs: Any) =

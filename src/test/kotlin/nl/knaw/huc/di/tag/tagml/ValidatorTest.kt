@@ -145,7 +145,7 @@ class ValidatorTest {
             |      "said > persName+, emph+, said*",
             |      ":may-not-overlap(said,s)",
             |      ":non-linear(sic,corr)",
-            |      "elmo is-colored red"
+            |      "persName said said"
             |    ]
             |  },
             |  ":authors": ["me", "you", "them"],
@@ -193,7 +193,7 @@ class ValidatorTest {
                                         HierarchyRule("said>persName+,emph+,said*"),
                                         SetRule(":may-not-overlap(said,s)", ":may-not-overlap", listOf("said", "s")),
                                         SetRule(":non-linear(sic,corr)", ":non-linear", listOf("sic", "corr")),
-                                        TripleRule("elmois-coloredred", "elmo", "is-colored", listOf("red"))
+                                        TripleRule("persNamesaisaid", "persName", "said", listOf("said"))
                                 )
 
                         )
@@ -275,17 +275,6 @@ class ValidatorTest {
                 val openId = excerptOpen.markupId
                 val closeId = excerptClose.markupId
                 assertThat(openId).isEqualTo(closeId)
-//                val bodyTokens = tokens.subList(1, tokens.lastIndex)
-//                assertTokenStreamIsValid(bodyTokens, ontology) { tokens: List<ValidToken> ->
-//                    val excerptOpen = tokens[1] as MarkupToken.MarkupOpenToken
-//                    assertThat(excerptOpen).hasFieldOrPropertyWithValue("name", "excerpt")
-//                    val openId = excerptOpen.markupId
-//                    val excerptClose = tokens[3] as MarkupToken.MarkupCloseToken
-//                    assertThat(excerptClose).hasFieldOrPropertyWithValue("name", "excerpt")
-//                    val closeId = excerptClose.markupId
-//                    assertThat(openId).isEqualTo(closeId)
-//
-//                }
             }
         }
     }
@@ -300,9 +289,7 @@ class ValidatorTest {
             |""".trimMargin())
         assertTAGMLHasErrors(tagml) { errors, warnings ->
             assertThat(warnings).isEmpty()
-            assertThat(errors).hasSize(1)
-            assertThat(errors[0])
-                    .hasFieldOrPropertyWithValue("message", """Field ":ontology" missing in header.""")
+            assertThat(errors.map { it.message }).containsExactly("""Field ":ontology" missing in header.""")
         }
     }
 
@@ -318,11 +305,8 @@ class ValidatorTest {
             |""".trimMargin())
         assertTAGMLHasErrors(tagml) { errors, warnings ->
             assertThat(errors).hasSize(1)
-            assertThat(errors[0])
-                    .hasFieldOrPropertyWithValue("message", """Root element "tagml" does not match the one defined in the header: "root"""")
-            assertThat(warnings).hasSize(1)
-            assertThat(warnings[0])
-                    .hasFieldOrPropertyWithValue("message", """Element "tagml" is not defined in the ontology.""")
+            assertThat(errors.map { it.message }).containsExactly("""Root element "tagml" does not match the one defined in the header: "root"""")
+            assertThat(warnings.map { it.message }).containsExactly("""Element "tagml" is not defined in the ontology.""")
         }
     }
 
@@ -340,9 +324,7 @@ class ValidatorTest {
             |[tagml>body<tagml]
             |""".trimMargin())
         assertTAGMLHasErrors(tagml) { errors, warnings ->
-            assertThat(errors).hasSize(1)
-            assertThat(errors[0])
-                    .hasFieldOrPropertyWithValue("message", """Element "tagml" is missing a description.""")
+            assertThat(errors.map { it.message }).containsExactly("""Element "tagml" is missing a description.""")
             assertThat(warnings).isEmpty()
         }
     }
@@ -361,9 +343,7 @@ class ValidatorTest {
             |[tagml>body [new>text<new] bla<tagml]
             |""".trimMargin())
         assertTAGMLParses(tagml) { _, warnings ->
-            assertThat(warnings).hasSize(1)
-            assertThat(warnings[0])
-                    .hasFieldOrPropertyWithValue("message", """Element "new" is not defined in the ontology.""")
+            assertThat(warnings.map { it.message }).containsExactly("""Element "new" is not defined in the ontology.""")
         }
     }
 
@@ -381,9 +361,7 @@ class ValidatorTest {
             |[tagml a=true>body<tagml]
             |""".trimMargin())
         assertTAGMLParses(tagml) { _, warnings ->
-            assertThat(warnings).hasSize(1)
-            assertThat(warnings[0])
-                    .hasFieldOrPropertyWithValue("message", """Attribute "a" on element "tagml" is not defined in the ontology.""")
+            assertThat(warnings.map { it.message }).containsExactly("""Attribute "a" on element "tagml" is not defined in the ontology.""")
         }
     }
 
@@ -408,11 +386,10 @@ class ValidatorTest {
             |[tagml>body<tagml]
             |""".trimMargin())
         assertTAGMLHasErrors(tagml) { errors, warnings ->
-            assertThat(errors).hasSize(2)
-            assertThat(errors[0])
-                    .hasFieldOrPropertyWithValue("message", """Required attribute "required1" is missing on element "tagml".""")
-            assertThat(errors[1])
-                    .hasFieldOrPropertyWithValue("message", """Required attribute "required2" is missing on element "tagml".""")
+            assertThat(errors.map { it.message }).containsExactly(
+                    """Required attribute "required1" is missing on element "tagml".""",
+                    """Required attribute "required2" is missing on element "tagml"."""
+            )
             assertThat(warnings).isEmpty()
         }
     }
@@ -433,12 +410,8 @@ class ValidatorTest {
             |[tagml>[milestone][not_a_milestone][undefined]<tagml]
             |""".trimMargin())
         assertTAGMLHasErrors(tagml) { errors, warnings ->
-            assertThat(errors).hasSize(1)
-            assertThat(errors[0])
-                    .hasFieldOrPropertyWithValue("message", """Element "not_a_milestone" does not have the "milestone" property in its definition.""")
-            assertThat(warnings).hasSize(1)
-            assertThat(warnings[0])
-                    .hasFieldOrPropertyWithValue("message", """Element "undefined" is not defined in the ontology.""")
+            assertThat(errors.map { it.message }).containsExactly("""Element "not_a_milestone" does not have the "milestone" property in its definition.""")
+            assertThat(warnings.map { it.message }).containsExactly("""Element "undefined" is not defined in the ontology.""")
         }
     }
 
@@ -461,13 +434,41 @@ class ValidatorTest {
             |[tagml>body<tagml]
             |""".trimMargin())
         assertTAGMLHasErrors(tagml) { errors, warnings ->
-            assertThat(errors).hasSize(3)
-            assertThat(errors[0])
-                    .hasFieldOrPropertyWithValue("message", """Attribute "id" is used on an elementDefinition, but has no valid definition in the ontology.""")
-            assertThat(errors[1])
-                    .hasFieldOrPropertyWithValue("message", """Attribute "id" is missing a dataType.""")
-            assertThat(errors[2])
-                    .hasFieldOrPropertyWithValue("message", """Attribute "id" is missing a description.""")
+            assertThat(errors.map { it.message }).containsExactly(
+                    """Attribute "id" is used on an elementDefinition, but has no valid definition in the ontology.""",
+                    """Attribute "id" is missing a dataType.""",
+                    """Attribute "id" is missing a description."""
+            )
+            assertThat(warnings).isEmpty()
+        }
+    }
+
+    @Test
+    fun test_elements_used_in_rules_must_be_defined() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |       "tagml": {
+            |           "description": "The root element"
+            |       }    
+            |    },
+            |    "rules": [
+            |       "tagml > book > chapter+ > paragraph+ > line+",
+            |       ":may-not-overlap(chapter,verse)",
+            |       "author writes book"
+            |    ]
+            |  }
+            |}!]
+            |[tagml>body<tagml]
+            |""".trimMargin())
+        assertTAGMLHasErrors(tagml) { errors, warnings ->
+            assertThat(errors.map { it.message }).containsExactly(
+                    """Rule "tagml > book+ > chapter+ > paragraph+ > line+" contains undefined elements book, chapter, paragraph, line.""",
+                    """Rule ":may-not-overlap(chapter,verse)" contains undefined elements chapter, verse.""",
+                    """Rule "author writes book" contains undefined elements author, book."""
+            )
             assertThat(warnings).isEmpty()
         }
     }
@@ -484,12 +485,8 @@ class ValidatorTest {
             |[tagml>body<somethingelse]
             |""".trimMargin())
         assertTAGMLHasErrors(tagml) { errors, warnings ->
-            assertThat(errors).hasSize(1)
-            assertThat(errors[0])
-                    .hasFieldOrPropertyWithValue("message", """Closing tag "<somethingelse]" found without corresponding open tag.""")
-            assertThat(warnings).hasSize(1)
-            assertThat(warnings[0])
-                    .hasFieldOrPropertyWithValue("message", """Element "tagml" is not defined in the ontology.""")
+            assertThat(errors.map { it.message }).containsExactly("""Closing tag "<somethingelse]" found without corresponding open tag.""")
+            assertThat(warnings.map { it.message }).containsExactly("""Element "tagml" is not defined in the ontology.""")
         }
     }
 
@@ -504,12 +501,10 @@ class ValidatorTest {
             |[somethingelse>body<somethingelse]
             |""".trimMargin())
         assertTAGMLHasErrors(tagml) { errors, warnings ->
-            assertThat(errors).hasSize(1)
-            assertThat(errors[0])
-                    .hasFieldOrPropertyWithValue("message", """Root element "somethingelse" does not match the one defined in the header: "tagml"""")
-            assertThat(warnings).hasSize(1)
-            assertThat(warnings[0])
-                    .hasFieldOrPropertyWithValue("message", """Element "somethingelse" is not defined in the ontology.""")
+            assertThat(errors.map { it.message })
+                    .containsExactly("""Root element "somethingelse" does not match the one defined in the header: "tagml"""")
+            assertThat(warnings.map { it.message })
+                    .containsExactly("""Element "somethingelse" is not defined in the ontology.""")
         }
     }
 
@@ -604,6 +599,28 @@ class ValidatorTest {
     }
 
     @Test
+    fun test_discontinuous_markup_needs_property() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |      "tagml": {"description": "something"},
+            |      "q":     {"description": "quote"}
+            |    }
+            |  }
+            |}!]
+            |[tagml>[q>I think,<-q] he thought, [+q>I need to say something now.<q]<tagml]
+            |""".trimMargin())
+        assertTAGMLHasErrors(tagml) { errors, warnings ->
+            assertThat(warnings).isEmpty()
+            assertThat(errors.map { it.message }).containsExactly(
+                    "Element q may not be suspended: it has not been marked as discontinuous in the ontology."
+            )
+        }
+    }
+
+    @Test
     fun test_suspended_markup() {
         val tagml = ("""
             |[!{
@@ -611,7 +628,10 @@ class ValidatorTest {
             |    "root": "tagml",
             |    "elements": {
             |      "tagml": {"description": "something"},
-            |      "q":     {"description": "something"}
+            |      "q":     {
+            |                   "description": "quote",
+            |                   "properties": ["discontinuous"]
+            |               }
             |    }
             |  }
             |}!]
@@ -619,6 +639,7 @@ class ValidatorTest {
             |""".trimMargin())
         assertTAGMLParses(tagml) { tokens, warnings ->
             assertThat(warnings).isEmpty()
+
             val tokenIterator = tokens.iterator()
             val headerToken = tokenIterator.next()
 
@@ -643,6 +664,52 @@ class ValidatorTest {
 
             val qClose = tokenIterator.next() as MarkupCloseToken
             assertThat(qClose.markupId).isEqualTo(qOpen.markupId)
+
+            val tagmlClose = tokenIterator.next() as MarkupCloseToken
+            assertThat(tagmlOpen.markupId).isEqualTo(tagmlClose.markupId)
+        }
+    }
+
+    @Test
+    fun test_overlap() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |      "tagml": {"description": "something"},
+            |      "a":     {"description": "something"},
+            |      "b":     {"description": "something"}
+            |    }
+            |  }
+            |}!]
+            |[tagml>[a>Cookie Monster [b>likes<a] cookies.<b]<tagml]
+            |""".trimMargin())
+        assertTAGMLParses(tagml) { tokens, warnings ->
+            assertThat(warnings).isEmpty()
+
+            val tokenIterator = tokens.iterator()
+            val headerToken = tokenIterator.next()
+
+            val tagmlOpen = tokenIterator.next() as MarkupOpenToken
+            val aOpen = tokenIterator.next() as MarkupOpenToken
+            assertThat(aOpen.markupId).isNotEqualTo(tagmlOpen.markupId)
+
+            val textCookie = tokenIterator.next() as TextToken
+            assertThat(textCookie.rawContent).isEqualTo("Cookie Monster ")
+
+            val bOpen = tokenIterator.next() as MarkupOpenToken
+            val textLikes = tokenIterator.next() as TextToken
+            assertThat(textLikes.rawContent).isEqualTo("likes")
+
+            val aClose = tokenIterator.next() as MarkupCloseToken
+            assertThat(aClose.markupId).isEqualTo(aOpen.markupId)
+
+            val textCookies = tokenIterator.next() as TextToken
+            assertThat(textCookies.rawContent).isEqualTo(" cookies.")
+
+            val bClose = tokenIterator.next() as MarkupCloseToken
+            assertThat(bClose.markupId).isEqualTo(bOpen.markupId)
 
             val tagmlClose = tokenIterator.next() as MarkupCloseToken
             assertThat(tagmlOpen.markupId).isEqualTo(tagmlClose.markupId)

@@ -198,13 +198,15 @@ class TAGMLTest {
     private fun parse(tagml: String): Either<List<String>, ParseTree> {
         printTAGMLTokens(tagml)
         val antlrInputStream: CharStream = CharStreams.fromString(tagml)
-        val lexer = TAGMLLexer(antlrInputStream)
         val errorListener = TestErrorListener()
-        lexer.addErrorListener(errorListener)
+        val lexer = TAGMLLexer(antlrInputStream).apply {
+            addErrorListener(errorListener)
+        }
         val tokens = CommonTokenStream(lexer)
-        val parser = TAGMLParser(tokens)
-        parser.addErrorListener(errorListener)
-        parser.buildParseTree = true
+        val parser = TAGMLParser(tokens).apply {
+            addErrorListener(errorListener)
+            buildParseTree = true
+        }
         val parseTree: ParseTree = parser.document()
         return if (errorListener.hasErrors) {
             Left(errorListener.errors)

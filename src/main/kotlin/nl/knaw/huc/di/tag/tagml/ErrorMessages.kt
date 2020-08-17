@@ -20,6 +20,7 @@ package nl.knaw.huc.di.tag.tagml
  * #L%
  */
 
+// TODO: check term use is consistent
 const val ILLEGAL_MILESTONE = """Element "%s" does not have the "milestone" property in its definition."""
 const val MISSING_ATTRIBUTE = """Required attribute "%s" is missing on element "%s"."""
 const val MISSING_ATTRIBUTE_DATATYPE = """Attribute "%s" is missing a dataType."""
@@ -30,7 +31,10 @@ const val MISSING_ONTOLOGY_ROOT = """Field "root" missing in ontology header."""
 const val MISSING_OPEN_TAG = """Closing tag "%s" found without corresponding open tag."""
 const val UNDEFINED_ATTRIBUTE = """Attribute "%s" on element "%s" is not defined in the ontology."""
 const val UNDEFINED_ELEMENT = """Element "%s" is not defined in the ontology."""
+const val UNDEFINED_RULE_ELEMENT = """Rule %s contains undefined elements %s."""
 const val UNEXPECTED_KEY = "Unexpected key %s"
+const val UNEXPECTED_CLOSE_TAG = "Unexpected closing tag: found %s, but expected <%s]"
+const val ILLEGAL_SUSPEND = "Element %s may not be suspended: it has not been marked as discontinuous in the ontology."
 const val UNEXPECTED_ROOT = """Root element "%s" does not match the one defined in the header: "%s""""
 const val UNKNOWN_ATTRIBUTE_FIELD = """Unknown attribute field "%s""""
 const val UNKNOWN_ELEMENT_FIELD = """Unknown element field "%s""""

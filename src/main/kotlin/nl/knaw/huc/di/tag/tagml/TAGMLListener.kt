@@ -57,21 +57,21 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     override fun exitStartTag(ctx: TAGMLParser.StartTagContext) {
         val qName = ctx.markupName().name().text
         val isResume = ctx.markupName().prefix()?.text == TAGML.RESUME_PREFIX
-        if (context != null) {
-            val ontology = context!!.ontology
+        context?.let { listenerContext ->
+            val ontology = listenerContext.ontology
             checkExpectedRoot(ontology, qName, ctx)
-            if (!ontology.hasElement(qName)) {
-                addWarning(ctx, UNDEFINED_ELEMENT, qName)
-            } else {
+            if (ontology.hasElement(qName)) {
                 checkAttributes(ctx, ontology, qName, ctx.annotation())
+            } else {
+                addWarning(ctx, UNDEFINED_ELEMENT, qName)
             }
-            context!!.openMarkup += qName
+            listenerContext.openMarkup += qName
             val token = if (isResume) {
-                val markupId = context!!.markupId[qName]!!
+                val markupId = listenerContext.markupId[qName]!!
                 MarkupResumeToken(ctx.getRange(), ctx.text, qName, markupId)
             } else {
-                val markupId = context!!.markupIds.next()
-                context!!.markupId[qName] = markupId
+                val markupId = listenerContext.markupIds.next()
+                listenerContext.markupId[qName] = markupId
                 MarkupOpenToken(ctx.getRange(), ctx.text, qName, markupId)
             }
             _tokens += token
@@ -113,19 +113,18 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
 
     override fun exitMilestoneTag(ctx: TAGMLParser.MilestoneTagContext) {
         val qName = ctx.name().text
-        if (context != null) {
-            val ontology = context!!.ontology
+        context?.let { listenerContext ->
+            val ontology = listenerContext.ontology
             checkExpectedRoot(ontology, qName, ctx)
-            if (!ontology.hasElement(qName)) {
-                addWarning(ctx, UNDEFINED_ELEMENT, qName)
-            } else {
+            if (ontology.hasElement(qName)) {
                 checkAttributes(ctx, ontology, qName, ctx.annotation())
                 if (!ontology.elementDefinition(qName)?.isMilestone!!) {
                     addError(ctx, ILLEGAL_MILESTONE, qName)
                 }
+            } else {
+                addWarning(ctx, UNDEFINED_ELEMENT, qName)
             }
         }
-
         val token = MarkupMilestoneToken(ctx.getRange(), ctx.text, qName)
         _tokens += token
     }
@@ -134,19 +133,26 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         val rawContent = ctx.text
         val qName = ctx.markupName().name().text
         val isSuspend = ctx.markupName().prefix()?.text == TAGML.SUSPEND_PREFIX
-        if (context != null) {
-            if (qName !in context!!.openMarkup) {
-                addError(ctx, MISSING_OPEN_TAG, rawContent)
-            } else {
-                context!!.openMarkup.remove(qName)
-                val markupId = context!!.markupId[qName]!!
+        val elementDefinition = context?.ontology?.elements?.firstOrNull { it.name == qName }
+        if (isSuspend && elementDefinition != null && !elementDefinition.isDiscontinuous) {
+            addError(ctx, ILLEGAL_SUSPEND, qName)
+        }
+        context?.let { listenerContext ->
+            if (qName == listenerContext.openMarkup.last()) {
+                listenerContext.openMarkup.remove(qName)
+                val markupId = listenerContext.markupId[qName]!!
                 val token = if (isSuspend) {
                     MarkupSuspendToken(ctx.getRange(), rawContent, qName, markupId)
                 } else {
                     MarkupCloseToken(ctx.getRange(), rawContent, qName, markupId)
                 }
                 _tokens += token
+            } else if (qName in listenerContext.openMarkup) {
+                addError(ctx, UNEXPECTED_CLOSE_TAG, rawContent, listenerContext.openMarkup.last())
+            } else {
+                addError(ctx, MISSING_OPEN_TAG, rawContent)
             }
+
         }
     }
 
