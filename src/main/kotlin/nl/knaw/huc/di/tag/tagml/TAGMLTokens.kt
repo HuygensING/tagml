@@ -22,9 +22,10 @@ package nl.knaw.huc.di.tag.tagml
 
 import arrow.core.Either
 
-sealed class TAGMLToken(internal val range: Range, private val rawContent: String) {
+sealed class TAGMLToken(internal val range: Range, val rawContent: String) {
     override fun toString(): String = "$range $rawContent"
 
+    @Suppress("UNCHECKED_CAST")
     class HeaderToken(range: Range, rawContent: String, val headerMap: Map<String, Any>) : TAGMLToken(range, rawContent) {
         val ontologyParseResult: Either<List<ErrorListener.TAGError>, TAGOntology>
             get() = headerMap.getOrElse(":ontology")
@@ -32,9 +33,13 @@ sealed class TAGMLToken(internal val range: Range, private val rawContent: Strin
                     as Either<List<ErrorListener.TAGError>, TAGOntology>
     }
 
-    class MarkupOpenToken(range: Range, rawContent: String, val qName: String) : TAGMLToken(range, rawContent)
+    class MarkupOpenToken(range: Range, rawContent: String, val qName: String, val markupId: Long) : TAGMLToken(range, rawContent)
 
-    class MarkupCloseToken(range: Range, rawContent: String, val qName: String) : TAGMLToken(range, rawContent)
+    class MarkupSuspendToken(range: Range, rawContent: String, val qName: String, val markupId: Long) : TAGMLToken(range, rawContent)
+
+    class MarkupResumeToken(range: Range, rawContent: String, val qName: String, val markupId: Long) : TAGMLToken(range, rawContent)
+
+    class MarkupCloseToken(range: Range, rawContent: String, val qName: String, val markupId: Long) : TAGMLToken(range, rawContent)
 
     class MarkupMilestoneToken(range: Range, rawContent: String, val qName: String) : TAGMLToken(range, rawContent)
 

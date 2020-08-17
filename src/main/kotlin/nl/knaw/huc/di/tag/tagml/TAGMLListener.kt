@@ -33,6 +33,8 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     private var context: ListenerContext? = null
 
     class ListenerContext(val ontology: TAGOntology) {
+        val markupId: MutableMap<String, Long> = mutableMapOf()
+        val markupIds: Iterator<Long> = generateSequence(0L) { it + 1L }.iterator()
         val openMarkup: MutableList<String> = mutableListOf()
     }
 
@@ -53,7 +55,8 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     }
 
     override fun exitStartTag(ctx: TAGMLParser.StartTagContext) {
-        val qName = ctx.markupName().text
+        val qName = ctx.markupName().name().text
+        val isResume = ctx.markupName().prefix()?.text == TAGML.RESUME_PREFIX
         if (context != null) {
             val ontology = context!!.ontology
             checkExpectedRoot(ontology, qName, ctx)
@@ -63,9 +66,16 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                 checkAttributes(ctx, ontology, qName, ctx.annotation())
             }
             context!!.openMarkup += qName
+            val token = if (isResume) {
+                val markupId = context!!.markupId[qName]!!
+                MarkupResumeToken(ctx.getRange(), ctx.text, qName, markupId)
+            } else {
+                val markupId = context!!.markupIds.next()
+                context!!.markupId[qName] = markupId
+                MarkupOpenToken(ctx.getRange(), ctx.text, qName, markupId)
+            }
+            _tokens += token
         }
-        val token = MarkupOpenToken(ctx.getRange(), ctx.text, qName)
-        _tokens += token
     }
 
     private fun checkAttributes(
@@ -122,16 +132,22 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
 
     override fun exitEndTag(ctx: TAGMLParser.EndTagContext) {
         val rawContent = ctx.text
-        val qName = ctx.markupName().text
+        val qName = ctx.markupName().name().text
+        val isSuspend = ctx.markupName().prefix()?.text == TAGML.SUSPEND_PREFIX
         if (context != null) {
             if (qName !in context!!.openMarkup) {
                 addError(ctx, MISSING_OPEN_TAG, rawContent)
             } else {
                 context!!.openMarkup.remove(qName)
+                val markupId = context!!.markupId[qName]!!
+                val token = if (isSuspend) {
+                    MarkupSuspendToken(ctx.getRange(), rawContent, qName, markupId)
+                } else {
+                    MarkupCloseToken(ctx.getRange(), rawContent, qName, markupId)
+                }
+                _tokens += token
             }
         }
-        val token = MarkupCloseToken(ctx.getRange(), rawContent, qName)
-        _tokens += token
     }
 
     override fun exitText(ctx: TAGMLParser.TextContext) {

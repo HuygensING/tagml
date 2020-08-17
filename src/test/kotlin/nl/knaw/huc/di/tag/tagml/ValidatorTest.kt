@@ -158,7 +158,7 @@ class ValidatorTest {
         assertTAGMLParses(tagml) { tokens, warnings ->
             assertThat(warnings).isEmpty()
 
-            println(tokens)
+            println(tokens.joinToString("\n"))
             assertThat(tokens).hasSize(5)
             assertThat(tokens[0])
                     .isInstanceOf(HeaderToken::class.java)
@@ -269,6 +269,23 @@ class ValidatorTest {
                 val imgElementDefinition = ontology.elementDefinition("img")!!
                 assert(imgElementDefinition.isMilestone)
                 assert(!imgElementDefinition.isDiscontinuous)
+
+                val excerptOpen = tokens[1] as MarkupOpenToken
+                val excerptClose = tokens[3] as MarkupCloseToken
+                val openId = excerptOpen.markupId
+                val closeId = excerptClose.markupId
+                assertThat(openId).isEqualTo(closeId)
+//                val bodyTokens = tokens.subList(1, tokens.lastIndex)
+//                assertTokenStreamIsValid(bodyTokens, ontology) { tokens: List<ValidToken> ->
+//                    val excerptOpen = tokens[1] as MarkupToken.MarkupOpenToken
+//                    assertThat(excerptOpen).hasFieldOrPropertyWithValue("name", "excerpt")
+//                    val openId = excerptOpen.markupId
+//                    val excerptClose = tokens[3] as MarkupToken.MarkupCloseToken
+//                    assertThat(excerptClose).hasFieldOrPropertyWithValue("name", "excerpt")
+//                    val closeId = excerptClose.markupId
+//                    assertThat(openId).isEqualTo(closeId)
+//
+//                }
             }
         }
     }
@@ -476,8 +493,164 @@ class ValidatorTest {
         }
     }
 
+    @Test
+    fun test_root_tag_does_not_match_ontology_root() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml"
+            |  }
+            |}!]
+            |[somethingelse>body<somethingelse]
+            |""".trimMargin())
+        assertTAGMLHasErrors(tagml) { errors, warnings ->
+            assertThat(errors).hasSize(1)
+            assertThat(errors[0])
+                    .hasFieldOrPropertyWithValue("message", """Root element "somethingelse" does not match the one defined in the header: "tagml"""")
+            assertThat(warnings).hasSize(1)
+            assertThat(warnings[0])
+                    .hasFieldOrPropertyWithValue("message", """Element "somethingelse" is not defined in the ontology.""")
+        }
+    }
+
+    @Test
+    fun test_repeated_markup() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |      "tagml": {"description": "something"},
+            |      "x":     {"description": "something"}
+            |    }
+            |  }
+            |}!]
+            |[tagml>[x>Lorem<x] [x>Ipsum<x] [x>Dolor<x]<tagml]
+            |""".trimMargin())
+        assertTAGMLParses(tagml) { tokens, warnings ->
+            assertThat(warnings).isEmpty()
+            val tokenIterator = tokens.iterator()
+            val headerToken = tokenIterator.next()
+
+            val tagmlOpen = tokenIterator.next() as MarkupOpenToken
+            val x1Open = tokenIterator.next() as MarkupOpenToken
+            val textLorem = tokenIterator.next() as TextToken
+            assertThat(textLorem.rawContent).isEqualTo("Lorem")
+
+            val x1Close = tokenIterator.next() as MarkupCloseToken
+            assertThat(x1Open.markupId).isEqualTo(x1Close.markupId)
+
+            val textSpace1 = tokenIterator.next() as TextToken
+            val x2Open = tokenIterator.next() as MarkupOpenToken
+            val textIpsum = tokenIterator.next() as TextToken
+            assertThat(textIpsum.rawContent).isEqualTo("Ipsum")
+
+            val x2Close = tokenIterator.next() as MarkupCloseToken
+            assertThat(x2Open.markupId).isEqualTo(x2Close.markupId)
+
+            val textSpace2 = tokenIterator.next() as TextToken
+            val x3Open = tokenIterator.next() as MarkupOpenToken
+            val textDolor = tokenIterator.next() as TextToken
+            assertThat(textDolor.rawContent).isEqualTo("Dolor")
+
+            val x3Close = tokenIterator.next() as MarkupCloseToken
+            assertThat(x3Open.markupId).isEqualTo(x3Close.markupId)
+
+            val tagmlClose = tokenIterator.next() as MarkupCloseToken
+            assertThat(tagmlOpen.markupId).isEqualTo(tagmlClose.markupId)
+        }
+    }
+
+    @Test
+    fun test_nested_markup() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |      "tagml": {"description": "something"},
+            |      "x":     {"description": "something"}
+            |    }
+            |  }
+            |}!]
+            |[tagml>[x>Lorem [x>Ipsum<x] Dolor<x]<tagml]
+            |""".trimMargin())
+        assertTAGMLParses(tagml) { tokens, warnings ->
+            assertThat(warnings).isEmpty()
+
+            val tokenIterator = tokens.iterator()
+            val headerToken = tokenIterator.next()
+            val tagmlOpen = tokenIterator.next() as MarkupOpenToken
+            val x1Open = tokenIterator.next() as MarkupOpenToken
+            val textLorem = tokenIterator.next() as TextToken
+            assertThat(textLorem.rawContent).isEqualTo("Lorem ")
+
+            val x2Open = tokenIterator.next() as MarkupOpenToken
+            val textIpsum = tokenIterator.next() as TextToken
+            assertThat(textIpsum.rawContent).isEqualTo("Ipsum")
+
+            val x2Close = tokenIterator.next() as MarkupCloseToken
+            assertThat(x2Open.markupId).isEqualTo(x2Close.markupId)
+
+            val textDolor = tokenIterator.next() as TextToken
+            assertThat(textDolor.rawContent).isEqualTo(" Dolor")
+
+            val x1Close = tokenIterator.next() as MarkupCloseToken
+            assertThat(x1Open.markupId).isEqualTo(x1Close.markupId)
+
+            val tagmlClose = tokenIterator.next() as MarkupCloseToken
+            assertThat(tagmlOpen.markupId).isEqualTo(tagmlClose.markupId)
+        }
+    }
+
+    @Test
+    fun test_suspended_markup() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |      "tagml": {"description": "something"},
+            |      "q":     {"description": "something"}
+            |    }
+            |  }
+            |}!]
+            |[tagml>[q>I think,<-q] he thought, [+q>I need to say something now.<q]<tagml]
+            |""".trimMargin())
+        assertTAGMLParses(tagml) { tokens, warnings ->
+            assertThat(warnings).isEmpty()
+            val tokenIterator = tokens.iterator()
+            val headerToken = tokenIterator.next()
+
+            val tagmlOpen = tokenIterator.next() as MarkupOpenToken
+            val qOpen = tokenIterator.next() as MarkupOpenToken
+            assertThat(qOpen.markupId).isNotEqualTo(tagmlOpen.markupId)
+
+            val textThink = tokenIterator.next() as TextToken
+            assertThat(textThink.rawContent).isEqualTo("I think,")
+
+            val qSuspend = tokenIterator.next() as MarkupSuspendToken
+            assertThat(qSuspend.markupId).isEqualTo(qOpen.markupId)
+
+            val textHe = tokenIterator.next() as TextToken
+            assertThat(textHe.rawContent).isEqualTo(" he thought, ")
+
+            val qResume = tokenIterator.next() as MarkupResumeToken
+            assertThat(qResume.markupId).isEqualTo(qOpen.markupId)
+
+            val textNeed = tokenIterator.next() as TextToken
+            assertThat(textNeed.rawContent).isEqualTo("I need to say something now.")
+
+            val qClose = tokenIterator.next() as MarkupCloseToken
+            assertThat(qClose.markupId).isEqualTo(qOpen.markupId)
+
+            val tagmlClose = tokenIterator.next() as MarkupCloseToken
+            assertThat(tagmlOpen.markupId).isEqualTo(tagmlClose.markupId)
+        }
+    }
+
     private fun assertTAGMLParses(tagml: String, tokenListAssert: (List<TAGMLToken>, List<TAGError>) -> Unit) =
-            when (val result = validate(tagml)) {
+            when (val result = parse(tagml)) {
                 is TAGMLParseSuccess -> tokenListAssert(result.tokens, result.warnings)
                 is TAGMLParseFailure -> {
                     val errors = result.errors.joinToString("\n")
@@ -486,7 +659,7 @@ class ValidatorTest {
             }
 
     private fun assertTAGMLHasErrors(tagml: String, errorListAssert: (List<TAGError>, List<TAGError>) -> Unit) =
-            when (val result = validate(tagml)) {
+            when (val result = parse(tagml)) {
                 is TAGMLParseSuccess -> fail("expected parsing to fail")
                 is TAGMLParseFailure -> errorListAssert(result.errors, result.warnings)
             }
@@ -500,5 +673,12 @@ class ValidatorTest {
                 { tagOntology -> ontologyAssert(tagOntology) }
         )
     }
+
+//    private fun assertTokenStreamIsValid(tokens: List<TAGMLToken>, ontology: TAGOntology, function: (List<ValidToken>) -> Unit) {
+//        validateTokens(tokens, ontology).fold(
+//                { reject -> fail("$reject") },
+//                { validTokens -> function(validTokens) }
+//        )
+//    }
 
 }

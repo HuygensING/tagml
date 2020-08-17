@@ -39,7 +39,7 @@ sealed class TAGMLParseResult(val warnings: List<ErrorListener.TAGError>) {
 fun ParserRuleContext.getRange(): Range =
         Range(Position.startOf(this), Position.endOf(this))
 
-fun validate(tagml: String): TAGMLParseResult {
+fun parse(tagml: String): TAGMLParseResult {
     val antlrInputStream: CharStream = CharStreams.fromString(tagml)
     val errorListener = ErrorListener()
     val lexer = TAGMLLexer(antlrInputStream)
