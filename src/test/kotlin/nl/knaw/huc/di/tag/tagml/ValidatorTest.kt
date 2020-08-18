@@ -197,7 +197,7 @@ class ValidatorTest {
                                 )
 
                         )
-                assertThat(ontology.elements).containsOnly(
+                assertThat(ontology.elementDefinitions.values).containsOnly(
                         ElementDefinition(
                                 name = "excerpt",
                                 description = "A short extract from a text",

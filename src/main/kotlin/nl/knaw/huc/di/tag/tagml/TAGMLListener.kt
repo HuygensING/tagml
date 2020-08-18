@@ -133,7 +133,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         val rawContent = ctx.text
         val qName = ctx.markupName().name().text
         val isSuspend = ctx.markupName().prefix()?.text == TAGML.SUSPEND_PREFIX
-        val elementDefinition = context?.ontology?.elements?.firstOrNull { it.name == qName }
+        val elementDefinition = context?.ontology?.elementDefinition(qName)
         if (isSuspend && elementDefinition != null && !elementDefinition.isDiscontinuous) {
             addError(ctx, ILLEGAL_SUSPEND, qName)
         }

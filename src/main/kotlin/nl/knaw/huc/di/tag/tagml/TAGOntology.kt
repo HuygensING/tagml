@@ -22,14 +22,14 @@ package nl.knaw.huc.di.tag.tagml
 
 data class TAGOntology(
         val root: String,
-        val elements: List<ElementDefinition>,
+        val elementDefinitions: Map<String, ElementDefinition>,
         val attributes: List<AttributeDefinition>,
         val rules: List<OntologyRule>
 )
 
 fun TAGOntology.elementDefinition(qName: String): ElementDefinition? =
-        elements.find { it.name == qName }
+        elementDefinitions[qName]
 
 fun TAGOntology.hasElement(qName: String): Boolean =
-        qName in elements.map { it.name }
+        elementDefinitions.containsKey(qName)
 
