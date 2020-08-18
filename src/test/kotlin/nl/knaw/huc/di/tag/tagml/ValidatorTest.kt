@@ -294,6 +294,28 @@ class ValidatorTest {
     }
 
     @Test
+    fun test_root_element_may_not_be_discontinuous() {
+        val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "root",
+            |    "elements": {
+            |       "root": {
+            |           "description": "the root",
+            |           "properties": ["discontinuous"]
+            |       }
+            |    }
+            |   }
+            |}!]
+            |[root>body<root]
+            |""".trimMargin())
+        assertTAGMLHasErrors(tagml) { errors, warnings ->
+            assertThat(warnings).isEmpty()
+            assertThat(errors.map { it.message }).containsExactly("""Root element "root" is not allowed to be discontinuous.""")
+        }
+    }
+
+    @Test
     fun test_different_root_in_header_and_body_gives_error() {
         val tagml = ("""
             |[!{

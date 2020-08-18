@@ -39,3 +39,4 @@ const val UNEXPECTED_ROOT = """Root element "%s" does not match the one defined 
 const val UNKNOWN_ATTRIBUTE_FIELD = """Unknown attribute field "%s""""
 const val UNKNOWN_ELEMENT_FIELD = """Unknown element field "%s""""
 const val USED_UNDEFINED_ATTRIBUTE = """Attribute "%s" is used on an elementDefinition, but has no valid definition in the ontology."""
+const val DISCONTINUOUS_ROOT = """Root element "%s" is not allowed to be discontinuous."""

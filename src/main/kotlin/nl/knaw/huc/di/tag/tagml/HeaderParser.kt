@@ -73,6 +73,9 @@ private fun parseOntology(jsonValueCtx: TAGMLParser.Json_valueContext): Either<L
                                             { elements += it }
                                     )
                                 }
+                        if (elements.firstOrNull { it.name == root }?.isDiscontinuous == true) {
+                            errors += error(pair, DISCONTINUOUS_ROOT, root!!)
+                        }
                     }
                     "attributes" -> {
                         pair.json_value().json_obj().json_pair()
@@ -92,11 +95,7 @@ private fun parseOntology(jsonValueCtx: TAGMLParser.Json_valueContext): Either<L
                                 .map { (ctx, string) -> Pair(ctx, parseRule(string, definedElements)) }
                                 .forEach { (ctx, either) ->
                                     either.fold(
-                                            { errorMessage ->
-                                                errors += errorMessage.map {
-                                                    ErrorListener.CustomError(ctx.getRange(), format(it, ctx.text))
-                                                }
-                                            },
+                                            { errorMessage -> errors += errorMessage.map { error(ctx, it, ctx.text) } },
                                             { ontologyRule -> rules += ontologyRule }
                                     )
                                 }
