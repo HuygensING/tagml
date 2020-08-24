@@ -139,12 +139,12 @@ class TAGORLTest {
         }
 
         private fun assertParseFails(tagml: String) {
-            val result = Companion.parse(tagml)
+            val result = parse(tagml)
             assert(result is Left)
         }
 
         private fun assertParseSucceeds(rule: String) {
-            val result = Companion.parse(rule)
+            val result = parse(rule)
             assert(result is Right)
         }
 
@@ -154,7 +154,7 @@ class TAGORLTest {
                 expectedPredicate: String,
                 expectedObjects: List<String>
         ): Unit =
-                Companion.parse(rule).fold(
+                parse(rule).fold(
                         { errors -> fail("$errors") },
                         { ctx ->
                             when (ctx) {
@@ -177,7 +177,7 @@ class TAGORLTest {
                 expectedFunctionName: String,
                 expectedParameters: List<String>
         ): Unit =
-                Companion.parse(rule).fold(
+                parse(rule).fold(
                         { errors -> fail("$errors") },
                         { ctx ->
                             when (ctx) {
@@ -200,7 +200,7 @@ class TAGORLTest {
                 rule: String,
                 expectedErrors: List<String>
         ) =
-                Companion.parse(rule).fold(
+                parse(rule).fold(
                         { errors -> assertThat(errors).containsExactlyElementsOf(expectedErrors) },
                         { fail("parsing succeeded, where failure was expected") }
                 )

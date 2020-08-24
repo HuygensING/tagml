@@ -64,13 +64,13 @@ class TAGMLTest {
             }!]
             [l>[w>Just<w] [w>some<w] [w>words<w]<l]
             """.trimIndent()
-        Companion.assertParseSucceeds(this, tagml)
+        assertParseSucceeds(this, tagml)
     }
 
     @Test
     fun test_whitespace_in_text() {
         val tagml = "[!{}!][l>[w>Just<w] [w>some<w] [w>words<w]<l] \n \n"
-        Companion.assertParseSucceeds(this, tagml)
+        assertParseSucceeds(this, tagml)
     }
 
     @Test
@@ -82,11 +82,11 @@ class TAGMLTest {
             [!{}!]
             [tagml>Hello World!<tagml]
             """.trimIndent()
-        Companion.assertParseSucceeds(this, tagmlGood)
+        assertParseSucceeds(this, tagmlGood)
     }
 
     @Nested
-    inner class TestEscape {
+    class TestEscape {
         @Test
         fun testEscapeRegularText() {
             val text = """Escape these characters: \ < [, but not these: | " ' """

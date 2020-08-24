@@ -183,7 +183,7 @@ class ValidatorTest {
                     .isInstanceOf(TextToken::class.java)
                     .hasFieldOrPropertyWithValue("isWhiteSpace", true)
 
-            Companion.assertOntologyParses(headerToken) { ontology ->
+            assertOntologyParses(headerToken) { ontology ->
                 assertThat(ontology)
                         .hasFieldOrPropertyWithValue("root", "excerpt")
                         .hasFieldOrPropertyWithValue(
