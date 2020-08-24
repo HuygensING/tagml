@@ -32,12 +32,20 @@ sealed class OntologyRule(val raw: String) {
     class HierarchyRule(raw: String) : OntologyRule(raw) {
         override fun equals(other: Any?): Boolean =
                 super.equals(other) && other is HierarchyRule
+
     }
 
     class SetRule(raw: String, val setName: String, val elements: List<String>) : OntologyRule(raw) {
         override fun toString(): String = "$setName(${elements.joinToString()}"
         override fun equals(other: Any?): Boolean =
                 super.equals(other) && other is SetRule
+
+        override fun hashCode(): Int {
+            var result = super.hashCode()
+            result = 31 * result + setName.hashCode()
+            result = 31 * result + elements.hashCode()
+            return result
+        }
     }
 
     class TripleRule(raw: String, val subject: String, val predicate: String, val objects: List<String>) : OntologyRule(raw) {
@@ -47,5 +55,13 @@ sealed class OntologyRule(val raw: String) {
                         other.subject == subject &&
                         other.predicate == predicate &&
                         other.objects == objects
+
+        override fun hashCode(): Int {
+            var result = super.hashCode()
+            result = 31 * result + subject.hashCode()
+            result = 31 * result + predicate.hashCode()
+            result = 31 * result + objects.hashCode()
+            return result
+        }
     }
 }

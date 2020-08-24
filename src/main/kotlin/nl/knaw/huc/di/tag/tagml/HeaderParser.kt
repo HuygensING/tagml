@@ -54,7 +54,7 @@ private fun parseOntology(jsonValueCtx: TAGMLParser.Json_valueContext): Either<L
     val errors: MutableList<ErrorListener.TAGError> = mutableListOf()
     var root: String? = ""
     val elementDefinitions: MutableMap<String, ElementDefinition> = mutableMapOf()
-    val attributes: MutableList<AttributeDefinition> = mutableListOf()
+    val attributeDefinitions: MutableMap<String, AttributeDefinition> = mutableMapOf()
     val rules: MutableList<OntologyRule> = mutableListOf()
     jsonValueCtx.json_obj().json_pair()
             .filterNotNull()
@@ -83,7 +83,7 @@ private fun parseOntology(jsonValueCtx: TAGMLParser.Json_valueContext): Either<L
                                 .forEach { either ->
                                     either.fold(
                                             { errors += it },
-                                            { attributes += it }
+                                            { attributeDefinition -> attributeDefinitions[attributeDefinition.name] = attributeDefinition }
                                     )
                                 }
                     }
@@ -103,9 +103,9 @@ private fun parseOntology(jsonValueCtx: TAGMLParser.Json_valueContext): Either<L
                 }
             }
     checkMissingRootDefinition(root, errors, jsonValueCtx)
-    checkMissingAttributeDefinitions(elementDefinitions, attributes, errors, jsonValueCtx)
+    checkMissingAttributeDefinitions(elementDefinitions, attributeDefinitions, errors, jsonValueCtx)
     return if (errors.isEmpty()) {
-        Either.right(TAGOntology(root!!, elementDefinitions, attributes, rules))
+        Either.right(TAGOntology(root!!, elementDefinitions, attributeDefinitions, rules))
     } else {
         Either.left(errors.toList())
     }
@@ -113,7 +113,7 @@ private fun parseOntology(jsonValueCtx: TAGMLParser.Json_valueContext): Either<L
 
 private fun checkMissingAttributeDefinitions(
         elementDefinitions: Map<String, ElementDefinition>,
-        attributes: MutableList<AttributeDefinition>,
+        attributeDefinitions: Map<String, AttributeDefinition>,
         errors: MutableList<ErrorListener.TAGError>,
         jsonValueCtx: TAGMLParser.Json_valueContext
 ) {
@@ -123,7 +123,7 @@ private fun checkMissingAttributeDefinitions(
             .flatten()
             .distinct()
             .map { it.name }
-    val definedAttributes = attributes.map { it.name }
+    val definedAttributes = attributeDefinitions.keys
     val usedButUndefinedAttributes = elementAttributes - definedAttributes
     usedButUndefinedAttributes.forEach {
         errors += error(jsonValueCtx, USED_UNDEFINED_ATTRIBUTE, it)
@@ -188,7 +188,7 @@ private fun parseElementDefinition(context: TAGMLParser.Json_pairContext): Eithe
 private fun parseAttributeDefinition(context: TAGMLParser.Json_pairContext): Either<List<ErrorListener.TAGError>, AttributeDefinition> {
     val name = context.JSON_STRING().text.content()
     var description = ""
-    var dataType = ""
+    var dataTypeString = ""
     var ref = ""
     val errors: MutableList<ErrorListener.TAGError> = mutableListOf()
     context.json_value().json_obj().json_pair()
@@ -196,7 +196,7 @@ private fun parseAttributeDefinition(context: TAGMLParser.Json_pairContext): Eit
             .forEach { ctx ->
                 when (val attributeField = ctx.JSON_STRING().text.content()) {
                     "description" -> description = ctx.json_value().text.content()
-                    "dataType" -> dataType = ctx.json_value().text.content()
+                    "dataType" -> dataTypeString = ctx.json_value().text.content()
                     "ref" -> ref = ctx.json_value().text.content()
                     else -> errors += error(ctx, UNKNOWN_ATTRIBUTE_FIELD, attributeField)
                 }
@@ -204,8 +204,15 @@ private fun parseAttributeDefinition(context: TAGMLParser.Json_pairContext): Eit
     if (description.isEmpty()) {
         errors += error(context, MISSING_ATTRIBUTE_DESCRIPTION, name)
     }
-    if (dataType.isEmpty()) {
+    var dataType = AttributeDataType.String
+    if (dataTypeString.isEmpty()) {
         errors += error(context, MISSING_ATTRIBUTE_DATATYPE, name)
+    } else {
+        if (dataTypeString in attributeDataTypeNames()) {
+            dataType = AttributeDataType.valueOf(dataTypeString)
+        } else {
+            errors += error(context, UNKNOWN_ATTRIBUTE_DATATYPE, dataTypeString, name)
+        }
     }
     return if (errors.isEmpty()) {
         Right(AttributeDefinition(name, description, dataType, ref))

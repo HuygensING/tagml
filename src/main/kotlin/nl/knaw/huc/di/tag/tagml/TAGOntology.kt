@@ -23,7 +23,7 @@ package nl.knaw.huc.di.tag.tagml
 data class TAGOntology(
         val root: String,
         val elementDefinitions: Map<String, ElementDefinition>,
-        val attributes: List<AttributeDefinition>,
+        val attributes: Map<String, AttributeDefinition>,
         val rules: List<OntologyRule>
 )
 

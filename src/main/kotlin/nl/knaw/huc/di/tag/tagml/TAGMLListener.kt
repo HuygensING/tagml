@@ -94,11 +94,16 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                     if (ontology.hasElement(qName) && !elementDefinition.hasAttribute(attributeName)) {
                         addWarning(ctx, UNDEFINED_ATTRIBUTE, attributeName, qName)
                     }
+                    when (actx.annotationValue()) {
+                        is TAGMLParser.AnnotationValueContext -> println("AnnotationValueContext")
+                        else -> TODO()
+                    }
                 }
                 is TAGMLParser.IdentifyingAnnotationContext -> TODO()
                 is TAGMLParser.RefAnnotationContext -> TODO()
             }
         }
+        attributesUsed.forEach { val definedDataType = ontology.attributes[it]?.dataType }
         (elementDefinition.requiredAttributes - attributesUsed).forEach { mra ->
             addError(ctx, MISSING_ATTRIBUTE, mra, qName)
         }
@@ -138,21 +143,24 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
             addError(ctx, ILLEGAL_SUSPEND, qName)
         }
         context?.let { listenerContext ->
-            if (qName == listenerContext.openMarkup.last()) {
-                listenerContext.openMarkup.remove(qName)
-                val markupId = listenerContext.markupId[qName]!!
-                val token = if (isSuspend) {
-                    MarkupSuspendToken(ctx.getRange(), rawContent, qName, markupId)
-                } else {
-                    MarkupCloseToken(ctx.getRange(), rawContent, qName, markupId)
+            when (qName) {
+                listenerContext.openMarkup.last() -> {
+                    listenerContext.openMarkup.remove(qName)
+                    val markupId = listenerContext.markupId[qName]!!
+                    val token = if (isSuspend) {
+                        MarkupSuspendToken(ctx.getRange(), rawContent, qName, markupId)
+                    } else {
+                        MarkupCloseToken(ctx.getRange(), rawContent, qName, markupId)
+                    }
+                    _tokens += token
                 }
-                _tokens += token
-            } else if (qName in listenerContext.openMarkup) {
-                addError(ctx, UNEXPECTED_CLOSE_TAG, rawContent, listenerContext.openMarkup.last())
-            } else {
-                addError(ctx, MISSING_OPEN_TAG, rawContent)
+                in listenerContext.openMarkup -> {
+                    addError(ctx, UNEXPECTED_CLOSE_TAG, rawContent, listenerContext.openMarkup.last())
+                }
+                else -> {
+                    addError(ctx, MISSING_OPEN_TAG, rawContent)
+                }
             }
-
         }
     }
 

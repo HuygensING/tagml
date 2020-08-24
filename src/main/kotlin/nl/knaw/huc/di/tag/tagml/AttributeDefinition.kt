@@ -23,6 +23,12 @@ package nl.knaw.huc.di.tag.tagml
 data class AttributeDefinition(
         val name: String,
         val description: String,
-        val dataType: String,
+        val dataType: AttributeDataType,
         val ref: String = ""
 )
+
+enum class AttributeDataType {
+    String, URI, Pointer, Integer, IntegerList, StringList, ID
+}
+
+fun attributeDataTypeNames(): Set<String> = AttributeDataType.values().map { it.name }.toSet()

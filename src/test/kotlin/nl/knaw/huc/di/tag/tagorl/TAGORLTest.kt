@@ -33,7 +33,8 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTree
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import kotlin.test.fail
@@ -42,163 +43,167 @@ class TAGORLTest {
 
     val log: Logger = LoggerFactory.getLogger(TAGORLTest::class.java)
 
-//    "excerpt > chapter+, img+",
-//    "chapter > par+, said+",
-//    "par > s+",
-//    "s > (sic, corr)*",
-//    "said > persName+, emph+, said*",
-//    "said may-not-overlap-with s",
-//    "sic is-non-linear-with corr"
+    @Nested
+    inner class HierarchyRuleTest {
 
-    @Test
-    fun test_hierarchy_rule_1() {
-        val rule = "excerpt > chapterTitle+, img?"
-        val expectedParent = "excerpt"
-        val expectedChildren1 = "chapterTitle"
-        val expectedChildren = "img"
-        parse(rule).fold(
-                { errors -> fail("$errors") },
-                { ctx ->
-                    {
-                        when (ctx) {
-                            is TAGORLParser.HierarchyRuleContext -> {
-                                assertThat(ctx.Name().text).isEqualTo(expectedParent)
-
-                                val children = ctx.children() as TAGORLParser.ChildrenListContext
-                                val child0 = children.child(0) as OneOrMoreChildContext
-                                assertThat(child0.Name().text).isEqualTo(expectedChildren1)
-
-                                val child1 = children.child(1) as OptionalChildContext
-                                assertThat(child1.Name().text).isEqualTo(expectedChildren)
-                            }
-                            else -> fail("expected HierarchyRuleContext")
-                        }
-                    }
-                }
-        )
-    }
-
-    @Test
-    fun test_set_rule_with_1_parameter_fails() {
-        val rule = "test(parameter)"
-        assertParsingFailsWithErrors(rule, listOf("syntax error: line 1:14 mismatched input ')' expecting ','"))
-    }
-
-    @Test
-    fun test_set_rule_with_2_parameters() {
-        val rule = "nonlinear(sic,corr)"
-        assertParsesAsSetRule(rule, "nonlinear", listOf("sic", "corr"))
-    }
-
-    @Test
-    fun test_set_rule_with_3_parameters() {
-        val rule = "siblings(huey,dewey,louie)"
-        assertParsesAsSetRule(rule, "siblings", listOf("huey", "dewey", "louie"))
-    }
-
-    @Test
-    fun test_failing_set_rule() {
-        val rule = "test(parameter"
-        assertParsingFailsWithErrors(rule, listOf("syntax error: line 1:14 mismatched input '<EOF>' expecting ','"))
-    }
-
-    @Test
-    fun test_triple_rule() {
-        val rule = "author writes title"
-        assertParsesAsTripleRule(rule, "author", "writes", listOf("title"))
-    }
-
-    @Test
-    fun test_triple_rule_with_multiple_objects() {
-        val rule = "cook prepares breakfast,lunch,dinner"
-        assertParsesAsTripleRule(rule, "cook", "prepares", listOf("breakfast", "lunch", "dinner"))
-    }
-
-    private fun assertParsingFailsWithErrors(
-            rule: String,
-            expectedErrors: List<String>
-    ) =
-            parse(rule).fold(
-                    { errors -> assertThat(errors).containsExactlyElementsOf(expectedErrors) },
-                    { fail("parsing succeeded, where failure was expected") }
-            )
-
-    private fun assertParsesAsSetRule(
-            rule: String,
-            expectedFunctionName: String,
-            expectedParameters: List<String>
-    ): Unit =
+        @Test
+        fun test_hierarchy_rule_1() {
+            val rule = "excerpt > chapterTitle+, img?"
+            val expectedParent = "excerpt"
+            val expectedChildren1 = "chapterTitle"
+            val expectedChildren = "img"
             parse(rule).fold(
                     { errors -> fail("$errors") },
                     { ctx ->
-                        when (ctx) {
-                            is TAGORLParser.SetRuleContext -> {
-                                assertThat(ctx.Name().text).isEqualTo(expectedFunctionName)
-                                assertThat(ctx.child()).hasSameSizeAs(expectedParameters)
-                                for (i in ctx.child().indices) {
-                                    val child = ctx.child(i)
-                                    assert(child is TAGORLParser.OneChildContext)
-                                    val c = child as TAGORLParser.OneChildContext
-                                    assertThat(c.text).isEqualTo(expectedParameters[i])
+                        {
+                            when (ctx) {
+                                is TAGORLParser.HierarchyRuleContext -> {
+                                    assertThat(ctx.Name().text).isEqualTo(expectedParent)
+
+                                    val children = ctx.children() as TAGORLParser.ChildrenListContext
+                                    val child0 = children.child(0) as OneOrMoreChildContext
+                                    assertThat(child0.Name().text).isEqualTo(expectedChildren1)
+
+                                    val child1 = children.child(1) as OptionalChildContext
+                                    assertThat(child1.Name().text).isEqualTo(expectedChildren)
                                 }
+                                else -> fail("expected HierarchyRuleContext")
                             }
-                            else -> fail("expected SetRuleContext")
                         }
                     }
             )
+        }
 
-    private fun assertParsesAsTripleRule(
-            rule: String,
-            expectedSubject: String,
-            expectedPredicate: String,
-            expectedObjects: List<String>
-    ): Unit =
-            parse(rule).fold(
-                    { errors -> fail("$errors") },
-                    { ctx ->
-                        when (ctx) {
-                            is TAGORLParser.TripleRuleContext -> {
-                                assertThat(ctx.subject().text).isEqualTo(expectedSubject)
-                                assertThat(ctx.predicate().text).isEqualTo(expectedPredicate)
-                                val objects = ctx.`object`().Name()
-                                assertThat(objects).hasSameSizeAs(expectedObjects)
-                                for (i in objects.indices) {
-                                    assertThat(objects[i].text).isEqualTo(expectedObjects[i])
+        @Test
+        fun test_set_rule_with_1_parameter_fails() {
+            val rule = "test(parameter)"
+            assertParsingFailsWithErrors(rule, listOf("syntax error: line 1:14 mismatched input ')' expecting ','"))
+        }
+    }
+
+    @Nested
+    inner class SetRuleTest {
+        @Test
+        fun test_set_rule_with_2_parameters() {
+            val rule = "nonlinear(sic,corr)"
+            assertParsesAsSetRule(rule, "nonlinear", listOf("sic", "corr"))
+        }
+
+        @Test
+        fun test_set_rule_with_3_parameters() {
+            val rule = "siblings(huey,dewey,louie)"
+            assertParsesAsSetRule(rule, "siblings", listOf("huey", "dewey", "louie"))
+        }
+
+        @Test
+        fun test_failing_set_rule() {
+            val rule = "test(parameter"
+            assertParsingFailsWithErrors(rule, listOf("syntax error: line 1:14 mismatched input '<EOF>' expecting ','"))
+        }
+    }
+
+    @Nested
+    inner class TripleRuleTest {
+        @Test
+        fun test_triple_rule() {
+            val rule = "author writes title"
+            assertParsesAsTripleRule(rule, "author", "writes", listOf("title"))
+        }
+
+        @Test
+        fun test_triple_rule_with_multiple_objects() {
+            val rule = "cook prepares breakfast,lunch,dinner"
+            assertParsesAsTripleRule(rule, "cook", "prepares", listOf("breakfast", "lunch", "dinner"))
+        }
+    }
+
+    companion object {
+        private fun parse(rule: String): Either<List<String>, ParseTree> {
+            printTAGORLTokens(rule)
+            val antlrInputStream: CharStream = CharStreams.fromString(rule)
+            val errorListener = TestErrorListener()
+            val lexer = TAGORLLexer(antlrInputStream).apply {
+                addErrorListener(errorListener)
+            }
+            val tokens = CommonTokenStream(lexer)
+            val parser = TAGORLParser(tokens).apply {
+                addErrorListener(errorListener)
+                buildParseTree = true
+            }
+            val ontologyRule = parser.ontologyRule() // this starts the parsing
+            return if (errorListener.hasErrors) {
+                Left(errorListener.errors)
+            } else {
+                Right(ontologyRule.getChild(0))
+            }
+        }
+
+        private fun assertParseFails(tagml: String) {
+            val result = Companion.parse(tagml)
+            assert(result is Left)
+        }
+
+        private fun assertParseSucceeds(rule: String) {
+            val result = Companion.parse(rule)
+            assert(result is Right)
+        }
+
+        private fun assertParsesAsTripleRule(
+                rule: String,
+                expectedSubject: String,
+                expectedPredicate: String,
+                expectedObjects: List<String>
+        ): Unit =
+                Companion.parse(rule).fold(
+                        { errors -> fail("$errors") },
+                        { ctx ->
+                            when (ctx) {
+                                is TAGORLParser.TripleRuleContext -> {
+                                    assertThat(ctx.subject().text).isEqualTo(expectedSubject)
+                                    assertThat(ctx.predicate().text).isEqualTo(expectedPredicate)
+                                    val objects = ctx.`object`().Name()
+                                    assertThat(objects).hasSameSizeAs(expectedObjects)
+                                    for (i in objects.indices) {
+                                        assertThat(objects[i].text).isEqualTo(expectedObjects[i])
+                                    }
                                 }
+                                else -> fail("expected TripleRuleContext")
                             }
-                            else -> fail("expected TripleRuleContext")
                         }
-                    }
-            )
+                )
 
-    private fun assertParseSucceeds(rule: String) {
-        val result = parse(rule)
-        assert(result is Right)
-    }
+        private fun assertParsesAsSetRule(
+                rule: String,
+                expectedFunctionName: String,
+                expectedParameters: List<String>
+        ): Unit =
+                Companion.parse(rule).fold(
+                        { errors -> fail("$errors") },
+                        { ctx ->
+                            when (ctx) {
+                                is TAGORLParser.SetRuleContext -> {
+                                    assertThat(ctx.Name().text).isEqualTo(expectedFunctionName)
+                                    assertThat(ctx.child()).hasSameSizeAs(expectedParameters)
+                                    for (i in ctx.child().indices) {
+                                        val child = ctx.child(i)
+                                        assert(child is TAGORLParser.OneChildContext)
+                                        val c = child as TAGORLParser.OneChildContext
+                                        assertThat(c.text).isEqualTo(expectedParameters[i])
+                                    }
+                                }
+                                else -> fail("expected SetRuleContext")
+                            }
+                        }
+                )
 
-    private fun assertParseFails(tagml: String) {
-        val result = parse(tagml)
-        assert(result is Left)
-    }
-
-    private fun parse(rule: String): Either<List<String>, ParseTree> {
-        printTAGORLTokens(rule)
-        val antlrInputStream: CharStream = CharStreams.fromString(rule)
-        val errorListener = TestErrorListener()
-        val lexer = TAGORLLexer(antlrInputStream).apply {
-            addErrorListener(errorListener)
-        }
-        val tokens = CommonTokenStream(lexer)
-        val parser = TAGORLParser(tokens).apply {
-            addErrorListener(errorListener)
-            buildParseTree = true
-        }
-        val ontologyRule = parser.ontologyRule() // this starts the parsing
-        return if (errorListener.hasErrors) {
-            Left(errorListener.errors)
-        } else {
-            Right(ontologyRule.getChild(0))
-        }
+        private fun assertParsingFailsWithErrors(
+                rule: String,
+                expectedErrors: List<String>
+        ) =
+                Companion.parse(rule).fold(
+                        { errors -> assertThat(errors).containsExactlyElementsOf(expectedErrors) },
+                        { fail("parsing succeeded, where failure was expected") }
+                )
     }
 
 }

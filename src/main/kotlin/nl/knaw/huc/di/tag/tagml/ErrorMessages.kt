@@ -24,6 +24,7 @@ package nl.knaw.huc.di.tag.tagml
 const val ILLEGAL_MILESTONE = """Element "%s" does not have the "milestone" property in its definition."""
 const val MISSING_ATTRIBUTE = """Required attribute "%s" is missing on element "%s"."""
 const val MISSING_ATTRIBUTE_DATATYPE = """Attribute "%s" is missing a dataType."""
+val UNKNOWN_ATTRIBUTE_DATATYPE = """DataType "%s" for attribute "%s" is unknown. Valid dataTypes are: ${AttributeDataType.values().sorted().joinToString()}"""
 const val MISSING_ATTRIBUTE_DESCRIPTION = """Attribute "%s" is missing a description."""
 const val MISSING_ELEMENT_DESCRIPTION = """Element "%s" is missing a description."""
 const val MISSING_ONTOLOGY_FIELD = """Field ":ontology" missing in header."""
