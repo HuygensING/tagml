@@ -45,12 +45,30 @@ private fun toPair(ctx: TAGMLParser.Json_pairContext): Pair<String, Any> {
     val key = ctx.JSON_STRING().text.trim('"')
     val value = when (key) {
         ":ontology" -> parseOntology(ctx.json_value())
+        ":namespaces" -> parseNameSpaces(ctx.json_value())
         else -> ctx.json_value().text.trim('"')
     }
     return (key to value)
 }
 
-private fun parseOntology(jsonValueCtx: TAGMLParser.Json_valueContext): Either<List<ErrorListener.TAGError>, TAGOntology> {
+private fun parseNameSpaces(jsonValueCtx: TAGMLParser.Json_valueContext): ParseResult<Map<String, String>> {
+    val errors: MutableList<ErrorListener.TAGError> = mutableListOf()
+    val namespaces: MutableMap<String, String> = mutableMapOf()
+    jsonValueCtx.json_obj().json_pair()
+            .filterNotNull()
+            .forEach { pair ->
+                val key = pair.JSON_STRING().text.content()
+                val value = pair.json_value().text.content()
+                namespaces[key] = value
+            }
+    return if (errors.isEmpty()) {
+        Either.right(namespaces)
+    } else {
+        Either.left(errors.toList())
+    }
+}
+
+private fun parseOntology(jsonValueCtx: TAGMLParser.Json_valueContext): ParseResult<TAGOntology> {
     val errors: MutableList<ErrorListener.TAGError> = mutableListOf()
     var root: String? = ""
     val elementDefinitions: MutableMap<String, ElementDefinition> = mutableMapOf()
@@ -104,10 +122,10 @@ private fun parseOntology(jsonValueCtx: TAGMLParser.Json_valueContext): Either<L
             }
     checkMissingRootDefinition(root, errors, jsonValueCtx)
     checkMissingAttributeDefinitions(elementDefinitions, attributeDefinitions, errors, jsonValueCtx)
-    return if (errors.isEmpty()) {
-        Either.right(TAGOntology(root!!, elementDefinitions, attributeDefinitions, rules))
-    } else {
+    return if (errors.isNotEmpty()) {
         Either.left(errors.toList())
+    } else {
+        Either.right(TAGOntology(root!!, elementDefinitions, attributeDefinitions, rules))
     }
 }
 
@@ -139,7 +157,7 @@ private fun checkMissingRootDefinition(root: String?, errors: MutableList<ErrorL
 private fun String.content() = this.trim('"')
 private fun String.isValidName() = this.matches(Regex("[a-z][a-zA-Z_0-9]*"))
 
-private fun parseElementDefinition(context: TAGMLParser.Json_pairContext): Either<List<ErrorListener.TAGError>, ElementDefinition> {
+private fun parseElementDefinition(context: TAGMLParser.Json_pairContext): ParseResult<ElementDefinition> {
     val name = context.JSON_STRING().text.content()
     var description = ""
     val attributes = mutableListOf<AssignedAttribute>()
@@ -185,7 +203,7 @@ private fun parseElementDefinition(context: TAGMLParser.Json_pairContext): Eithe
     }
 }
 
-private fun parseAttributeDefinition(context: TAGMLParser.Json_pairContext): Either<List<ErrorListener.TAGError>, AttributeDefinition> {
+private fun parseAttributeDefinition(context: TAGMLParser.Json_pairContext): ParseResult<AttributeDefinition> {
     val name = context.JSON_STRING().text.content()
     var description = ""
     var dataTypeString = ""

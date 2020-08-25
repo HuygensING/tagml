@@ -20,6 +20,7 @@ package nl.knaw.huc.di.tag.tagml
  * #L%
  */
 
+import arrow.core.Either
 import nl.knaw.huc.di.tag.tagml.TAGMLParseResult.TAGMLParseFailure
 import nl.knaw.huc.di.tag.tagml.TAGMLParseResult.TAGMLParseSuccess
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLLexer
@@ -30,6 +31,8 @@ import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.tree.ParseTreeWalker
+
+typealias ParseResult<T> = Either<List<ErrorListener.TAGError>, T>
 
 sealed class TAGMLParseResult(val warnings: List<ErrorListener.TAGError>) {
     class TAGMLParseSuccess(val tokens: List<TAGMLToken>, warnings: List<ErrorListener.TAGError>) : TAGMLParseResult(warnings)

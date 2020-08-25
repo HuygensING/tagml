@@ -27,10 +27,22 @@ sealed class TAGMLToken(internal val range: Range, val rawContent: String) {
 
     @Suppress("UNCHECKED_CAST")
     class HeaderToken(range: Range, rawContent: String, val headerMap: Map<String, Any>) : TAGMLToken(range, rawContent) {
-        val ontologyParseResult: Either<List<ErrorListener.TAGError>, TAGOntology>
-            get() = headerMap.getOrElse(":ontology")
+        private val namespaceParseResult: ParseResult<Map<String, String>> by lazy {
+            headerMap.getOrElse(":namespaces") { Either.Right(mapOf<String, String>()) } as ParseResult<Map<String, String>>
+        }
+
+        val namespaces: Map<String, String> by lazy {
+            namespaceParseResult.fold(
+                    { mapOf() },
+                    { map -> map }
+            )
+        }
+
+        val ontologyParseResult: ParseResult<TAGOntology> by lazy {
+            headerMap.getOrElse(":ontology")
             { Either.left(listOf(ErrorListener.CustomError(range, MISSING_ONTOLOGY_FIELD))) }
-                    as Either<List<ErrorListener.TAGError>, TAGOntology>
+                    as ParseResult<TAGOntology>
+        }
     }
 
     class MarkupOpenToken(range: Range, rawContent: String, val qName: String, val markupId: Long, val attributes: List<TAGMLListener.KeyValue>) : TAGMLToken(range, rawContent)

@@ -421,35 +421,6 @@ class ValidatorTest {
         }
 
         @Test
-        fun attribute_datatype_must_match() {
-            val tagml = ("""
-            |[!{
-            |  ":ontology": {
-            |    "root": "tagml",
-            |    "elements": {
-            |       "tagml": {
-            |           "description": "The root element",
-            |           "attributes": ["string","int"]}
-            |    },
-            |    "attributes": {
-            |       "string": { "description": "something", "dataType": "String" },
-            |       "int": { "description": "something", "dataType": "Integer" }
-            |    }
-            |  }
-            |}!]
-            |[tagml string=42 int="foo">body<tagml]
-            |""".trimMargin())
-            assertTAGMLHasErrors(tagml) { errors, warnings ->
-                assertThat(errors.map { it.message }).containsExactly(
-                        """Attribute "string" is defined as dataType String, but is used as dataType Integer""",
-                        """Attribute "int" is defined as dataType Integer, but is used as dataType String"""
-                )
-                assertThat(warnings).isEmpty()
-            }
-            // TODO: test all DataTypes
-        }
-
-        @Test
         fun milestone_elements_must_have_milestone_property() {
             val tagml = ("""
             |[!{
@@ -776,6 +747,57 @@ class ValidatorTest {
 
                 val tagmlClose = tokenIterator.next() as MarkupCloseToken
                 assertThat(tagmlOpen.markupId).isEqualTo(tagmlClose.markupId)
+            }
+        }
+
+        @Test
+        fun defined_attribute_datatype_must_match_use() {
+            val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |       "tagml": {
+            |           "description": "The root element",
+            |           "attributes": ["string","int"]}
+            |    },
+            |    "attributes": {
+            |       "string": { "description": "something", "dataType": "String" },
+            |       "int": { "description": "something", "dataType": "Integer" }
+            |    }
+            |  }
+            |}!]
+            |[tagml string=42 int="foo">body<tagml]
+            |""".trimMargin())
+            assertTAGMLHasErrors(tagml) { errors, warnings ->
+                assertThat(errors.map { it.message }).containsExactly(
+                        """Attribute "string" is defined as dataType String, but is used as dataType Integer""",
+                        """Attribute "int" is defined as dataType Integer, but is used as dataType String"""
+                )
+                assertThat(warnings).isEmpty()
+            }
+            // TODO: test all DataTypes
+        }
+
+        @Test
+        fun namespace_must_be_defined_before_use() {
+            val tagml = ("""
+            |[!{
+            |  ":namespaces": {
+            |    "a": "http://example.org/namespace/a",
+            |    "b": "http://example.org/namespace/b"
+            |  },
+            |  ":ontology": {
+            |    "root": "tagml"
+            |  }
+            |}!]
+            |[tagml>[a:w>Lorem<a:w] [b:w>ipsum<b:w] dolor.<tagml]
+            |""".trimMargin())
+            assertTAGMLParses(tagml) { tokens, warnings ->
+                assertThat(warnings).isEmpty()
+                val tokenIterator = tokens.iterator()
+                val headerToken = tokenIterator.next() as HeaderToken
+                assertThat(headerToken.namespaces).containsOnlyKeys("a", "b")
             }
         }
     }
