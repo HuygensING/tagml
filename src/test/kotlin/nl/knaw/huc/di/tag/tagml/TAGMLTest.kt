@@ -53,7 +53,7 @@ class TAGMLTest {
     val log: Logger = LoggerFactory.getLogger(TAGMLTest::class.java)
 
     @Test
-    fun test_header() {
+    fun header() {
         val tagml = """
             [!{
                 "name": "test",
@@ -68,13 +68,13 @@ class TAGMLTest {
     }
 
     @Test
-    fun test_whitespace_in_text() {
+    fun whitespace_in_text() {
         val tagml = "[!{}!][l>[w>Just<w] [w>some<w] [w>words<w]<l] \n \n"
         assertParseSucceeds(this, tagml)
     }
 
     @Test
-    fun test_schema_header_is_required() {
+    fun schema_header_is_required() {
         val tagmlBad = "[tagml>Hello World!<tagml]\n"
         assertParseFails(tagmlBad)
 

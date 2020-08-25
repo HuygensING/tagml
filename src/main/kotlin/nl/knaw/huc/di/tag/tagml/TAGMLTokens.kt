@@ -33,7 +33,7 @@ sealed class TAGMLToken(internal val range: Range, val rawContent: String) {
                     as Either<List<ErrorListener.TAGError>, TAGOntology>
     }
 
-    class MarkupOpenToken(range: Range, rawContent: String, val qName: String, val markupId: Long) : TAGMLToken(range, rawContent)
+    class MarkupOpenToken(range: Range, rawContent: String, val qName: String, val markupId: Long, val attributes: List<TAGMLListener.KeyValue>) : TAGMLToken(range, rawContent)
 
     class MarkupSuspendToken(range: Range, rawContent: String, val qName: String, val markupId: Long) : TAGMLToken(range, rawContent)
 

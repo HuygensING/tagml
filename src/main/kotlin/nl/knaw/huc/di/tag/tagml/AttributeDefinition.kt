@@ -28,7 +28,7 @@ data class AttributeDefinition(
 )
 
 enum class AttributeDataType {
-    String, URI, Pointer, Integer, IntegerList, StringList, ID
+    String, URI, Pointer, Integer, IntegerList, StringList, ID, Boolean, Object, RichText
 }
 
 fun attributeDataTypeNames(): Set<String> = AttributeDataType.values().map { it.name }.toSet()

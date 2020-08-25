@@ -47,7 +47,7 @@ class TAGORLTest {
     inner class HierarchyRuleTest {
 
         @Test
-        fun test_hierarchy_rule_1() {
+        fun hierarchy_rule_1() {
             val rule = "excerpt > chapterTitle+, img?"
             val expectedParent = "excerpt"
             val expectedChildren1 = "chapterTitle"
@@ -73,30 +73,30 @@ class TAGORLTest {
                     }
             )
         }
-
-        @Test
-        fun test_set_rule_with_1_parameter_fails() {
-            val rule = "test(parameter)"
-            assertParsingFailsWithErrors(rule, listOf("syntax error: line 1:14 mismatched input ')' expecting ','"))
-        }
     }
 
     @Nested
     inner class SetRuleTest {
         @Test
-        fun test_set_rule_with_2_parameters() {
+        fun set_rule_with_1_parameter_fails() {
+            val rule = "test(parameter)"
+            assertParsingFailsWithErrors(rule, listOf("syntax error: line 1:14 mismatched input ')' expecting ','"))
+        }
+
+        @Test
+        fun set_rule_with_2_parameters() {
             val rule = "nonlinear(sic,corr)"
             assertParsesAsSetRule(rule, "nonlinear", listOf("sic", "corr"))
         }
 
         @Test
-        fun test_set_rule_with_3_parameters() {
+        fun set_rule_with_3_parameters() {
             val rule = "siblings(huey,dewey,louie)"
             assertParsesAsSetRule(rule, "siblings", listOf("huey", "dewey", "louie"))
         }
 
         @Test
-        fun test_failing_set_rule() {
+        fun failing_set_rule() {
             val rule = "test(parameter"
             assertParsingFailsWithErrors(rule, listOf("syntax error: line 1:14 mismatched input '<EOF>' expecting ','"))
         }
@@ -105,13 +105,13 @@ class TAGORLTest {
     @Nested
     inner class TripleRuleTest {
         @Test
-        fun test_triple_rule() {
+        fun triple_rule() {
             val rule = "author writes title"
             assertParsesAsTripleRule(rule, "author", "writes", listOf("title"))
         }
 
         @Test
-        fun test_triple_rule_with_multiple_objects() {
+        fun triple_rule_with_multiple_objects() {
             val rule = "cook prepares breakfast,lunch,dinner"
             assertParsesAsTripleRule(rule, "cook", "prepares", listOf("breakfast", "lunch", "dinner"))
         }

@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test
 class ValidatorTest {
 
     @Test
-    fun test_correct_tagml() {
+    fun correct_tagml() {
         val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -285,7 +285,7 @@ class ValidatorTest {
     @Nested
     inner class HeaderTest {
         @Test
-        fun test_header_without_root_creates_error() {
+        fun header_without_root_creates_error() {
             val tagml = ("""
             |[!{
             |}!]
@@ -298,7 +298,7 @@ class ValidatorTest {
         }
 
         @Test
-        fun test_root_element_may_not_be_discontinuous() {
+        fun root_element_may_not_be_discontinuous() {
             val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -320,7 +320,7 @@ class ValidatorTest {
         }
 
         @Test
-        fun test_different_root_in_header_and_body_gives_error() {
+        fun different_root_in_header_and_body_gives_error() {
             val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -337,7 +337,7 @@ class ValidatorTest {
         }
 
         @Test
-        fun test_element_definition_is_required() {
+        fun element_definition_is_required() {
             val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -356,7 +356,7 @@ class ValidatorTest {
         }
 
         @Test
-        fun test_using_undefined_element_gives_warning() {
+        fun using_undefined_element_gives_warning() {
             val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -374,7 +374,7 @@ class ValidatorTest {
         }
 
         @Test
-        fun test_using_undefined_attribute_gives_warning() {
+        fun using_undefined_attribute_gives_warning() {
             val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -392,7 +392,7 @@ class ValidatorTest {
         }
 
         @Test
-        fun test_missing_required_attributes_gives_error() {
+        fun missing_required_attributes_gives_error() {
             val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -420,9 +420,8 @@ class ValidatorTest {
             }
         }
 
-        @Disabled
         @Test
-        fun test_attribute_datatype_must_match() {
+        fun attribute_datatype_must_match() {
             val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -447,10 +446,11 @@ class ValidatorTest {
                 )
                 assertThat(warnings).isEmpty()
             }
+            // TODO: test all DataTypes
         }
 
         @Test
-        fun test_milestone_elements_must_have_milestone_property() {
+        fun milestone_elements_must_have_milestone_property() {
             val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -471,7 +471,7 @@ class ValidatorTest {
         }
 
         @Test
-        fun test_attribute_description_and_datatype_are_required() {
+        fun attribute_description_and_datatype_are_required() {
             val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -500,7 +500,7 @@ class ValidatorTest {
 
         @Disabled
         @Test
-        fun test_elements_used_in_rules_must_be_defined() {
+        fun elements_used_in_rules_must_be_defined() {
             val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -536,7 +536,7 @@ class ValidatorTest {
     inner class BodyTest {
 
         @Test
-        fun test_illegal_closing_tag_error() {
+        fun illegal_closing_tag_error() {
             val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -552,7 +552,7 @@ class ValidatorTest {
         }
 
         @Test
-        fun test_root_tag_does_not_match_ontology_root() {
+        fun root_tag_does_not_match_ontology_root() {
             val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -570,7 +570,7 @@ class ValidatorTest {
         }
 
         @Test
-        fun test_repeated_markup() {
+        fun repeated_markup() {
             val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -619,7 +619,7 @@ class ValidatorTest {
 
         @Disabled
         @Test
-        fun test_nested_markup() {
+        fun nested_markup() {
             val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -661,7 +661,7 @@ class ValidatorTest {
         }
 
         @Test
-        fun test_discontinuous_markup_needs_property() {
+        fun discontinuous_markup_needs_property() {
             val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -683,7 +683,7 @@ class ValidatorTest {
         }
 
         @Test
-        fun test_suspended_markup() {
+        fun suspended_markup() {
             val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -734,7 +734,7 @@ class ValidatorTest {
 
         @Disabled
         @Test
-        fun test_overlap() {
+        fun overlap() {
             val tagml = ("""
             |[!{
             |  ":ontology": {

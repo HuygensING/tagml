@@ -26,6 +26,9 @@ import nl.knaw.huc.di.tag.tagml.TAGMLToken.*
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParser
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
+import org.antlr.v4.runtime.tree.ParseTree
+import org.antlr.v4.runtime.tree.TerminalNode
+import java.util.*
 
 class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseListener() {
 
@@ -60,32 +63,37 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         context?.let { listenerContext ->
             val ontology = listenerContext.ontology
             checkExpectedRoot(ontology, qName, ctx)
+            val attributes: MutableList<KeyValue> = mutableListOf()
             if (ontology.hasElement(qName)) {
-                checkAttributes(ctx, ontology, qName, ctx.annotation())
+                attributes += parseAttributes(ctx, ontology, qName, ctx.annotation())
             } else {
                 addWarning(ctx, UNDEFINED_ELEMENT, qName)
             }
             listenerContext.openMarkup += qName
             val token = if (isResume) {
+                if (attributes.isNotEmpty()) {
+                    addError(ctx, NO_ATTRIBUTES_ON_RESUME, qName)
+                }
                 val markupId = listenerContext.markupId[qName]!!
                 MarkupResumeToken(ctx.getRange(), ctx.text, qName, markupId)
             } else {
                 val markupId = listenerContext.markupIds.next()
                 listenerContext.markupId[qName] = markupId
-                MarkupOpenToken(ctx.getRange(), ctx.text, qName, markupId)
+                MarkupOpenToken(ctx.getRange(), ctx.text, qName, markupId, attributes)
             }
             _tokens += token
         }
     }
 
-    private fun checkAttributes(
+    private fun parseAttributes(
             ctx: ParserRuleContext,
             ontology: TAGOntology,
             qName: String,
             annotationContexts: List<TAGMLParser.AnnotationContext>
-    ) {
+    ): List<KeyValue> {
         val attributesUsed = mutableListOf<String>()
         val elementDefinition = ontology.elementDefinition(qName)!!
+        val keyValues: MutableList<KeyValue> = mutableListOf()
         for (actx in annotationContexts) {
             when (actx) {
                 is TAGMLParser.BasicAnnotationContext -> {
@@ -94,8 +102,16 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                     if (ontology.hasElement(qName) && !elementDefinition.hasAttribute(attributeName)) {
                         addWarning(ctx, UNDEFINED_ATTRIBUTE, attributeName, qName)
                     }
-                    when (actx.annotationValue()) {
-                        is TAGMLParser.AnnotationValueContext -> println("AnnotationValueContext")
+                    when (val annotationValueCtx = actx.annotationValue()) {
+                        is TAGMLParser.AnnotationValueContext -> {
+                            val value = annotationValue(annotationValueCtx)
+                            val expectedDataType = ontology.attributes[attributeName]?.dataType
+                            if (expectedDataType != null && value?.type != expectedDataType) {
+                                addError(actx, WRONG_DATATYPE, attributeName, expectedDataType, value?.type!!)
+                            } else {
+                                keyValues.add(KeyValue(attributeName, value))
+                            }
+                        }
                         else -> TODO()
                     }
                 }
@@ -107,7 +123,88 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         (elementDefinition.requiredAttributes - attributesUsed).forEach { mra ->
             addError(ctx, MISSING_ATTRIBUTE, mra, qName)
         }
+        return keyValues
     }
+
+    data class TypedValue(val value: Any?, val type: AttributeDataType)
+
+    private fun annotationValue(annotationValueContext: TAGMLParser.AnnotationValueContext): TypedValue? =
+            when {
+                annotationValueContext.AV_StringValue() != null ->
+                    TypedValue(annotationValueContext
+                            .AV_StringValue()
+                            .text
+                            .replaceFirst("^.".toRegex(), "")
+                            .replaceFirst(".$".toRegex(), "")
+                            .replace("\\\"", "\"")
+                            .replace("\\'", "'"),
+                            AttributeDataType.String)
+                annotationValueContext.booleanValue() != null ->
+                    TypedValue(
+                            java.lang.Boolean.valueOf(annotationValueContext.booleanValue().text),
+                            AttributeDataType.Boolean
+                    )
+                annotationValueContext.AV_NumberValue() != null ->
+                    TypedValue(
+                            java.lang.Double.valueOf(annotationValueContext.AV_NumberValue().text),
+                            AttributeDataType.Integer)
+                annotationValueContext.listValue() != null ->
+                    TypedValue(
+                            annotationValueContext.listValue().annotationValue()
+                                    .map { annotationValue(it) },
+                            AttributeDataType.StringList
+                    )
+                annotationValueContext.objectValue() != null ->
+                    TypedValue(
+                            readObject(annotationValueContext.objectValue()),
+                            AttributeDataType.Object
+                    )
+                annotationValueContext.richTextValue() != null ->
+                    TypedValue(
+                            annotationValueContext.richTextValue().text,
+                            AttributeDataType.RichText
+                    )
+                else -> {
+                    addError(annotationValueContext.getParent(),
+                            UNKNOWN_ANNOTATION_TYPE,
+                            annotationValueContext.text)
+                    null
+                }
+            }
+
+    private fun readObject(objectValueContext: TAGMLParser.ObjectValueContext): Map<String, Any?> {
+        val map: MutableMap<String, Any?> = LinkedHashMap()
+        objectValueContext.children
+                .filter { c: ParseTree? -> c !is TerminalNode }
+                .map { parseTree: ParseTree -> parseAttribute(parseTree) }
+                .forEach { kv: KeyValue -> map[kv.key] = kv.value }
+        return map
+    }
+
+    private fun parseAttribute(parseTree: ParseTree): KeyValue =
+            when (parseTree) {
+                is TAGMLParser.BasicAnnotationContext -> {
+                    val aName = parseTree.annotationName().text
+                    val annotationValueContext = parseTree.annotationValue()
+                    val value = annotationValue(annotationValueContext)
+                    KeyValue(aName, value)
+                }
+                is TAGMLParser.IdentifyingAnnotationContext -> {
+                    // TODO: deal with this identifier
+                    val value = parseTree.idValue().text
+                    KeyValue(":id", value)
+                }
+                is TAGMLParser.RefAnnotationContext -> {
+                    val aName = parseTree.annotationName().text
+                    val value = parseTree.refValue().text
+                    KeyValue("!$aName", value)
+                }
+                else -> {
+                    throw RuntimeException("unhandled type " + parseTree.javaClass.name)
+                    //      errorListener.addBreakingError("%s Cannot determine the type of this annotation: %s",
+                    //          errorPrefix(parseTree.), parseTree.getText());
+                }
+            }
 
     private fun checkExpectedRoot(ontology: TAGOntology, qName: String, ctx: ParserRuleContext) {
         val expectedRoot = ontology.root
@@ -122,7 +219,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
             val ontology = listenerContext.ontology
             checkExpectedRoot(ontology, qName, ctx)
             if (ontology.hasElement(qName)) {
-                checkAttributes(ctx, ontology, qName, ctx.annotation())
+                parseAttributes(ctx, ontology, qName, ctx.annotation())
                 if (!ontology.elementDefinition(qName)?.isMilestone!!) {
                     addError(ctx, ILLEGAL_MILESTONE, qName)
                 }
@@ -184,4 +281,5 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
             errorListener.addBreakingError(
                     Position.startOf(ctx), Position.endOf(ctx), messageTemplate, *messageArgs)
 
+    data class KeyValue(var key: String, var value: Any?)
 }
