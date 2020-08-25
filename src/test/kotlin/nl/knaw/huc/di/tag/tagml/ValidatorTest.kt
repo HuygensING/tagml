@@ -703,6 +703,33 @@ class ValidatorTest {
             }
         }
 
+        @Test
+        fun attributes_not_allowed_on_resume_tag() {
+            val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |      "tagml": {"description": "something"},
+            |      "q":     {
+            |                   "description": "quote",
+            |                   "properties": ["discontinuous"]
+            |               }
+            |    }
+            |  }
+            |}!]
+            |[tagml>[q>I think,<-q] he thought, [+q reason="whatever">I need to say something now.<q]<tagml]
+            |""".trimMargin())
+            assertTAGMLHasErrors(tagml) { errors, warnings ->
+                assertThat(errors.map { it.message }).containsExactly(
+                        """Resume tag "q" has attributes, this is not allowed"""
+                )
+                assertThat(warnings.map { it.message }).containsExactly(
+                        """Attribute "reason" on element "q" is not defined in the ontology."""
+                )
+            }
+        }
+
         @Disabled
         @Test
         fun overlap() {
@@ -780,7 +807,7 @@ class ValidatorTest {
         }
 
         @Test
-        fun namespace_must_be_defined_before_use() {
+        fun predefined_namespaces_are_allowed() {
             val tagml = ("""
             |[!{
             |  ":namespaces": {
@@ -788,7 +815,12 @@ class ValidatorTest {
             |    "b": "http://example.org/namespace/b"
             |  },
             |  ":ontology": {
-            |    "root": "tagml"
+            |    "root": "tagml",
+            |    "elements": {
+            |      "tagml": {"description": "..."},
+            |      "a:w": {"description": "..."},
+            |      "b:w": {"description": "..."}
+            |    }
             |  }
             |}!]
             |[tagml>[a:w>Lorem<a:w] [b:w>ipsum<b:w] dolor.<tagml]
@@ -798,6 +830,31 @@ class ValidatorTest {
                 val tokenIterator = tokens.iterator()
                 val headerToken = tokenIterator.next() as HeaderToken
                 assertThat(headerToken.namespaces).containsOnlyKeys("a", "b")
+            }
+        }
+
+        @Test
+        fun undefined_namespaces_are_not_allowed() {
+            val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |      "tagml": {"description": "..."}
+            |    }
+            |  }
+            |}!]
+            |[tagml>[a:w>Lorem<a:w] [b:w>ipsum<b:w] dolor.<tagml]
+            |""".trimMargin())
+            assertTAGMLHasErrors(tagml) { errors, warnings ->
+                assertThat(errors.map { it.message }).containsExactly(
+                        "some error about namespace a",
+                        "some error about namespace b",
+                )
+                assertThat(warnings.map { it.message }).containsExactly(
+                        """Element "a:w" is not defined in the ontology.""",
+                        """Element "b:w" is not defined in the ontology."""
+                )
             }
         }
     }
