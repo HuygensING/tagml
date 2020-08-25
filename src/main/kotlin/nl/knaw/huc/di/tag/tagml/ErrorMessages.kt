@@ -44,3 +44,4 @@ const val UNEXPECTED_ROOT = """Root element "%s" does not match the one defined 
 const val UNKNOWN_ELEMENT_FIELD = """Unknown element field "%s""""
 const val DISCONTINUOUS_ROOT = """Root element "%s" is not allowed to be discontinuous."""
 const val UNKNOWN_ANNOTATION_TYPE = "Cannot determine the type of this annotation: %s"
+const val NAMESPACE_NOT_DEFINED = """Namespace "%s" has not been defined in the header."""

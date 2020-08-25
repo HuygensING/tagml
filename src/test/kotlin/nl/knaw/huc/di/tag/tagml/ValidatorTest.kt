@@ -557,7 +557,7 @@ class ValidatorTest {
             assertTAGMLParses(tagml) { tokens, warnings ->
                 assertThat(warnings).isEmpty()
                 val tokenIterator = tokens.iterator()
-                val headerToken = tokenIterator.next()
+                val headerToken = tokenIterator.next() as HeaderToken
 
                 val tagmlOpen = tokenIterator.next() as MarkupOpenToken
                 val x1Open = tokenIterator.next() as MarkupOpenToken
@@ -674,7 +674,7 @@ class ValidatorTest {
                 assertThat(warnings).isEmpty()
 
                 val tokenIterator = tokens.iterator()
-                val headerToken = tokenIterator.next()
+                val headerToken = tokenIterator.next() as HeaderToken
 
                 val tagmlOpen = tokenIterator.next() as MarkupOpenToken
                 val qOpen = tokenIterator.next() as MarkupOpenToken
@@ -848,12 +848,14 @@ class ValidatorTest {
             |""".trimMargin())
             assertTAGMLHasErrors(tagml) { errors, warnings ->
                 assertThat(errors.map { it.message }).containsExactly(
-                        "some error about namespace a",
-                        "some error about namespace b",
+                        """Namespace "a" has not been defined in the header.""",
+                        """Namespace "a" has not been defined in the header.""",
+                        """Namespace "b" has not been defined in the header.""",
+                        """Namespace "b" has not been defined in the header."""
                 )
                 assertThat(warnings.map { it.message }).containsExactly(
                         """Element "a:w" is not defined in the ontology.""",
-                        """Element "b:w" is not defined in the ontology."""
+                        """Element "b:w" is not defined in the ontology.""",
                 )
             }
         }
