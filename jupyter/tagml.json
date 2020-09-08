@@ -1,0 +1,26 @@
+{
+  "description": "TAGML Parser",
+  "properties": {
+    "v": "3.0.560-SNAPSHOT"
+  },
+  "link": "https://github.com/HuygensING/tagml",
+  "dependencies": [
+    "nl.knaw.huygens.alexandria:tagml:$v"
+  ],
+  "repositories": [
+    "http://maven.huygens.knaw.nl/repository/"
+  ],
+  "imports": [
+    "nl.knaw.huc.di.tag.tagml.*"
+  ],
+  "init": [
+    "LibraryConfig.init()"
+  ],
+  "initCell": [
+    "LibraryConfig.initCell()"
+  ],
+  "shutdown": [
+    "LibraryConfig.shutdown()"
+  ]
+  //  "renderers": {"nl.knaw.huygens.hypercollate.model.CollationGraph":  "HTML(LibraryConfig.renderCollationGraph($it))"}
+}

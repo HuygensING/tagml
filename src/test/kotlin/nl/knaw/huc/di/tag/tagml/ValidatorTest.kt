@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test
 class ValidatorTest {
 
     @Test
-    fun correct_tagml() {
+    fun integration_test() {
         val tagml = ("""
             |[!{
             |  ":ontology": {
@@ -469,7 +469,6 @@ class ValidatorTest {
             }
         }
 
-        @Disabled
         @Test
         fun elements_used_in_rules_must_be_defined() {
             val tagml = ("""
@@ -730,7 +729,7 @@ class ValidatorTest {
             }
         }
 
-        @Disabled
+        //        @Disabled
         @Test
         fun overlap() {
             val tagml = ("""
@@ -744,7 +743,7 @@ class ValidatorTest {
             |    }
             |  }
             |}!]
-            |[tagml>[a>Cookie Monster [b>likes<a] cookies.<b]<tagml]
+            |[tagml|+A,+B>[a|A>Cookie Monster [b|B>likes<a] cookies.<b]<tagml]
             |""".trimMargin())
             assertTAGMLParses(tagml) { tokens, warnings ->
                 assertThat(warnings).isEmpty()
@@ -855,7 +854,7 @@ class ValidatorTest {
                 )
                 assertThat(warnings.map { it.message }).containsExactly(
                         """Element "a:w" is not defined in the ontology.""",
-                        """Element "b:w" is not defined in the ontology.""",
+                        """Element "b:w" is not defined in the ontology."""
                 )
             }
         }

@@ -42,11 +42,11 @@ fun parseHeader(ctx: TAGMLParser.HeaderContext): Map<String, Any> =
 
 @Suppress("IMPLICIT_CAST_TO_ANY")
 private fun toPair(ctx: TAGMLParser.Json_pairContext): Pair<String, Any> {
-    val key = ctx.JSON_STRING().text.trim('"')
+    val key = ctx.JSON_STRING().text.content()
     val value = when (key) {
         ":ontology" -> parseOntology(ctx.json_value())
         ":namespaces" -> parseNameSpaces(ctx.json_value())
-        else -> ctx.json_value().text.trim('"')
+        else -> ctx.json_value().text.content()
     }
     return (key to value)
 }
@@ -263,6 +263,7 @@ private fun parseRule(tagorl: String, definedElements: Set<String>): Either<List
 }
 
 fun parseHierarchyRule(ruleContext: TAGORLParser.HierarchyRuleContext, definedElements: Set<String>): Either<List<String>, HierarchyRule> {
+    val elements = ruleContext.children.map { it.text }
     return Right(HierarchyRule(ruleContext.text))
 }
 

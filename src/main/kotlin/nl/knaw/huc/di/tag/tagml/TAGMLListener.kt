@@ -24,6 +24,7 @@ import arrow.core.Either
 import nl.knaw.huc.di.tag.tagml.ErrorListener.TAGError
 import nl.knaw.huc.di.tag.tagml.TAGMLToken.*
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParser
+import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParser.LayerInfoContext
 import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTree
@@ -41,7 +42,12 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     class ListenerContext(val ontology: TAGOntology, val nameSpaces: Map<String, String>) {
         val markupId: MutableMap<String, Long> = mutableMapOf()
         val markupIds: Iterator<Long> = generateSequence(0L) { it + 1L }.iterator()
-        val openMarkup: MutableList<String> = mutableListOf()
+        internal val openMarkup: MutableMap<String, MutableList<String>> = mutableMapOf()
+
+        fun noOpenMarkup(): Boolean = openMarkup.isEmpty()
+
+        fun openMarkupInLayer(layer: String): MutableList<String> =
+                openMarkup.getOrPut(layer) { mutableListOf() }
     }
 
     val tokens: List<TAGMLToken>
@@ -75,6 +81,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     override fun exitStartTag(ctx: TAGMLParser.StartTagContext) {
         context?.let { listenerContext ->
             val qName = validatedMarkupName(ctx.markupName().name(), listenerContext)
+            val layers = ctx.markupName().layerInfo().layers()
             val isResume = ctx.markupName().prefix()?.text == TAGML.RESUME_PREFIX
             val ontology = listenerContext.ontology
             checkExpectedRoot(ontology, qName, ctx)
@@ -84,17 +91,17 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
             } else {
                 addWarning(ctx, UNDEFINED_ELEMENT, qName)
             }
-            listenerContext.openMarkup += qName
+            layers.forEach { listenerContext.openMarkupInLayer(it) += qName }
             val token = if (isResume) {
                 if (attributes.isNotEmpty()) {
                     addError(ctx, NO_ATTRIBUTES_ON_RESUME, qName)
                 }
                 val markupId = listenerContext.markupId[qName]!!
-                MarkupResumeToken(ctx.getRange(), ctx.text, qName, markupId)
+                MarkupResumeToken(ctx.getRange(), ctx.text, qName, layers, markupId)
             } else {
                 val markupId = listenerContext.markupIds.next()
                 listenerContext.markupId[qName] = markupId
-                MarkupOpenToken(ctx.getRange(), ctx.text, qName, markupId, attributes)
+                MarkupOpenToken(ctx.getRange(), ctx.text, qName, layers, markupId, attributes)
             }
             _tokens += token
         }
@@ -103,6 +110,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     override fun exitMilestoneTag(ctx: TAGMLParser.MilestoneTagContext) {
         context?.let { listenerContext ->
             val qName = validatedMarkupName(ctx.name(), listenerContext)
+            val layers = ctx.layerInfo().layers()
             val ontology = listenerContext.ontology
             checkExpectedRoot(ontology, qName, ctx)
             val attributes: MutableList<KeyValue> = mutableListOf()
@@ -114,7 +122,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
             } else {
                 addWarning(ctx, UNDEFINED_ELEMENT, qName)
             }
-            val token = MarkupMilestoneToken(ctx.getRange(), ctx.text, qName, attributes)
+            val token = MarkupMilestoneToken(ctx.getRange(), ctx.text, qName, layers, attributes)
             _tokens += token
         }
     }
@@ -123,27 +131,43 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         context?.let { listenerContext ->
             val rawContent = ctx.text
             val qName = validatedMarkupName(ctx.markupName().name(), listenerContext)
+            val givenLayers = ctx.markupName().layerInfo().layers()
+            val layers = if (givenLayers != setOf(TAGML.DEFAULT_LAYER)) {
+                givenLayers
+            } else {
+                val deducedLayers = listenerContext.openMarkup
+                        .filter { (_, markupStack) -> markupStack.lastOrNull() == qName }
+                        .map { (layer, _) -> layer }
+                        .toSet()
+                if (deducedLayers.isEmpty()) {
+                    setOf(TAGML.DEFAULT_LAYER)
+                } else {
+                    deducedLayers
+                }
+            }
             val isSuspend = ctx.markupName().prefix()?.text == TAGML.SUSPEND_PREFIX
             val elementDefinition = listenerContext.ontology.elementDefinition(qName)
             if (isSuspend && elementDefinition != null && !elementDefinition.isDiscontinuous) {
                 addError(ctx, ILLEGAL_SUSPEND, qName)
             }
-            when (qName) {
-                listenerContext.openMarkup.last() -> {
-                    listenerContext.openMarkup.remove(qName)
-                    val markupId = listenerContext.markupId[qName]!!
-                    val token = if (isSuspend) {
-                        MarkupSuspendToken(ctx.getRange(), rawContent, qName, markupId)
-                    } else {
-                        MarkupCloseToken(ctx.getRange(), rawContent, qName, markupId)
+            for (layer in layers) {
+                when (qName) {
+                    listenerContext.openMarkupInLayer(layer).lastOrNull() -> {
+                        listenerContext.openMarkupInLayer(layer).remove(qName)
+                        val markupId = listenerContext.markupId[qName]!!
+                        val token = if (isSuspend) {
+                            MarkupSuspendToken(ctx.getRange(), rawContent, qName, givenLayers, markupId)
+                        } else {
+                            MarkupCloseToken(ctx.getRange(), rawContent, qName, givenLayers, markupId)
+                        }
+                        _tokens += token
                     }
-                    _tokens += token
-                }
-                in listenerContext.openMarkup -> {
-                    addError(ctx, UNEXPECTED_CLOSE_TAG, rawContent, listenerContext.openMarkup.last())
-                }
-                else -> {
-                    addError(ctx, MISSING_OPEN_TAG, rawContent)
+                    in listenerContext.openMarkupInLayer(layer) -> {
+                        addError(ctx, UNEXPECTED_CLOSE_TAG, rawContent, listenerContext.openMarkupInLayer(layer).last())
+                    }
+                    else -> {
+                        addError(ctx, MISSING_OPEN_TAG, rawContent)
+                    }
                 }
             }
         }
@@ -275,7 +299,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
 
     private fun checkExpectedRoot(ontology: TAGOntology, qName: String, ctx: ParserRuleContext) {
         val expectedRoot = ontology.root
-        if (context!!.openMarkup.isEmpty() && qName != expectedRoot) {
+        if (context!!.noOpenMarkup() && qName != expectedRoot) {
             addError(ctx, UNEXPECTED_ROOT, qName, expectedRoot)
         }
     }
@@ -306,5 +330,18 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
             ctx: ParserRuleContext, messageTemplate: String, vararg messageArgs: Any) =
             errorListener.addBreakingError(
                     Position.startOf(ctx), Position.endOf(ctx), messageTemplate, *messageArgs)
+
+    private fun LayerInfoContext?.layers(): Set<String> {
+        val layers: MutableSet<String> = HashSet()
+        if (this != null) {
+            val explicitLayers = layerName()
+                    .map { it.text.replace("+", "") }
+            layers += explicitLayers
+        }
+        if (layers.isEmpty()) {
+            layers.add(TAGML.DEFAULT_LAYER)
+        }
+        return layers
+    }
 
 }
