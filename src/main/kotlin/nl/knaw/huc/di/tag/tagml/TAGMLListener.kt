@@ -156,9 +156,9 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                         listenerContext.openMarkupInLayer(layer).remove(qName)
                         val markupId = listenerContext.markupId[qName]!!
                         val token = if (isSuspend) {
-                            MarkupSuspendToken(ctx.getRange(), rawContent, qName, givenLayers, markupId)
+                            MarkupSuspendToken(ctx.getRange(), rawContent, qName, layers, markupId)
                         } else {
-                            MarkupCloseToken(ctx.getRange(), rawContent, qName, givenLayers, markupId)
+                            MarkupCloseToken(ctx.getRange(), rawContent, qName, layers, markupId)
                         }
                         _tokens += token
                     }
