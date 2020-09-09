@@ -47,13 +47,13 @@ sealed class TAGMLToken(private val range: Range, val rawContent: String) {
 
     class MarkupOpenToken(range: Range, rawContent: String, val qName: String, val layers: Set<String>, val markupId: Long, val attributes: List<KeyValue>) : TAGMLToken(range, rawContent)
 
-    class MarkupSuspendToken(range: Range, rawContent: String, val qName: String, layers: Set<String>, val markupId: Long) : TAGMLToken(range, rawContent)
+    class MarkupSuspendToken(range: Range, rawContent: String, val qName: String, val layers: Set<String>, val markupId: Long) : TAGMLToken(range, rawContent)
 
-    class MarkupResumeToken(range: Range, rawContent: String, val qName: String, layers: Set<String>, val markupId: Long) : TAGMLToken(range, rawContent)
+    class MarkupResumeToken(range: Range, rawContent: String, val qName: String, val layers: Set<String>, val markupId: Long) : TAGMLToken(range, rawContent)
 
-    class MarkupCloseToken(range: Range, rawContent: String, val qName: String, layers: Set<String>, val markupId: Long) : TAGMLToken(range, rawContent)
+    class MarkupCloseToken(range: Range, rawContent: String, val qName: String, val layers: Set<String>, val markupId: Long) : TAGMLToken(range, rawContent)
 
-    class MarkupMilestoneToken(range: Range, rawContent: String, val qName: String, layers: Set<String>, val attributes: List<KeyValue>) : TAGMLToken(range, rawContent)
+    class MarkupMilestoneToken(range: Range, rawContent: String, val qName: String, val layers: Set<String>, val attributes: List<KeyValue>) : TAGMLToken(range, rawContent)
 
     class TextToken(range: Range, rawContent: String) : TAGMLToken(range, rawContent) {
         val isWhiteSpace: Boolean =

@@ -44,7 +44,9 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         val markupIds: Iterator<Long> = generateSequence(0L) { it + 1L }.iterator()
         internal val openMarkup: MutableMap<String, MutableList<String>> = mutableMapOf()
 
-        fun noOpenMarkup(): Boolean = openMarkup.isEmpty()
+        fun noOpenMarkup(): Boolean = openMarkup.values.all { it.isEmpty() }
+
+        fun noMarkupEncountered(): Boolean = openMarkup.isEmpty()
 
         fun openMarkupInLayer(layer: String): MutableList<String> =
                 openMarkup.getOrPut(layer) { mutableListOf() }
@@ -174,8 +176,12 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     }
 
     override fun exitText(ctx: TAGMLParser.TextContext) {
-        val token = TextToken(ctx.getRange(), ctx.text)
-        _tokens += token
+        context?.let { listenerContext ->
+            if (!listenerContext.noOpenMarkup()) {
+                val token = TextToken(ctx.getRange(), ctx.text)
+                _tokens += token
+            }
+        }
     }
 
     private fun parseAttributes(
@@ -299,7 +305,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
 
     private fun checkExpectedRoot(ontology: TAGOntology, qName: String, ctx: ParserRuleContext) {
         val expectedRoot = ontology.root
-        if (context!!.noOpenMarkup() && qName != expectedRoot) {
+        if (context!!.noMarkupEncountered() && qName != expectedRoot) {
             addError(ctx, UNEXPECTED_ROOT, qName, expectedRoot)
         }
     }

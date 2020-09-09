@@ -584,6 +584,8 @@ class ValidatorTest {
 
                 val tagmlClose = tokenIterator.next() as MarkupCloseToken
                 assertThat(tagmlOpen.markupId).isEqualTo(tagmlClose.markupId)
+
+                assertThat(tokenIterator.hasNext()).isFalse()
             }
         }
 
