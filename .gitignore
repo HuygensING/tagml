@@ -9,4 +9,4 @@
 main/out
 out/*
 src/generated/
-src/main/antlr4/nl/knaw/huc/di/tag/tagml/grammar/gen/
+src/main/antlr4/nl/knaw/huygens/tag/tagml/grammar/gen/
