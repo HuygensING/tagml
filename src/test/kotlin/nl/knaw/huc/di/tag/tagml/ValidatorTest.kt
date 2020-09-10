@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Test
 
 class ValidatorTest {
 
+    @Disabled("TODO: datatype ID/String")
     @Test
     fun integration_test() {
         val tagml = ("""
@@ -469,6 +470,7 @@ class ValidatorTest {
             }
         }
 
+        @Disabled("TODO: parse HierarchyRule")
         @Test
         fun elements_used_in_rules_must_be_defined() {
             val tagml = ("""

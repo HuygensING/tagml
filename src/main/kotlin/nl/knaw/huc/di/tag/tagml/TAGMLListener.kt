@@ -219,7 +219,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
             }
         }
         attributesUsed.forEach { val definedDataType = ontology.attributes[it]?.dataType }
-        (elementDefinition.requiredAttributes - attributesUsed).forEach { mra ->
+        for (mra in elementDefinition.requiredAttributes - attributesUsed) {
             addError(ctx, MISSING_ATTRIBUTE, mra, qName)
         }
         return keyValues
