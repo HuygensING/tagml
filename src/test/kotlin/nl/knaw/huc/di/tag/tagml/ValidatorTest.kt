@@ -866,7 +866,7 @@ class ValidatorTest {
 
     companion object {
         private fun assertTAGMLParses(tagml: String, tokenListAssert: (List<TAGMLToken>, List<TAGError>) -> Unit) =
-                when (val result = parse(tagml)) {
+                when (val result = parseFromString(tagml)) {
                     is TAGMLParseSuccess -> tokenListAssert(result.tokens, result.warnings)
                     is TAGMLParseFailure -> {
                         val errors = result.errors.joinToString("\n")
@@ -875,7 +875,7 @@ class ValidatorTest {
                 }
 
         private fun assertTAGMLHasErrors(tagml: String, errorListAssert: (List<TAGError>, List<TAGError>) -> Unit) =
-                when (val result = parse(tagml)) {
+                when (val result = parseFromString(tagml)) {
                     is TAGMLParseSuccess -> fail("expected parsing to fail")
                     is TAGMLParseFailure -> errorListAssert(result.errors, result.warnings)
                 }
