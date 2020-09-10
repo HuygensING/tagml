@@ -8,7 +8,7 @@ add this dependency to your `pom.xml`
 
 ```xml
 <dependency>
-  <groupId>nl.knaw.huygens.alexandria</groupId>
+  <groupId>nl.knaw.huygens.tag</groupId>
   <artifactId>tagml</artifactId>
   <version>0.560.1</version>
 </dependency>
