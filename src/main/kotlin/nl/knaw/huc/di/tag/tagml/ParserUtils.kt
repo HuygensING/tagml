@@ -31,6 +31,8 @@ import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.tree.ParseTreeWalker
+import java.io.File
+import java.nio.file.Path
 
 typealias ParseResult<T> = Either<List<ErrorListener.TAGError>, T>
 
@@ -42,8 +44,16 @@ sealed class TAGMLParseResult(val warnings: List<ErrorListener.TAGError>) {
 fun ParserRuleContext.getRange(): Range =
         Range(Position.startOf(this), Position.endOf(this))
 
-fun parse(tagml: String): TAGMLParseResult {
-    val antlrInputStream: CharStream = CharStreams.fromString(tagml)
+fun parse(tagmlPath: Path): TAGMLParseResult =
+        parse(CharStreams.fromPath(tagmlPath))
+
+fun parse(tagmlFile: File): TAGMLParseResult =
+        parse(tagmlFile.toPath())
+
+fun parse(tagml: String): TAGMLParseResult =
+        parse(CharStreams.fromString(tagml))
+
+private fun parse(antlrInputStream: CharStream): TAGMLParseResult {
     val errorListener = ErrorListener()
     val lexer = TAGMLLexer(antlrInputStream)
             .apply { addErrorListener(errorListener) }
@@ -63,6 +73,5 @@ fun parse(tagml: String): TAGMLParseResult {
     } else {
         TAGMLParseSuccess(listener.tokens, errorListener.orderedWarnings)
     }
-
 }
 
