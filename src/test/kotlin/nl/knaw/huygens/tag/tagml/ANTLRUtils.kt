@@ -25,7 +25,7 @@ import de.vandermeer.asciitable.CWC_LongestLine
 import de.vandermeer.asciithemes.a7.A7_Grids
 import de.vandermeer.skb.interfaces.transformers.textformat.TextAlignment
 import nl.knaw.huygens.tag.tagml.grammar.TAGMLLexer
-import nl.knaw.huygens.tag.tagml.tagorl.TAGORLLexer
+import nl.knaw.huygens.tag.tagorl.TAGORLLexer
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.Lexer

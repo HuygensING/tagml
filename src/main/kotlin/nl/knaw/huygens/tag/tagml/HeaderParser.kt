@@ -27,8 +27,8 @@ import nl.knaw.huygens.tag.tagml.AssignedAttribute.OptionalAttribute
 import nl.knaw.huygens.tag.tagml.AssignedAttribute.RequiredAttribute
 import nl.knaw.huygens.tag.tagml.OntologyRule.*
 import nl.knaw.huygens.tag.tagml.grammar.TAGMLParser
-import nl.knaw.huygens.tag.tagml.tagorl.TAGORLLexer
-import nl.knaw.huygens.tag.tagml.tagorl.TAGORLParser
+import nl.knaw.huygens.tag.tagorl.TAGORLLexer
+import nl.knaw.huygens.tag.tagorl.TAGORLParser
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
