@@ -1,4 +1,4 @@
-package nl.knaw.huc.di.tag.tagml
+package nl.knaw.huygens.tag.tagml
 
 /*-
  * #%L
@@ -20,7 +20,7 @@ package nl.knaw.huc.di.tag.tagml
  * #L%
  */
 
-import nl.knaw.huc.di.tag.tagml.AssignedAttribute.RequiredAttribute
+import nl.knaw.huygens.tag.tagml.AssignedAttribute.RequiredAttribute
 
 data class ElementDefinition(
         val name: String,

@@ -1,4 +1,4 @@
-package nl.knaw.huc.di.tag.tagml
+package nl.knaw.huygens.tag.tagml
 
 /*-
  * #%L
@@ -20,16 +20,15 @@ package nl.knaw.huc.di.tag.tagml
  * #L%
  */
 
-data class TAGOntology(
-        val root: String,
-        val elementDefinitions: Map<String, ElementDefinition>,
-        val attributes: Map<String, AttributeDefinition>,
-        val rules: List<OntologyRule>
+data class AttributeDefinition(
+        val name: String,
+        val description: String,
+        val dataType: AttributeDataType,
+        val ref: String = ""
 )
 
-fun TAGOntology.elementDefinition(qName: String): ElementDefinition? =
-        elementDefinitions[qName]
+enum class AttributeDataType {
+    String, URI, Pointer, Integer, IntegerList, StringList, ID, Boolean, Object, RichText
+}
 
-fun TAGOntology.hasElement(qName: String): Boolean =
-        elementDefinitions.containsKey(qName)
-
+fun attributeDataTypeNames(): Set<String> = AttributeDataType.values().map { it.name }.toSet()

@@ -17,10 +17,6 @@
  * limitations under the License.
  * #L%
  */
-package nl.knaw.huc.di.tag.tagml
+package nl.knaw.huygens.tag.tagml
 
-data class Range(val startPosition: Position, val endPosition: Position) {
-
-    override fun toString(): String =
-            "Range{$startPosition - $endPosition}"
-}
+class TAGMLBreakingError(message: String) : RuntimeException(message)

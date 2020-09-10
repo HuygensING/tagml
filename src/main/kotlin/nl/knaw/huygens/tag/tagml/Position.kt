@@ -1,3 +1,5 @@
+package nl.knaw.huygens.tag.tagml
+
 /*-
  * #%L
  * tagml
@@ -17,6 +19,19 @@
  * limitations under the License.
  * #L%
  */
-package nl.knaw.huc.di.tag.tagml
 
-class TAGMLBreakingError(message: String) : RuntimeException(message)
+import org.antlr.v4.runtime.ParserRuleContext
+
+data class Position(val line: Int, val character: Int) {
+
+    override fun toString(): String = String.format("%d:%d", line, character)
+
+    companion object {
+        fun startOf(ctx: ParserRuleContext): Position =
+                Position(ctx.start.line, ctx.start.charPositionInLine + 1)
+
+        fun endOf(ctx: ParserRuleContext): Position =
+                Position(ctx.stop.line, ctx.stop.charPositionInLine + ctx.stop.stopIndex - ctx.stop.startIndex + 2)
+    }
+
+}

@@ -1,4 +1,4 @@
-package nl.knaw.huc.di.tag.tagml
+package nl.knaw.huygens.tag.tagml
 
 /*-
  * #%L
@@ -21,10 +21,10 @@ package nl.knaw.huc.di.tag.tagml
  */
 
 import arrow.core.Either
-import nl.knaw.huc.di.tag.tagml.TAGMLParseResult.TAGMLParseFailure
-import nl.knaw.huc.di.tag.tagml.TAGMLParseResult.TAGMLParseSuccess
-import nl.knaw.huc.di.tag.tagml.grammar.TAGMLLexer
-import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParser
+import nl.knaw.huygens.tag.tagml.TAGMLParseResult.TAGMLParseFailure
+import nl.knaw.huygens.tag.tagml.TAGMLParseResult.TAGMLParseSuccess
+import nl.knaw.huygens.tag.tagml.grammar.TAGMLLexer
+import nl.knaw.huygens.tag.tagml.grammar.TAGMLParser
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream

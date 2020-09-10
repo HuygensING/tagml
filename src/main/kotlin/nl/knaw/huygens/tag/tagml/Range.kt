@@ -1,5 +1,3 @@
-package nl.knaw.huc.di.tag.tagml
-
 /*-
  * #%L
  * tagml
@@ -19,16 +17,10 @@ package nl.knaw.huc.di.tag.tagml
  * limitations under the License.
  * #L%
  */
+package nl.knaw.huygens.tag.tagml
 
-data class AttributeDefinition(
-        val name: String,
-        val description: String,
-        val dataType: AttributeDataType,
-        val ref: String = ""
-)
+data class Range(val startPosition: Position, val endPosition: Position) {
 
-enum class AttributeDataType {
-    String, URI, Pointer, Integer, IntegerList, StringList, ID, Boolean, Object, RichText
+    override fun toString(): String =
+            "Range{$startPosition - $endPosition}"
 }
-
-fun attributeDataTypeNames(): Set<String> = AttributeDataType.values().map { it.name }.toSet()

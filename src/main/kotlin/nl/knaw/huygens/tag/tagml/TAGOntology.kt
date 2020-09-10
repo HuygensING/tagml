@@ -1,4 +1,4 @@
-package nl.knaw.huc.di.tag.tagml
+package nl.knaw.huygens.tag.tagml
 
 /*-
  * #%L
@@ -20,18 +20,16 @@ package nl.knaw.huc.di.tag.tagml
  * #L%
  */
 
-import org.antlr.v4.runtime.ParserRuleContext
+data class TAGOntology(
+        val root: String,
+        val elementDefinitions: Map<String, ElementDefinition>,
+        val attributes: Map<String, AttributeDefinition>,
+        val rules: List<OntologyRule>
+)
 
-data class Position(val line: Int, val character: Int) {
+fun TAGOntology.elementDefinition(qName: String): ElementDefinition? =
+        elementDefinitions[qName]
 
-    override fun toString(): String = String.format("%d:%d", line, character)
+fun TAGOntology.hasElement(qName: String): Boolean =
+        elementDefinitions.containsKey(qName)
 
-    companion object {
-        fun startOf(ctx: ParserRuleContext): Position =
-                Position(ctx.start.line, ctx.start.charPositionInLine + 1)
-
-        fun endOf(ctx: ParserRuleContext): Position =
-                Position(ctx.stop.line, ctx.stop.charPositionInLine + ctx.stop.stopIndex - ctx.stop.startIndex + 2)
-    }
-
-}

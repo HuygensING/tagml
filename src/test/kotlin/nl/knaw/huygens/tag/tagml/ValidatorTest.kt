@@ -1,4 +1,4 @@
-package nl.knaw.huc.di.tag.tagml
+package nl.knaw.huygens.tag.tagml
 
 /*-
  * #%L
@@ -20,13 +20,13 @@ package nl.knaw.huc.di.tag.tagml
  * #L%
  */
 
-import nl.knaw.huc.di.tag.tagml.AssignedAttribute.OptionalAttribute
-import nl.knaw.huc.di.tag.tagml.AssignedAttribute.RequiredAttribute
-import nl.knaw.huc.di.tag.tagml.ErrorListener.TAGError
-import nl.knaw.huc.di.tag.tagml.OntologyRule.*
-import nl.knaw.huc.di.tag.tagml.TAGMLParseResult.TAGMLParseFailure
-import nl.knaw.huc.di.tag.tagml.TAGMLParseResult.TAGMLParseSuccess
-import nl.knaw.huc.di.tag.tagml.TAGMLToken.*
+import nl.knaw.huygens.tag.tagml.AssignedAttribute.OptionalAttribute
+import nl.knaw.huygens.tag.tagml.AssignedAttribute.RequiredAttribute
+import nl.knaw.huygens.tag.tagml.ErrorListener.TAGError
+import nl.knaw.huygens.tag.tagml.OntologyRule.*
+import nl.knaw.huygens.tag.tagml.TAGMLParseResult.TAGMLParseFailure
+import nl.knaw.huygens.tag.tagml.TAGMLParseResult.TAGMLParseSuccess
+import nl.knaw.huygens.tag.tagml.TAGMLToken.*
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Disabled

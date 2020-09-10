@@ -17,17 +17,17 @@
  * limitations under the License.
  * #L%
  */
-package nl.knaw.huc.di.tag.tagorl
+package nl.knaw.huygens.tag.tagml.tagorl
 
 import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.Left
 import arrow.core.Right
-import nl.knaw.huc.di.tag.ANTLRUtils.printTAGORLTokens
-import nl.knaw.huc.di.tag.tagml.TestErrorListener
-import nl.knaw.huc.di.tag.tagorl.TAGORLParser.OneOrMoreChildContext
-import nl.knaw.huc.di.tag.tagorl.TAGORLParser.OptionalChildContext
+import nl.knaw.huygens.tag.tagml.ANTLRUtils.printTAGORLTokens
+import nl.knaw.huygens.tag.tagml.TestErrorListener
+import nl.knaw.huygens.tag.tagml.tagorl.TAGORLParser.OneOrMoreChildContext
+import nl.knaw.huygens.tag.tagml.tagorl.TAGORLParser.OptionalChildContext
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream

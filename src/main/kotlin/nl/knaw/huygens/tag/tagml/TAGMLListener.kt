@@ -1,4 +1,4 @@
-package nl.knaw.huc.di.tag.tagml
+package nl.knaw.huygens.tag.tagml
 
 /*-
  * #%L
@@ -21,14 +21,15 @@ package nl.knaw.huc.di.tag.tagml
  */
 
 import arrow.core.Either
-import nl.knaw.huc.di.tag.tagml.ErrorListener.TAGError
-import nl.knaw.huc.di.tag.tagml.TAGMLToken.*
-import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParser
-import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParser.LayerInfoContext
-import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParserBaseListener
+import nl.knaw.huygens.tag.tagml.ErrorListener.TAGError
+import nl.knaw.huygens.tag.tagml.TAGMLToken.*
+import nl.knaw.huygens.tag.tagml.grammar.TAGMLParser
+import nl.knaw.huygens.tag.tagml.grammar.TAGMLParser.LayerInfoContext
+import nl.knaw.huygens.tag.tagml.grammar.TAGMLParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.tree.TerminalNode
+import java.lang.Double
 import java.util.*
 
 data class KeyValue(var key: String, var value: Any?)
@@ -243,7 +244,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                     )
                 annotationValueContext.AV_NumberValue() != null ->
                     TypedValue(
-                            java.lang.Double.valueOf(annotationValueContext.AV_NumberValue().text),
+                            Double.valueOf(annotationValueContext.AV_NumberValue().text),
                             AttributeDataType.Integer)
                 annotationValueContext.listValue() != null ->
                     TypedValue(

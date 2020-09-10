@@ -1,4 +1,4 @@
-package nl.knaw.huc.di.tag
+package nl.knaw.huygens.tag.tagml
 
 /*-
  * #%L
@@ -24,8 +24,8 @@ import de.vandermeer.asciitable.AsciiTable
 import de.vandermeer.asciitable.CWC_LongestLine
 import de.vandermeer.asciithemes.a7.A7_Grids
 import de.vandermeer.skb.interfaces.transformers.textformat.TextAlignment
-import nl.knaw.huc.di.tag.tagml.grammar.TAGMLLexer
-import nl.knaw.huc.di.tag.tagorl.TAGORLLexer
+import nl.knaw.huygens.tag.tagml.grammar.TAGMLLexer
+import nl.knaw.huygens.tag.tagml.tagorl.TAGORLLexer
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.Lexer

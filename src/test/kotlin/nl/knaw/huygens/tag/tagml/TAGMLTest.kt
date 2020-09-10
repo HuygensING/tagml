@@ -1,4 +1,4 @@
-package nl.knaw.huc.di.tag.tagml
+package nl.knaw.huygens.tag.tagml
 
 /*-
  * #%L
@@ -23,20 +23,20 @@ package nl.knaw.huc.di.tag.tagml
 import arrow.core.Either
 import arrow.core.Left
 import arrow.core.Right
-import nl.knaw.huc.di.tag.ANTLRUtils.printTAGMLTokens
-import nl.knaw.huc.di.tag.tagml.TAGML.BRANCH
-import nl.knaw.huc.di.tag.tagml.TAGML.BRANCHES
-import nl.knaw.huc.di.tag.tagml.TAGML.CLOSE_TAG_ENDCHAR
-import nl.knaw.huc.di.tag.tagml.TAGML.CLOSE_TAG_STARTCHAR
-import nl.knaw.huc.di.tag.tagml.TAGML.OPEN_TAG_ENDCHAR
-import nl.knaw.huc.di.tag.tagml.TAGML.OPEN_TAG_STARTCHAR
-import nl.knaw.huc.di.tag.tagml.TAGML.escapeDoubleQuotedText
-import nl.knaw.huc.di.tag.tagml.TAGML.escapeRegularText
-import nl.knaw.huc.di.tag.tagml.TAGML.escapeSingleQuotedText
-import nl.knaw.huc.di.tag.tagml.TAGML.escapeVariantText
-import nl.knaw.huc.di.tag.tagml.TAGML.unEscape
-import nl.knaw.huc.di.tag.tagml.grammar.TAGMLLexer
-import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParser
+import nl.knaw.huygens.tag.tagml.ANTLRUtils.printTAGMLTokens
+import nl.knaw.huygens.tag.tagml.TAGML.BRANCH
+import nl.knaw.huygens.tag.tagml.TAGML.BRANCHES
+import nl.knaw.huygens.tag.tagml.TAGML.CLOSE_TAG_ENDCHAR
+import nl.knaw.huygens.tag.tagml.TAGML.CLOSE_TAG_STARTCHAR
+import nl.knaw.huygens.tag.tagml.TAGML.OPEN_TAG_ENDCHAR
+import nl.knaw.huygens.tag.tagml.TAGML.OPEN_TAG_STARTCHAR
+import nl.knaw.huygens.tag.tagml.TAGML.escapeDoubleQuotedText
+import nl.knaw.huygens.tag.tagml.TAGML.escapeRegularText
+import nl.knaw.huygens.tag.tagml.TAGML.escapeSingleQuotedText
+import nl.knaw.huygens.tag.tagml.TAGML.escapeVariantText
+import nl.knaw.huygens.tag.tagml.TAGML.unEscape
+import nl.knaw.huygens.tag.tagml.grammar.TAGMLLexer
+import nl.knaw.huygens.tag.tagml.grammar.TAGMLParser
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.atn.ATNConfigSet
 import org.antlr.v4.runtime.dfa.DFA

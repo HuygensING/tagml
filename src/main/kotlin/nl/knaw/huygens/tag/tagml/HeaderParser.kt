@@ -1,4 +1,4 @@
-package nl.knaw.huc.di.tag.tagml
+package nl.knaw.huygens.tag.tagml
 
 /*-
  * #%L
@@ -23,12 +23,12 @@ package nl.knaw.huc.di.tag.tagml
 import arrow.core.Either
 import arrow.core.Left
 import arrow.core.Right
-import nl.knaw.huc.di.tag.tagml.AssignedAttribute.OptionalAttribute
-import nl.knaw.huc.di.tag.tagml.AssignedAttribute.RequiredAttribute
-import nl.knaw.huc.di.tag.tagml.OntologyRule.*
-import nl.knaw.huc.di.tag.tagml.grammar.TAGMLParser
-import nl.knaw.huc.di.tag.tagorl.TAGORLLexer
-import nl.knaw.huc.di.tag.tagorl.TAGORLParser
+import nl.knaw.huygens.tag.tagml.AssignedAttribute.OptionalAttribute
+import nl.knaw.huygens.tag.tagml.AssignedAttribute.RequiredAttribute
+import nl.knaw.huygens.tag.tagml.OntologyRule.*
+import nl.knaw.huygens.tag.tagml.grammar.TAGMLParser
+import nl.knaw.huygens.tag.tagml.tagorl.TAGORLLexer
+import nl.knaw.huygens.tag.tagml.tagorl.TAGORLParser
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream

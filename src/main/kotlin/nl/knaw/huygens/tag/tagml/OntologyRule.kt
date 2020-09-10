@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package nl.knaw.huc.di.tag.tagml
+package nl.knaw.huygens.tag.tagml
 
 sealed class OntologyRule(val raw: String) {
     override fun hashCode(): Int =
