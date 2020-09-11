@@ -44,16 +44,16 @@ sealed class TAGMLParseResult(val warnings: List<ErrorListener.TAGError>) {
 fun ParserRuleContext.getRange(): Range =
         Range(Position.startOf(this), Position.endOf(this))
 
-fun parseFromPath(tagmlPath: Path): TAGMLParseResult =
-        parseFromCharStream(CharStreams.fromPath(tagmlPath))
+fun parse(tagmlPath: Path): TAGMLParseResult =
+        parse(CharStreams.fromPath(tagmlPath))
 
-fun parseFromFile(tagmlFile: File): TAGMLParseResult =
-        parseFromPath(tagmlFile.toPath())
+fun parse(tagmlFile: File): TAGMLParseResult =
+        parse(tagmlFile.toPath())
 
-fun parseFromString(tagml: String): TAGMLParseResult =
-        parseFromCharStream(CharStreams.fromString(tagml))
+fun parse(tagml: String): TAGMLParseResult =
+        parse(CharStreams.fromString(tagml))
 
-private fun parseFromCharStream(antlrInputStream: CharStream): TAGMLParseResult {
+private fun parse(antlrInputStream: CharStream): TAGMLParseResult {
     val errorListener = ErrorListener()
     val lexer = TAGMLLexer(antlrInputStream)
             .apply { addErrorListener(errorListener) }
