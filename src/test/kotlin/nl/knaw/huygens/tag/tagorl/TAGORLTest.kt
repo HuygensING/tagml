@@ -22,18 +22,20 @@ package nl.knaw.huygens.tag.tagorl
 
 import arrow.core.Either
 import arrow.core.Either.Left
-import arrow.core.Either.Right
 import arrow.core.Left
 import arrow.core.Right
 import nl.knaw.huygens.tag.tagml.ANTLRUtils.printTAGORLTokens
+import nl.knaw.huygens.tag.tagml.OntologyRule
+import nl.knaw.huygens.tag.tagml.OntologyRule.HierarchyRule
+import nl.knaw.huygens.tag.tagml.QualifiedElement.*
 import nl.knaw.huygens.tag.tagml.TestErrorListener
-import nl.knaw.huygens.tag.tagorl.TAGORLParser.OneOrMoreChildContext
-import nl.knaw.huygens.tag.tagorl.TAGORLParser.OptionalChildContext
+import nl.knaw.huygens.tag.tagml.parseRule
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTree
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.SoftAssertions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.slf4j.Logger
@@ -45,39 +47,57 @@ class TAGORLTest {
     val log: Logger = LoggerFactory.getLogger(TAGORLTest::class.java)
 
     @Nested
-    inner class HierarchyRuleTest {
+    inner class HierarchyRuleTests {
 
         @Test
-        fun hierarchy_rule_1() {
+        fun mono_level_hierarchy_rule() {
             val rule = "excerpt > chapterTitle+, img?"
-            val expectedParent = "excerpt"
-            val expectedChildren1 = "chapterTitle"
-            val expectedChildren = "img"
-            parse(rule).fold(
-                    { errors -> fail("$errors") },
-                    { ctx ->
-                        {
-                            when (ctx) {
-                                is TAGORLParser.HierarchyRuleContext -> {
-                                    assertThat(ctx.Name().text).isEqualTo(expectedParent)
-
-                                    val children = ctx.children() as TAGORLParser.ChildrenListContext
-                                    val child0 = children.child(0) as OneOrMoreChildContext
-                                    assertThat(child0.Name().text).isEqualTo(expectedChildren1)
-
-                                    val child1 = children.child(1) as OptionalChildContext
-                                    assertThat(child1.Name().text).isEqualTo(expectedChildren)
-                                }
-                                else -> fail("expected HierarchyRuleContext")
-                            }
-                        }
-                    }
-            )
+            assertParseSucceeds(rule, setOf("excerpt", "chapterTitle", "img")) { ontologyRule ->
+                val hr = ontologyRule as HierarchyRule
+                SoftAssertions().apply {
+                    assertThat(hr.childMap.keys).containsOnly("excerpt")
+                    assertThat(hr.childMap["excerpt"]).containsExactly(
+                            OneOrMoreElement("chapterTitle"),
+                            OptionalElement("img")
+                    )
+                    assertAll()
+                }
+            }
         }
+
+        @Test
+        fun multiple_level_hierarchy_rule() {
+            val rule = "book > chapter+ > paragraph* > line?"
+            assertParseSucceeds(rule, setOf("book", "chapter", "paragraph", "line")) { ontologyRule ->
+                val hr = ontologyRule as HierarchyRule
+                SoftAssertions().apply {
+                    assertThat(hr.childMap.keys).containsOnly("book", "chapter", "paragraph")
+                    assertThat(hr.childMap["book"]).containsOnly(OneOrMoreElement("chapter"))
+                    assertThat(hr.childMap["chapter"]).containsOnly(ZeroOrMoreElement("paragraph"))
+                    assertThat(hr.childMap["paragraph"]).containsOnly(OptionalElement("line"))
+                    assertAll()
+                }
+            }
+        }
+
+        @Test
+        fun multiple_level_hierarchy_rule_with_multiple_leaf_choices() {
+            val rule = "book > chapter+ > title, paragraph*"
+            assertParseSucceeds(rule, setOf("book", "chapter", "paragraph", "title")) { ontologyRule ->
+                val hr = ontologyRule as HierarchyRule
+                SoftAssertions().apply {
+                    assertThat(hr.childMap.keys).containsOnly("book", "chapter")
+                    assertThat(hr.childMap["book"]).containsOnly(OneOrMoreElement("chapter"))
+                    assertThat(hr.childMap["chapter"]).containsOnly(ZeroOrMoreElement("paragraph"), SingleElement("title"))
+                    assertAll()
+                }
+            }
+        }
+
     }
 
     @Nested
-    inner class SetRuleTest {
+    inner class SetRuleTests {
         @Test
         fun set_rule_with_1_parameter_fails() {
             val rule = "test(parameter)"
@@ -104,7 +124,7 @@ class TAGORLTest {
     }
 
     @Nested
-    inner class TripleRuleTest {
+    inner class TripleRuleTests {
         @Test
         fun triple_rule() {
             val rule = "author writes title"
@@ -144,17 +164,18 @@ class TAGORLTest {
             assert(result is Left)
         }
 
-        private fun assertParseSucceeds(rule: String) {
-            val result = parse(rule)
-            assert(result is Right)
-        }
+        private fun assertParseSucceeds(rule: String, definedElements: Set<String>, func: (OntologyRule) -> Unit) =
+                parseRule(rule, definedElements).fold(
+                        { errors -> fail("$errors") },
+                        { ontologyRule -> func(ontologyRule) }
+                )
 
         private fun assertParsesAsTripleRule(
                 rule: String,
                 expectedSubject: String,
                 expectedPredicate: String,
                 expectedObjects: List<String>
-        ): Unit =
+        ) =
                 parse(rule).fold(
                         { errors -> fail("$errors") },
                         { ctx ->
@@ -177,16 +198,16 @@ class TAGORLTest {
                 rule: String,
                 expectedFunctionName: String,
                 expectedParameters: List<String>
-        ): Unit =
+        ) =
                 parse(rule).fold(
                         { errors -> fail("$errors") },
                         { ctx ->
                             when (ctx) {
                                 is TAGORLParser.SetRuleContext -> {
                                     assertThat(ctx.Name().text).isEqualTo(expectedFunctionName)
-                                    assertThat(ctx.child()).hasSameSizeAs(expectedParameters)
-                                    for (i in ctx.child().indices) {
-                                        val child = ctx.child(i)
+                                    assertThat(ctx.childElement()).hasSameSizeAs(expectedParameters)
+                                    for (i in ctx.childElement().indices) {
+                                        val child = ctx.childElement(i)
                                         assert(child is TAGORLParser.OneChildContext)
                                         val c = child as TAGORLParser.OneChildContext
                                         assertThat(c.text).isEqualTo(expectedParameters[i])

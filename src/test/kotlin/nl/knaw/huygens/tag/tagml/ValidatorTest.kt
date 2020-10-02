@@ -29,13 +29,13 @@ import nl.knaw.huygens.tag.tagml.TAGMLParseResult.TAGMLParseSuccess
 import nl.knaw.huygens.tag.tagml.TAGMLToken.*
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
-import org.junit.jupiter.api.Disabled
+import org.assertj.core.api.SoftAssertions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 class ValidatorTest {
 
-    @Disabled("TODO: datatype ID/String")
+    //    @Disabled("TODO: datatype ID/String")
     @Test
     fun integration_test() {
         val tagml = ("""
@@ -189,11 +189,11 @@ class ValidatorTest {
                         .hasFieldOrPropertyWithValue("root", "excerpt")
                         .hasFieldOrPropertyWithValue(
                                 "rules",
-                                listOf(HierarchyRule("excerpt>chapter+,img+"),
-                                        HierarchyRule("chapter>par+,said+"),
-                                        HierarchyRule("par>s+"),
-                                        HierarchyRule("s>(sic,corr)*"),
-                                        HierarchyRule("said>persName+,emph+,said*"),
+                                listOf(HierarchyRule("excerpt>chapter+,img+", mapOf(("excerpt" to setOf(QualifiedElement.OneOrMoreElement("chapter"))))),
+                                        HierarchyRule("chapter>par+,said+", mapOf(("excerpt" to setOf(QualifiedElement.OneOrMoreElement("chapter"))))),
+                                        HierarchyRule("par>s+", mapOf(("excerpt" to setOf(QualifiedElement.OneOrMoreElement("chapter"))))),
+                                        HierarchyRule("s>(sic,corr)*", mapOf(("excerpt" to setOf(QualifiedElement.OneOrMoreElement("chapter"))))),
+                                        HierarchyRule("said>persName+,emph+,said*", mapOf(("excerpt" to setOf(QualifiedElement.OneOrMoreElement("chapter"))))),
                                         SetRule(":may-not-overlap(said,s)", ":may-not-overlap", listOf("said", "s")),
                                         SetRule(":non-linear(sic,corr)", ":non-linear", listOf("sic", "corr")),
                                         TripleRule("persNamesaissaid", "persName", "said", listOf("said"))
@@ -470,7 +470,6 @@ class ValidatorTest {
             }
         }
 
-        @Disabled("TODO: parse HierarchyRule")
         @Test
         fun elements_used_in_rules_must_be_defined() {
             val tagml = ("""
@@ -493,9 +492,9 @@ class ValidatorTest {
             |""".trimMargin())
             assertTAGMLHasErrors(tagml) { errors, warnings ->
                 assertThat(errors.map { it.message }).containsExactly(
-                        """Rule "tagml > book+ > chapter+ > paragraph+ > line+" contains undefined elements book, chapter, paragraph, line.""",
-                        """Rule ":may-not-overlap(chapter,verse)" contains undefined elements chapter, verse.""",
-                        """Rule "author writes book" contains undefined elements author, book."""
+                        """Rule "tagml > book > chapter+ > paragraph+ > line+" contains undefined element(s) book, chapter, paragraph, line.""",
+                        """Rule ":may-not-overlap(chapter,verse)" contains undefined element(s) chapter, verse.""",
+                        """Rule "author writes book" contains undefined element(s) author, book."""
                 )
                 assertThat(warnings).isEmpty()
             }
@@ -591,7 +590,7 @@ class ValidatorTest {
             }
         }
 
-        @Disabled
+        //        @Disabled
         @Test
         fun nested_markup() {
             val tagml = ("""
@@ -862,6 +861,87 @@ class ValidatorTest {
                 )
             }
         }
+
+        @Test
+        fun markup_hierarchy_as_defined_in_ontology_rules() {
+            val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |      "tagml": {"description": "..."},
+            |      "book": {"description": "..."},
+            |      "title": {"description": "..."},
+            |      "chapter": {"description": "..."},
+            |      "p": {"description": "..."},
+            |      "l": {"description": "..."}
+            |    },
+            |    "rules": [
+            |       "tagml > book",
+            |       "book > title, chapter+",
+            |       "chapter > p+ > l+"
+            |    ]
+            |  }
+            |}!]
+            |[tagml>
+            |  [book>
+            |    [title>Example<title]
+            |    [chapter>
+            |      [p>
+            |        [l>Lorem Ipsum<l]
+            |      <p]
+            |    <chapter]
+            |  <book]
+            |<tagml]
+            |""".trimMargin())
+            assertTAGMLParses(tagml) { tokens, warnings ->
+                SoftAssertions().apply {
+                    assertThat(warnings).isEmpty()
+                    assertThat(tokens).hasSize(24)
+                    assertAll()
+                }
+            }
+        }
+
+        @Test
+        fun markup_hierarchy_does_not_follow_ontology_rules() {
+            val tagml = ("""
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |      "tagml": {"description": "..."},
+            |      "book": {"description": "..."},
+            |      "title": {"description": "..."},
+            |      "chapter": {"description": "..."},
+            |      "p": {"description": "..."},
+            |      "l": {"description": "..."}
+            |    },
+            |    "rules": [
+            |       "tagml > book > title, chapter+",
+            |       "chapter > p+ > l+"
+            |    ]
+            |  }
+            |}!]
+            |[tagml>
+            |  [book>
+            |    [p>
+            |      [l>Lorem Ipsum 1<l]
+            |    <p]
+            |  <book]
+            |<tagml]
+            |""".trimMargin())
+            assertTAGMLHasErrors(tagml) { errors, warnings ->
+                println(warnings.joinToString(separator = "\n", prefix = "warnings:") { it.message })
+                println(errors.joinToString(separator = "\n", prefix = "errors:") { it.message })
+                SoftAssertions().apply {
+                    assertThat(warnings).isEmpty()
+                    assertThat(errors.map { it.message }).containsExactly("Unexpected opening tag: found [p> as child of [book>, but expected [title> or [chapter>.")
+                    assertAll()
+                }
+            }
+        }
+
     }
 
     companion object {

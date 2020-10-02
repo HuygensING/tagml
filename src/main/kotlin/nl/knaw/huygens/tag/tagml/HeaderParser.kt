@@ -239,7 +239,7 @@ private fun parseAttributeDefinition(context: TAGMLParser.Json_pairContext): Par
     }
 }
 
-private fun parseRule(tagorl: String, definedElements: Set<String>): Either<List<String>, OntologyRule> {
+fun parseRule(tagorl: String, definedElements: Set<String>): Either<List<String>, OntologyRule> {
     val antlrInputStream: CharStream = CharStreams.fromString(tagorl)
     val errorListener = ErrorListener()
     val lexer = TAGORLLexer(antlrInputStream).apply {
@@ -263,12 +263,59 @@ private fun parseRule(tagorl: String, definedElements: Set<String>): Either<List
 }
 
 fun parseHierarchyRule(ruleContext: TAGORLParser.HierarchyRuleContext, definedElements: Set<String>): Either<List<String>, HierarchyRule> {
-    val elements = ruleContext.children.map { it.text }
-    return Right(HierarchyRule(ruleContext.text))
+    val childMap = mutableMapOf<String, MutableSet<QualifiedElement>>()
+//            .withDefault { mutableSetOf() }
+    when (ruleContext) {
+        is TAGORLParser.MonoLevelContext -> {
+            val parent = ruleContext.Name().text
+            val childElements = ruleContext.childElements()
+            parseChildElementsContext(childElements, childMap, parent)
+        }
+        is TAGORLParser.MultiLevelContext -> {
+            var parent = ruleContext.Name().text
+            for (childCtx in ruleContext.childElement()) {
+                val qualifiedChild = toQualifiedElement(childCtx)
+                childMap.getOrPut(parent) { mutableSetOf() } += qualifiedChild
+                parent = qualifiedChild.element
+            }
+            val ruleTail = ruleContext.childElements()
+            parseChildElementsContext(ruleTail, childMap, parent)
+        }
+        else -> TODO()
+    }
+
+    val elements = childMap.values.flatten().map { it.element }.toSet()
+    val undefinedElements = elements - definedElements
+    return if (undefinedElements.isEmpty()) {
+        Right(HierarchyRule(ruleContext.text, childMap))
+    } else {
+        Left(listOf(format(UNDEFINED_RULE_ELEMENT, "%s", undefinedElements.joinToString())))
+    }
 }
 
+private fun parseChildElementsContext(ctx: TAGORLParser.ChildElementsContext, childMap: MutableMap<String, MutableSet<QualifiedElement>>, parent: String) {
+    when (ctx) {
+        is TAGORLParser.SingleChildContext -> childMap.getOrPut(parent) { mutableSetOf() } += toQualifiedElement(ctx.childElement())
+        is TAGORLParser.ChildrenListContext -> ctx.childElement().forEach { childMap.getOrPut(parent) { mutableSetOf() } += toQualifiedElement(it) }
+        is TAGORLParser.ChildrenGroupContext -> ctx.childElement().forEach { childMap.getOrPut(parent) { mutableSetOf() } += toQualifiedElement(it) }
+        is TAGORLParser.OptionalChildrenGroupContext -> ctx.childElement().forEach { childMap.getOrPut(parent) { mutableSetOf() } += toQualifiedElement(it) }
+        is TAGORLParser.ZeroOrMoreChildrenGroupContext -> ctx.childElement().forEach { childMap.getOrPut(parent) { mutableSetOf() } += toQualifiedElement(it) }
+        is TAGORLParser.OneOrMoreChildrenGroupContext -> ctx.childElement().forEach { childMap.getOrPut(parent) { mutableSetOf() } += toQualifiedElement(it) }
+        else -> error("unexpected type: ${ctx.text} ${ctx.javaClass}")
+    }
+}
+
+fun toQualifiedElement(childCtx: TAGORLParser.ChildElementContext): QualifiedElement =
+        when (childCtx) {
+            is TAGORLParser.OneChildContext -> QualifiedElement.SingleElement(childCtx.Name().text)
+            is TAGORLParser.OptionalChildContext -> QualifiedElement.OptionalElement(childCtx.Name().text)
+            is TAGORLParser.ZeroOrMoreChildContext -> QualifiedElement.ZeroOrMoreElement(childCtx.Name().text)
+            is TAGORLParser.OneOrMoreChildContext -> QualifiedElement.OneOrMoreElement(childCtx.Name().text)
+            else -> TODO()
+        }
+
 fun parseSetRule(ruleContext: TAGORLParser.SetRuleContext, definedElements: Set<String>): Either<List<String>, SetRule> {
-    val elements = ruleContext.child().map { it.text }
+    val elements = ruleContext.childElement().map { it.text }
     val undefinedElements = elements - definedElements
     return if (undefinedElements.isEmpty()) {
         Right(SetRule(

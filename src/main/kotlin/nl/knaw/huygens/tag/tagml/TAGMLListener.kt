@@ -56,6 +56,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     val tokens: List<TAGMLToken>
         get() = _tokens
 
+    @Suppress("UNCHECKED_CAST")
     override fun exitHeader(ctx: TAGMLParser.HeaderContext) {
         val headerMap: Map<String, Any> = parseHeader(ctx)
         val token = HeaderToken(ctx.getRange(), ctx.text, headerMap)
@@ -94,7 +95,15 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
             } else {
                 addWarning(ctx, UNDEFINED_ELEMENT, qName)
             }
-            layers.forEach { listenerContext.openMarkupInLayer(it) += qName }
+            for (layer in layers) {
+                listenerContext.openMarkupInLayer(layer).lastOrNull()?.let { parent ->
+                    val expected = ontology.expectedChildrenFor(parent)
+                    if (expected.isNotEmpty() && qName !in expected) {
+                        addError(ctx, UNEXPECTED_OPEN_TAG, qName, parent, expected.joinToString(" or ") { "[$it>" })
+                    }
+                }
+                listenerContext.openMarkupInLayer(layer) += qName
+            }
             val token = if (isResume) {
                 if (attributes.isNotEmpty()) {
                     addError(ctx, NO_ATTRIBUTES_ON_RESUME, qName)

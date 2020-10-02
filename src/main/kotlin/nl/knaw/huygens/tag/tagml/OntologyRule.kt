@@ -1,3 +1,5 @@
+package nl.knaw.huygens.tag.tagml
+
 /*-
  * #%L
  * tagml
@@ -17,7 +19,48 @@
  * limitations under the License.
  * #L%
  */
-package nl.knaw.huygens.tag.tagml
+
+sealed class QualifiedElement(val element: String) {
+    override fun hashCode(): Int = element.hashCode()
+    override fun equals(other: Any?): Boolean =
+            other is QualifiedElement && other.element == element
+
+    class SingleElement(element: String) : QualifiedElement(element) {
+        override fun equals(other: Any?): Boolean =
+                other is SingleElement && other.element == element
+
+        override fun toString(): String =
+                "$element"
+
+    }
+
+    class OptionalElement(element: String) : QualifiedElement(element) {
+        override fun equals(other: Any?): Boolean =
+                other is OptionalElement && other.element == element
+
+        override fun toString(): String =
+                "$element?"
+
+    }
+
+    class ZeroOrMoreElement(element: String) : QualifiedElement(element) {
+        override fun equals(other: Any?): Boolean =
+                other is ZeroOrMoreElement && other.element == element
+
+        override fun toString(): String =
+                "$element*"
+
+    }
+
+    class OneOrMoreElement(element: String) : QualifiedElement(element) {
+        override fun equals(other: Any?): Boolean =
+                other is OneOrMoreElement && other.element == element
+
+        override fun toString(): String =
+                "$element+"
+
+    }
+}
 
 sealed class OntologyRule(val raw: String) {
     override fun hashCode(): Int =
@@ -29,7 +72,7 @@ sealed class OntologyRule(val raw: String) {
     override fun toString(): String =
             raw
 
-    class HierarchyRule(raw: String) : OntologyRule(raw) {
+    class HierarchyRule(raw: String, val childMap: Map<String, Set<QualifiedElement>>) : OntologyRule(raw) {
         override fun equals(other: Any?): Boolean =
                 super.equals(other) && other is HierarchyRule
 
@@ -65,3 +108,4 @@ sealed class OntologyRule(val raw: String) {
         }
     }
 }
+

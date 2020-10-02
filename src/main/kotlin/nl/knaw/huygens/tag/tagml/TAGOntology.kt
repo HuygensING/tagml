@@ -27,6 +27,14 @@ data class TAGOntology(
         val rules: List<OntologyRule>
 )
 
+fun TAGOntology.expectedChildrenFor(parent: String): Set<String> =
+        rules.asSequence()
+                .filterIsInstance<OntologyRule.HierarchyRule>()
+                .mapNotNull { it.childMap[parent] }
+                .flatten()
+                .map { it.element }
+                .toSet()
+
 fun TAGOntology.elementDefinition(qName: String): ElementDefinition? =
         elementDefinitions[qName]
 

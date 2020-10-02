@@ -52,9 +52,18 @@ class TAGMLTest {
 
     val log: Logger = LoggerFactory.getLogger(TAGMLTest::class.java)
 
-    @Test
-    fun header() {
-        val tagml = """
+    @Nested
+    inner class TAGMLTests {
+
+        @Test
+        fun test() {
+            val tagml = "[!{}!][test|+A,+B>[a|A>Jonn [b|B>loves<a] Oreos<b]<test]"
+            assertParseSucceeds(tagml)
+        }
+
+        @Test
+        fun header() {
+            val tagml = """
             [!{
                 "name": "test",
                 "id": "test001",
@@ -64,29 +73,36 @@ class TAGMLTest {
             }!]
             [l>[w>Just<w] [w>some<w] [w>words<w]<l]
             """.trimIndent()
-        assertParseSucceeds(this, tagml)
-    }
+            assertParseSucceeds(tagml)
+        }
 
-    @Test
-    fun whitespace_in_text() {
-        val tagml = "[!{}!][l>[w>Just<w] [w>some<w] [w>words<w]<l] \n \n"
-        assertParseSucceeds(this, tagml)
-    }
+        @Test
+        fun whitespace_in_text() {
+            val tagml = "[!{}!][l>[w>Just<w] [w>some<w] [w>words<w]<l] \n \n"
+            assertParseSucceeds(tagml)
+        }
 
-    @Test
-    fun schema_header_is_required() {
-        val tagmlBad = "[tagml>Hello World!<tagml]\n"
-        assertParseFails(tagmlBad)
+        @Test
+        fun schema_header_is_required() {
+            val tagmlBad = "[tagml>Hello World!<tagml]\n"
+            assertParseFails(tagmlBad)
 
-        val tagmlGood = """
+            val tagmlGood = """
             [!{}!]
             [tagml>Hello World!<tagml]
             """.trimIndent()
-        assertParseSucceeds(this, tagmlGood)
+            assertParseSucceeds(tagmlGood)
+        }
+
+        @Test
+        fun testIncorrectTAGML() {
+            val tagml = "<xml>This is not TAGML!</xml>"
+            assertParseFails(tagml)
+        }
     }
 
     @Nested
-    class TestEscape {
+    inner class EscapeTests {
         @Test
         fun testEscapeRegularText() {
             val text = """Escape these characters: \ < [, but not these: | " ' """
@@ -129,12 +145,6 @@ class TAGMLTest {
     }
 
     @Test
-    fun testIncorrectTAGML() {
-        val tagml = "<xml>This is not TAGML!</xml>"
-        assertParseFails(tagml)
-    }
-
-    @Test
     fun call_constants() {
         assertThat(OPEN_TAG_STARTCHAR).isEqualTo("[")
         assertThat(OPEN_TAG_ENDCHAR).isEqualTo(">")
@@ -145,7 +155,7 @@ class TAGMLTest {
     }
 
     companion object {
-        private fun assertParseSucceeds(tagmlTest: TAGMLTest, tagml: String) {
+        private fun assertParseSucceeds(tagml: String) {
             val result = parse(tagml)
             assert(result is Either.Right)
         }

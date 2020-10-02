@@ -7,7 +7,8 @@ ontologyRule
   ;
 
 hierarchyRule
-  : Name '>' children
+  : Name  '>' childElements  # monoLevel
+  | Name ( '>' childElement )+ ( '>' childElements )# multiLevel
   ;
 
 Name
@@ -15,16 +16,16 @@ Name
   | NameStartChar NameChar* NameEndChar
   ;
 
-children
-  : child                       # singleChild
-  | child (',' child)+          # childrenList
-  | '(' child (',' child)+ ')'  # childrenGroup
-  | '(' child (',' child)+ ')?' # optionalChildrenGroup
-  | '(' child (',' child)+ ')*' # zeroOrMoreChildrenGroup
-  | '(' child (',' child)+ ')+' # oneOrMoreChildrenGroup
+childElements
+  : childElement                              # singleChild
+  | childElement (',' childElement)+          # childrenList
+  | '(' childElement (',' childElement)+ ')'  # childrenGroup
+  | '(' childElement (',' childElement)+ ')?' # optionalChildrenGroup
+  | '(' childElement (',' childElement)+ ')*' # zeroOrMoreChildrenGroup
+  | '(' childElement (',' childElement)+ ')+' # oneOrMoreChildrenGroup
   ;
 
-child
+childElement
   : Name     # oneChild
   | Name '?' # optionalChild
   | Name '*' # zeroOrMoreChild
@@ -32,7 +33,7 @@ child
   ;
 
 setRule
-  : Name '(' child (',' child)+ ')'
+  : Name '(' childElement (',' childElement)+ ')'
   ;
 
 
