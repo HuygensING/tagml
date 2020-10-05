@@ -53,7 +53,7 @@ class TAGMLTest {
     val log: Logger = LoggerFactory.getLogger(TAGMLTest::class.java)
 
     @Nested
-    inner class TAGMLTests {
+    inner class TAGMLParserTests {
 
         @Test
         fun test() {

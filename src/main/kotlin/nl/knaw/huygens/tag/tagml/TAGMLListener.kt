@@ -34,6 +34,7 @@ import java.util.*
 
 data class KeyValue(var key: String, var value: Any?)
 data class TypedValue(val value: Any?, val type: AttributeDataType)
+data class OpenMarkup(val qName: String, val id: Long)
 
 class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseListener() {
 
@@ -41,15 +42,15 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     private var context: ListenerContext? = null
 
     class ListenerContext(val ontology: TAGOntology, val nameSpaces: Map<String, String>) {
-        val markupId: MutableMap<String, Long> = mutableMapOf()
+        val suspendedMarkupId: MutableMap<String, Long> = mutableMapOf()
         val markupIds: Iterator<Long> = generateSequence(0L) { it + 1L }.iterator()
-        internal val openMarkup: MutableMap<String, MutableList<String>> = mutableMapOf()
+        internal val openMarkup: MutableMap<String, MutableList<OpenMarkup>> = mutableMapOf()
 
         fun noOpenMarkup(): Boolean = openMarkup.values.all { it.isEmpty() }
 
         fun noMarkupEncountered(): Boolean = openMarkup.isEmpty()
 
-        fun openMarkupInLayer(layer: String): MutableList<String> =
+        fun openMarkupInLayer(layer: String): MutableList<OpenMarkup> =
                 openMarkup.getOrPut(layer) { mutableListOf() }
     }
 
@@ -95,24 +96,26 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
             } else {
                 addWarning(ctx, UNDEFINED_ELEMENT, qName)
             }
+            val markupId = if (isResume) {
+                listenerContext.suspendedMarkupId[qName]!!
+            } else {
+                listenerContext.markupIds.next()
+            }
             for (layer in layers) {
                 listenerContext.openMarkupInLayer(layer).lastOrNull()?.let { parent ->
-                    val expected = ontology.expectedChildrenFor(parent)
+                    val expected = ontology.expectedChildrenFor(parent.qName)
                     if (expected.isNotEmpty() && qName !in expected) {
-                        addError(ctx, UNEXPECTED_OPEN_TAG, qName, parent, expected.joinToString(" or ") { "[$it>" })
+                        addError(ctx, UNEXPECTED_OPEN_TAG, qName, parent.qName, expected.joinToString(" or ") { "[$it>" })
                     }
                 }
-                listenerContext.openMarkupInLayer(layer) += qName
+                listenerContext.openMarkupInLayer(layer) += OpenMarkup(qName, markupId)
             }
             val token = if (isResume) {
                 if (attributes.isNotEmpty()) {
                     addError(ctx, NO_ATTRIBUTES_ON_RESUME, qName)
                 }
-                val markupId = listenerContext.markupId[qName]!!
                 MarkupResumeToken(ctx.getRange(), ctx.text, qName, layers, markupId)
             } else {
-                val markupId = listenerContext.markupIds.next()
-                listenerContext.markupId[qName] = markupId
                 MarkupOpenToken(ctx.getRange(), ctx.text, qName, layers, markupId, attributes)
             }
             _tokens += token
@@ -148,7 +151,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                 givenLayers
             } else {
                 val deducedLayers = listenerContext.openMarkup
-                        .filter { (_, markupStack) -> markupStack.lastOrNull() == qName }
+                        .filter { (_, markupStack) -> markupStack.lastOrNull()?.qName == qName }
                         .map { (layer, _) -> layer }
                         .toSet()
                 if (deducedLayers.isEmpty()) {
@@ -164,17 +167,18 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
             }
             for (layer in layers) {
                 when (qName) {
-                    listenerContext.openMarkupInLayer(layer).lastOrNull() -> {
-                        listenerContext.openMarkupInLayer(layer).remove(qName)
-                        val markupId = listenerContext.markupId[qName]!!
+                    listenerContext.openMarkupInLayer(layer).lastOrNull()?.qName -> {
+                        val lastOpenedMarkup = listenerContext.openMarkupInLayer(layer).removeLast()
+                        val markupId = lastOpenedMarkup.id
                         val token = if (isSuspend) {
+                            listenerContext.suspendedMarkupId[qName] = markupId
                             MarkupSuspendToken(ctx.getRange(), rawContent, qName, layers, markupId)
                         } else {
                             MarkupCloseToken(ctx.getRange(), rawContent, qName, layers, markupId)
                         }
                         _tokens += token
                     }
-                    in listenerContext.openMarkupInLayer(layer) -> {
+                    in listenerContext.openMarkupInLayer(layer).map { it.qName } -> {
                         addError(ctx, UNEXPECTED_CLOSE_TAG, rawContent, listenerContext.openMarkupInLayer(layer).last())
                     }
                     else -> {
