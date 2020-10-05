@@ -46,6 +46,7 @@ private fun toPair(ctx: TAGMLParser.Json_pairContext): Pair<String, Any> {
     val value = when (key) {
         ":ontology" -> parseOntology(ctx.json_value())
         ":namespaces" -> parseNameSpaces(ctx.json_value())
+        ":entities" -> parseEntities(ctx.json_value())
         else -> ctx.json_value().text.content()
     }
     return (key to value)
@@ -63,6 +64,23 @@ private fun parseNameSpaces(jsonValueCtx: TAGMLParser.Json_valueContext): ParseR
             }
     return if (errors.isEmpty()) {
         Either.right(namespaces)
+    } else {
+        Either.left(errors.toList())
+    }
+}
+
+private fun parseEntities(jsonValueCtx: TAGMLParser.Json_valueContext): ParseResult<Map<String, String>> {
+    val errors: MutableList<ErrorListener.TAGError> = mutableListOf()
+    val entities: MutableMap<String, String> = mutableMapOf()
+    jsonValueCtx.json_obj().json_pair()
+            .filterNotNull()
+            .forEach { pair ->
+                val key = pair.JSON_STRING().text.content()
+                val value = pair.json_value().text.content()
+                entities[key] = value
+            }
+    return if (errors.isEmpty()) {
+        Either.right(entities)
     } else {
         Either.left(errors.toList())
     }

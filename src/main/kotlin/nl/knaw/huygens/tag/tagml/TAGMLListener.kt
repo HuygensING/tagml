@@ -40,7 +40,10 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     private val _tokens: MutableList<TAGMLToken> = mutableListOf()
     private var context: ListenerContext? = null
 
-    class ListenerContext(val ontology: TAGOntology, val nameSpaces: Map<String, String>) {
+    class ListenerContext(val ontology: TAGOntology, val nameSpaces: Map<String, String>, val entities: Map<String, String>) {
+        val definedEntityRefs: Set<String>
+            get() = entities.keys
+
         val suspendedMarkupId: MutableMap<String, Long> = mutableMapOf()
         val markupIds: Iterator<Long> = generateSequence(0L) { it + 1L }.iterator()
         internal val openMarkup: MutableMap<String, MutableList<OpenMarkup>> = mutableMapOf()
@@ -62,6 +65,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         val token = HeaderToken(ctx.getRange(), ctx.text, headerMap)
         var ontology: TAGOntology? = null
         var nameSpaces: Map<String, String>? = null
+        var entities: Map<String, String>? = null
         when (val ontologyParseResult = headerMap[":ontology"]) {
             null -> addError(ctx, MISSING_ONTOLOGY_FIELD)
             is Either<*, *> -> ontologyParseResult.fold(
@@ -76,8 +80,15 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                     { nameSpaces = it as Map<String, String> }
             )
         }
-        if (ontology != null && nameSpaces != null) {
-            context = ListenerContext(ontology!!, nameSpaces!!)
+        when (val entitiesParseResult = headerMap[":entities"]) {
+            null -> entities = mapOf()
+            is Either<*, *> -> entitiesParseResult.fold(
+                    { errorListener.addErrors(it as List<TAGError>) },
+                    { entities = it as Map<String, String> }
+            )
+        }
+        if (ontology != null && nameSpaces != null && entities != null) {
+            context = ListenerContext(ontology!!, nameSpaces!!, entities!!)
         }
         _tokens += token
     }
@@ -89,12 +100,10 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
             val isResume = ctx.markupName().prefix()?.text == TAGML.RESUME_PREFIX
             val ontology = listenerContext.ontology
             checkExpectedRoot(ontology, qName, ctx)
-            val attributes: MutableList<KeyValue> = mutableListOf()
-            if (ontology.hasElement(qName)) {
-                attributes += parseAttributes(ctx, ontology, qName, ctx.annotation())
-            } else {
+            if (!ontology.hasElement(qName)) {
                 addWarning(ctx, UNDEFINED_ELEMENT, qName)
             }
+            val attributes = parseAttributes(ctx, ontology, listenerContext.definedEntityRefs, qName, ctx.annotation())
             val markupId = if (isResume) {
                 listenerContext.suspendedMarkupId[qName]!!
             } else {
@@ -129,7 +138,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
             checkExpectedRoot(ontology, qName, ctx)
             val attributes: MutableList<KeyValue> = mutableListOf()
             if (ontology.hasElement(qName)) {
-                attributes += parseAttributes(ctx, ontology, qName, ctx.annotation())
+                attributes += parseAttributes(ctx, ontology, listenerContext.definedEntityRefs, qName, ctx.annotation())
                 if (!ontology.elementDefinition(qName)?.isMilestone!!) {
                     addError(ctx, ILLEGAL_MILESTONE, qName)
                 }
@@ -200,18 +209,19 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     private fun parseAttributes(
             ctx: ParserRuleContext,
             ontology: TAGOntology,
+            definedEntityRefs: Set<String>,
             qName: String,
             annotationContexts: List<TAGMLParser.AnnotationContext>
     ): List<KeyValue> {
         val attributesUsed = mutableListOf<String>()
-        val elementDefinition = ontology.elementDefinition(qName)!!
+        val elementDefinition = ontology.elementDefinition(qName)
         val keyValues: MutableList<KeyValue> = mutableListOf()
         for (actx in annotationContexts) {
             when (actx) {
                 is TAGMLParser.BasicAnnotationContext -> {
                     val attributeName = actx.annotationName().text
                     attributesUsed += attributeName
-                    if (ontology.hasElement(qName) && !elementDefinition.hasAttribute(attributeName)) {
+                    if (ontology.hasElement(qName) && !elementDefinition!!.hasAttribute(attributeName)) {
                         addWarning(ctx, UNDEFINED_ATTRIBUTE, attributeName, qName)
                     }
                     when (val annotationValueCtx = actx.annotationValue()) {
@@ -228,12 +238,19 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                     }
                 }
                 is TAGMLParser.IdentifyingAnnotationContext -> TODO()
-                is TAGMLParser.RefAnnotationContext -> TODO()
+                is TAGMLParser.RefAnnotationContext -> {
+                    val ref = actx.refValue().RV_RefValue().text
+                    if (ref !in definedEntityRefs) {
+                        addError(actx, UNDEFINED_ENTITY, ref)
+                    }
+                }
             }
         }
         attributesUsed.forEach { val definedDataType = ontology.attributes[it]?.dataType }
-        for (mra in elementDefinition.requiredAttributes - attributesUsed) {
-            addError(ctx, MISSING_ATTRIBUTE, mra, qName)
+        elementDefinition?.let {
+            for (mra in elementDefinition.requiredAttributes - attributesUsed) {
+                addError(ctx, MISSING_ATTRIBUTE, mra, qName)
+            }
         }
         return keyValues
     }

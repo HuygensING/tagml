@@ -35,7 +35,6 @@ import org.junit.jupiter.api.Test
 
 class ValidatorTest {
 
-    //    @Disabled("TODO: datatype ID/String")
     @Test
     fun integration_test() {
         val tagml = ("""
@@ -934,6 +933,38 @@ class ValidatorTest {
                 SoftAssertions().apply {
                     assertThat(warnings).isEmpty()
                     assertThat(errors.map { it.message }).containsExactly("Unexpected opening tag: found [p> as child of [book>, but expected [title> or [chapter>.")
+                    assertAll()
+                }
+            }
+        }
+
+        @Test
+        fun entities_referred_to_with_pointers_should_be_defined_in_the_header() {
+            val tagml = ("""
+            |[!{
+            |  ":entities": {
+            |    "catwoman0001": {
+            |       "gender": "F",
+            |       "codename": "Catwoman",
+            |       "alterego": "Selina Kyle"
+            |    }
+            |  },
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |      "tagml": {"description": "..."},
+            |      "person": {"description": "..."}
+            |    }
+            |  }
+            |}!]
+            |[tagml>[person ref->batman0001>Bruce<person] loves [person ref->catwoman0001>Selina<person]<tagml]
+            |""".trimMargin())
+            assertTAGMLHasErrors(tagml) { errors, warnings ->
+                println(warnings.joinToString(separator = "\n", prefix = "warnings:") { it.message })
+                println(errors.joinToString(separator = "\n", prefix = "errors:") { it.message })
+                SoftAssertions().apply {
+                    assertThat(warnings).isEmpty()
+                    assertThat(errors.map { it.message }).containsExactly("No entity defined with id \"batman0001\"")
                     assertAll()
                 }
             }
