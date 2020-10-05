@@ -29,7 +29,6 @@ import nl.knaw.huygens.tag.tagml.grammar.TAGMLParserBaseListener
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.tree.TerminalNode
-import java.lang.Double
 import java.util.*
 
 data class KeyValue(var key: String, var value: Any?)
@@ -257,7 +256,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                     )
                 annotationValueContext.AV_NumberValue() != null ->
                     TypedValue(
-                            Double.valueOf(annotationValueContext.AV_NumberValue().text),
+                            annotationValueContext.AV_NumberValue().text.toDouble(),
                             AttributeDataType.Integer)
                 annotationValueContext.listValue() != null ->
                     TypedValue(
