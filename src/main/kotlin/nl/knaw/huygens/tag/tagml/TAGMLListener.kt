@@ -219,8 +219,8 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                         is TAGMLParser.AnnotationValueContext -> {
                             val value = annotationValue(annotationValueCtx)
                             val expectedDataType = ontology.attributes[attributeName]?.dataType
-                            if (expectedDataType != null && value?.type != expectedDataType) {
-                                addError(actx, WRONG_DATATYPE, attributeName, expectedDataType, value?.type!!)
+                            if (expectedDataType != null && !attributeDataTypesMatch(value?.type!!, expectedDataType)) {
+                                addError(actx, WRONG_DATATYPE, attributeName, expectedDataType, value.type)
                             } else {
                                 keyValues.add(KeyValue(attributeName, value))
                             }
@@ -362,6 +362,14 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
             layers.add(TAGML.DEFAULT_LAYER)
         }
         return layers
+    }
+
+    companion object {
+        private val stringDataTypes: Set<AttributeDataType> = setOf(AttributeDataType.String, AttributeDataType.ID, AttributeDataType.URI)
+        private fun attributeDataTypesMatch(dataType1: AttributeDataType, dataType2: AttributeDataType): Boolean =
+                dataType1 == dataType2 ||
+                        (dataType1 == AttributeDataType.String && dataType2 in stringDataTypes) ||
+                        (dataType2 == AttributeDataType.String && dataType1 in stringDataTypes)
     }
 
 }

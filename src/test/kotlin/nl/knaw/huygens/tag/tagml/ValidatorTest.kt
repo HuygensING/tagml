@@ -162,7 +162,7 @@ class ValidatorTest {
             assertThat(warnings).isEmpty()
 
             println(tokens.joinToString("\n"))
-            assertThat(tokens).hasSize(5)
+            assertThat(tokens).hasSize(4)
             assertThat(tokens[0])
                     .isInstanceOf(HeaderToken::class.java)
             val headerToken = tokens[0] as HeaderToken
@@ -180,9 +180,6 @@ class ValidatorTest {
             assertThat(tokens[3])
                     .isInstanceOf(MarkupCloseToken::class.java)
                     .hasFieldOrPropertyWithValue("qName", "excerpt")
-            assertThat(tokens[4])
-                    .isInstanceOf(TextToken::class.java)
-                    .hasFieldOrPropertyWithValue("isWhiteSpace", true)
 
             assertOntologyParses(headerToken) { ontology ->
                 assertThat(ontology)
