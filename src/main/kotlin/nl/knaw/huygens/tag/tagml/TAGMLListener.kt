@@ -234,10 +234,10 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                                 keyValues.add(KeyValue(attributeName, value))
                             }
                         }
-                        else -> TODO()
-                    }
+                        else -> TODO("this should not happen, has TAGML*.g4 changed?")
+                   }
                 }
-                is TAGMLParser.IdentifyingAnnotationContext -> TODO()
+                is TAGMLParser.IdentifyingAnnotationContext -> TODO("With all entities in header.:entities, is this still necessary?")
                 is TAGMLParser.RefAnnotationContext -> {
                     val ref = actx.refValue().RV_RefValue().text
                     if (ref !in definedEntityRefs) {
@@ -317,6 +317,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                     KeyValue(aName, value)
                 }
                 is TAGMLParser.IdentifyingAnnotationContext -> {
+                    // TODO: With all entities in header.:entities, is this still necessary?
                     // TODO: deal with this identifier
                     val value = parseTree.idValue().text
                     KeyValue(":id", value)

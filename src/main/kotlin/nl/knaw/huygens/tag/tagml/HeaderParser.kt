@@ -60,6 +60,7 @@ private fun parseNameSpaces(jsonValueCtx: TAGMLParser.Json_valueContext): ParseR
             .forEach { pair ->
                 val key = pair.JSON_STRING().text.content()
                 val value = pair.json_value().text.content()
+                // TODO: value should be url
                 namespaces[key] = value
             }
     return if (errors.isEmpty()) {
@@ -77,6 +78,7 @@ private fun parseEntities(jsonValueCtx: TAGMLParser.Json_valueContext): ParseRes
             .forEach { pair ->
                 val key = pair.JSON_STRING().text.content()
                 val value = pair.json_value().text.content()
+                // TODO: value should be json map
                 entities[key] = value
             }
     return if (errors.isEmpty()) {
@@ -299,7 +301,7 @@ fun parseHierarchyRule(ruleContext: TAGORLParser.HierarchyRuleContext, definedEl
             val ruleTail = ruleContext.childElements()
             parseChildElementsContext(ruleTail, childMap, parent)
         }
-        else -> TODO()
+        else -> TODO("this should not happen, has TAGORL.g4 changed?")
     }
 
     val elements = childMap.values.flatten().map { it.element }.toSet()
@@ -329,7 +331,7 @@ fun toQualifiedElement(childCtx: TAGORLParser.ChildElementContext): QualifiedEle
             is TAGORLParser.OptionalChildContext -> QualifiedElement.OptionalElement(childCtx.Name().text)
             is TAGORLParser.ZeroOrMoreChildContext -> QualifiedElement.ZeroOrMoreElement(childCtx.Name().text)
             is TAGORLParser.OneOrMoreChildContext -> QualifiedElement.OneOrMoreElement(childCtx.Name().text)
-            else -> TODO()
+            else -> TODO("this should not happen, has TAGORL.g4 changed?")
         }
 
 fun parseSetRule(ruleContext: TAGORLParser.SetRuleContext, definedElements: Set<String>): Either<List<String>, SetRule> {
