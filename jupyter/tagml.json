@@ -22,5 +22,5 @@
   "shutdown": [
     "LibraryConfig.shutdown()"
   ]
-  //  "renderers": {"nl.knaw.huygens.hypercollate.model.CollationGraph":  "HTML(LibraryConfig.renderCollationGraph($it))"}
+//    "renderers": {"nl.knaw.huygens.hypercollate.model.CollationGraph":  "HTML(LibraryConfig.renderCollationGraph($it))"}
 }

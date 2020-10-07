@@ -832,6 +832,32 @@ class ValidatorTest {
         }
 
         @Test
+        fun namespaces_must_have_a_valid_uri() {
+            val tagml = ("""
+            |[!{
+            |  ":namespaces": {
+            |    "a": "http://example.org/namespace/a",
+            |    "b": "invalid uri"
+            |  },
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |      "tagml": {"description": "..."},
+            |      "a:w": {"description": "..."},
+            |      "b:w": {"description": "..."}
+            |    }
+            |  }
+            |}!]
+            |[tagml>[a:w>Lorem<a:w] [b:w>ipsum<b:w] dolor.<tagml]
+            |""".trimMargin())
+            assertTAGMLHasErrors(tagml) { errors, warnings ->
+                assertThat(warnings).isEmpty()
+                assertThat(errors.map { it.message }).containsExactly(
+                        """Not a valid URI: "invalid uri"""")
+            }
+        }
+
+        @Test
         fun undefined_namespaces_are_not_allowed() {
             val tagml = ("""
             |[!{

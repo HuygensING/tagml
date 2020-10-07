@@ -29,12 +29,14 @@ import nl.knaw.huygens.tag.tagml.OntologyRule.*
 import nl.knaw.huygens.tag.tagml.grammar.TAGMLParser
 import nl.knaw.huygens.tag.tagorl.TAGORLLexer
 import nl.knaw.huygens.tag.tagorl.TAGORLParser
+import nl.knaw.huygens.toURI
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTree
 import java.lang.String.format
+import java.net.URI
 
 fun parseHeader(ctx: TAGMLParser.HeaderContext): Map<String, Any> =
         ctx.json_pair().map { toPair(it) }
@@ -52,16 +54,20 @@ private fun toPair(ctx: TAGMLParser.Json_pairContext): Pair<String, Any> {
     return (key to value)
 }
 
-private fun parseNameSpaces(jsonValueCtx: TAGMLParser.Json_valueContext): ParseResult<Map<String, String>> {
+private fun parseNameSpaces(jsonValueCtx: TAGMLParser.Json_valueContext): ParseResult<Map<String, URI>> {
     val errors: MutableList<ErrorListener.TAGError> = mutableListOf()
-    val namespaces: MutableMap<String, String> = mutableMapOf()
+    val namespaces: MutableMap<String, URI> = mutableMapOf()
     jsonValueCtx.json_obj().json_pair()
             .filterNotNull()
             .forEach { pair ->
                 val key = pair.JSON_STRING().text.content()
                 val value = pair.json_value().text.content()
-                // TODO: value should be url
-                namespaces[key] = value
+                val uri = value.toURI()
+                if (uri == null) {
+                    errors.add(error(pair.json_value(), INVALID_URI, value))
+                } else {
+                    namespaces[key] = uri
+                }
             }
     return if (errors.isEmpty()) {
         Either.right(namespaces)

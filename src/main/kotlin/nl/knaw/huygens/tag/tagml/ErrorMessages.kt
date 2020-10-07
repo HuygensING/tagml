@@ -47,3 +47,4 @@ const val DISCONTINUOUS_ROOT = """Root element "%s" is not allowed to be discont
 const val UNKNOWN_ANNOTATION_TYPE = "Cannot determine the type of this annotation: %s"
 const val NAMESPACE_NOT_DEFINED = """Namespace "%s" has not been defined in the header."""
 const val UNDEFINED_ENTITY = """No entity defined with id "%s""""
+const val INVALID_URI = """Not a valid URI: "%s""""

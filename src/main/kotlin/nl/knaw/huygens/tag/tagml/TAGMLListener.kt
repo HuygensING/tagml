@@ -235,7 +235,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                             }
                         }
                         else -> TODO("this should not happen, has TAGML*.g4 changed?")
-                   }
+                    }
                 }
                 is TAGMLParser.IdentifyingAnnotationContext -> TODO("With all entities in header.:entities, is this still necessary?")
                 is TAGMLParser.RefAnnotationContext -> {
@@ -299,14 +299,12 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                 }
             }
 
-    private fun readObject(objectValueContext: TAGMLParser.ObjectValueContext): Map<String, Any?> {
-        val map: MutableMap<String, Any?> = LinkedHashMap()
-        objectValueContext.children
-                .filter { c: ParseTree? -> c !is TerminalNode }
-                .map { parseTree: ParseTree -> parseAttribute(parseTree) }
-                .forEach { kv: KeyValue -> map[kv.key] = kv.value }
-        return map
-    }
+    private fun readObject(objectValueContext: TAGMLParser.ObjectValueContext): Map<String, Any?> =
+            objectValueContext.children
+                    .filter { c: ParseTree? -> c !is TerminalNode }
+                    .map { parseTree: ParseTree -> parseAttribute(parseTree) }
+                    .map { it.key to it.value }
+                    .toMap()
 
     private fun parseAttribute(parseTree: ParseTree): KeyValue =
             when (parseTree) {
