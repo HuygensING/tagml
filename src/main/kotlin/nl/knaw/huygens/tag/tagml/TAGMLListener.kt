@@ -62,7 +62,6 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
     @Suppress("UNCHECKED_CAST")
     override fun exitHeader(ctx: TAGMLParser.HeaderContext) {
         val headerMap: Map<String, Any> = parseHeader(ctx)
-        val token = HeaderToken(ctx.getRange(), ctx.text, headerMap)
         var ontology: TAGOntology? = null
         var nameSpaces: Map<String, String>? = null
         var entities: Map<String, String>? = null
@@ -90,7 +89,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
         if (ontology != null && nameSpaces != null && entities != null) {
             context = ListenerContext(ontology!!, nameSpaces!!, entities!!)
         }
-        _tokens += token
+        _tokens += HeaderToken(ctx.getRange(), ctx.text, headerMap)
     }
 
     override fun exitStartTag(ctx: TAGMLParser.StartTagContext) {

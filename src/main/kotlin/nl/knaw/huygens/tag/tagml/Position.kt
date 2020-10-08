@@ -31,7 +31,11 @@ data class Position(val line: Int, val character: Int) {
                 Position(ctx.start.line, ctx.start.charPositionInLine + 1)
 
         fun endOf(ctx: ParserRuleContext): Position =
-                Position(ctx.stop.line, ctx.stop.charPositionInLine + ctx.stop.stopIndex - ctx.stop.startIndex + 2)
+                if (ctx.stop == null) {
+                    Position(ctx.start.line, ctx.start.charPositionInLine + 1)
+                } else {
+                    Position(ctx.stop.line, ctx.stop.charPositionInLine + ctx.stop.stopIndex - ctx.stop.startIndex + 2)
+                }
     }
 
 }
