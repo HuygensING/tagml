@@ -31,7 +31,6 @@ class HeaderInferrerTest {
         val tagml = "[tagml>body [new>text<new] bla<tagml]"
         val expected = """
             |[!{
-            |  ":namespaces": {},
             |  ":ontology": {
             |    "root": "tagml",
             |    "elements": {
@@ -56,7 +55,6 @@ class HeaderInferrerTest {
         val tagml = "[tagml id=1 title=\"Title\">body [new hilite=true>text<new] bla<tagml]"
         val expected = """
             |[!{
-            |  ":namespaces": {},
             |  ":ontology": {
             |    "root": "tagml",
             |    "elements": {
@@ -101,7 +99,6 @@ class HeaderInferrerTest {
         val tagml = "[tagml>[q>Time is an illusion.<-q] he said, [+q>Lunchtime doubly so.<q]<tagml]"
         val expected = """
             |[!{
-            |  ":namespaces": {},
             |  ":ontology": {
             |    "root": "tagml",
             |    "elements": {
@@ -160,7 +157,6 @@ class HeaderInferrerTest {
         val tagml = """[tagml>[q>Nothing travels faster than the speed of light, with the possible exception of bad news[note text="fake news"], which obeys its own special laws.<q]<tagml]"""
         val expected = """
             |[!{
-            |  ":namespaces": {},
             |  ":ontology": {
             |    "root": "tagml",
             |    "elements": {
@@ -186,6 +182,33 @@ class HeaderInferrerTest {
             |        "dataType": "String"
             |      }
             |    }
+            |  }
+            |}!]
+            """.trimMargin()
+        assertHeaderCanBeInferred(tagml) { header ->
+            assertThat(header).isEqualTo(expected)
+        }
+    }
+
+    @Test
+    fun infer_entities() {
+        val tagml = "[tagml>[q author->pkd001>If you think this Universe is bad, you should see some of the others.<q]<tagml]"
+        val expected = """
+            |[!{
+            |  ":entities": {
+            |    "pkd001": {}
+            |  },
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |      "tagml": {
+            |        "description": "..."
+            |      },
+            |      "q": {
+            |        "description": "..."
+            |      }
+            |    },
+            |    "attributes": {}
             |  }
             |}!]
             """.trimMargin()

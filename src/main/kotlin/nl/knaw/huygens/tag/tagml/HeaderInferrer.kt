@@ -25,8 +25,14 @@ import com.google.gson.GsonBuilder
 
 fun String.inferHeader(): Either<List<ErrorListener.TAGError>, String> {
     val gson = GsonBuilder().setPrettyPrinting().create()
-    val nameSpaces = gson.toJson(
-            Regex("""\[([a-zA-Z0-9]):""")
+    val entitiesMap = Regex("""->([a-zA-Z0-9]+)""")
+            .findAll(this)
+            .map { it.groupValues[1] }
+            .map { it to mapOf<String, Any>() }
+            .toMap()
+    val entitiesJson = gson.toJson(entitiesMap)
+    val nameSpacesJson = gson.toJson(
+            Regex("""\[([a-zA-Z0-9]+):""")
                     .findAll(this)
                     .map { it.groupValues[1] }
                     .map { it to "http://example.org/ns/test" }
@@ -34,7 +40,8 @@ fun String.inferHeader(): Either<List<ErrorListener.TAGError>, String> {
     )
     val tagml = """
             |[!{
-            |    ":namespaces": $nameSpaces, 
+            |    ":namespaces": $nameSpacesJson, 
+            |    ":entities": $entitiesJson, 
             |    ":ontology": {
             |        "root" : "dummy_root"
             |    }
@@ -80,14 +87,16 @@ fun String.inferHeader(): Either<List<ErrorListener.TAGError>, String> {
                     elementDefinition["attributes"] = elementAttributes
                 }
             }
-            val headerMap: Map<String, Any> = mapOf(
+            val headerMap: Map<String, Any> = listOf(
+                    ":entities" to entitiesMap,
                     ":namespaces" to namespaces.map { it to "https://example.org/ns/$it" }.toMap(),
                     ":ontology" to mapOf(
                             "root" to root,
                             "elements" to elementDefinitions,
                             "attributes" to attributeDefinitionMap(attributeDataTypeMap)
-                    )
-            )
+                    ))
+                    .filter { (_: String, v: Map<String, Any>) -> v.isNotEmpty() }
+                    .toMap()
             val header = gson.toJson(headerMap)
             Either.right(headerJson(header))
         }
