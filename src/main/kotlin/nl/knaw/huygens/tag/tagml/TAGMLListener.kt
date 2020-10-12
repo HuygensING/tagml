@@ -185,7 +185,7 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                         _tokens += token
                     }
                     in listenerContext.openMarkupInLayer(layer).map { it.qName } -> {
-                        addError(ctx, UNEXPECTED_CLOSE_TAG, rawContent, listenerContext.openMarkupInLayer(layer).last())
+                        addError(ctx, UNEXPECTED_CLOSE_TAG, rawContent, listenerContext.openMarkupInLayer(layer).last().qName)
                     }
                     else -> {
                         addError(ctx, MISSING_OPEN_TAG, rawContent)
