@@ -135,9 +135,8 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
             val layers = ctx.layerInfo().layers()
             val ontology = listenerContext.ontology
             checkExpectedRoot(ontology, qName, ctx)
-            val attributes: MutableList<KeyValue> = mutableListOf()
+            val attributes: List<KeyValue> = parseAttributes(ctx, ontology, listenerContext.definedEntityRefs, qName, ctx.annotation())
             if (ontology.hasElement(qName)) {
-                attributes += parseAttributes(ctx, ontology, listenerContext.definedEntityRefs, qName, ctx.annotation())
                 if (!ontology.elementDefinition(qName)?.isMilestone!!) {
                     addError(ctx, ILLEGAL_MILESTONE, qName)
                 }

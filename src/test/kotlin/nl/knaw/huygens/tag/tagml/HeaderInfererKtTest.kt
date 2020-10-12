@@ -1,3 +1,5 @@
+package nl.knaw.huygens.tag.tagml
+
 /*-
  * #%L
  * tagml
@@ -17,7 +19,6 @@
  * limitations under the License.
  * #L%
  */
-package nl.knaw.huygens.tag.tagml
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -39,7 +40,8 @@ class HeaderInferrerTest {
             |      "new": {
             |        "description": "..."
             |      }
-            |    }
+            |    },
+            |    "attributes": {}
             |  }
             |}!]
             """.trimMargin()
@@ -58,16 +60,95 @@ class HeaderInferrerTest {
             |    "elements": {
             |      "tagml": {
             |        "description": "...",
-            |        "attributes" : [
+            |        "attributes": [
             |          "id",
             |          "title"
             |        ]
             |      },
             |      "new": {
             |        "description": "...",
-            |        "attributes" : [
+            |        "attributes": [
             |          "hilite"
             |        ]
+            |      }
+            |    },
+            |    "attributes": {
+            |      "id": {
+            |        "description": "...",
+            |        "dataType": "Integer"
+            |      },
+            |      "title": {
+            |        "description": "...",
+            |        "dataType": "String"
+            |      },
+            |      "hilite": {
+            |        "description": "...",
+            |        "dataType": "Boolean"
+            |      }
+            |    }
+            |  }
+            |}!]
+            """.trimMargin()
+        assertHeaderCanBeInferred(tagml) { header ->
+            assertThat(header).isEqualTo(expected)
+        }
+    }
+
+    @Test
+    fun infer_discontinuity() {
+        val tagml = "[tagml>[q>Time is an illusion.<-q] he said, [+q>Lunchtime doubly so.<q]<tagml]"
+        val expected = """
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |      "tagml": {
+            |        "description": "..."
+            |      },
+            |      "q": {
+            |        "description": "...",
+            |        "properties": [
+            |          "discontinuous"
+            |        ]
+            |      }
+            |    },
+            |    "attributes": {}
+            |  }
+            |}!]
+            """.trimMargin()
+        assertHeaderCanBeInferred(tagml) { header ->
+            assertThat(header).isEqualTo(expected)
+        }
+    }
+
+    @Test
+    fun infer_milestone() {
+        val tagml = """[tagml>[q>Nothing travels faster than the speed of light, with the possible exception of bad news[note text="fake news"], which obeys its own special laws.<q]<tagml]"""
+        val expected = """
+            |[!{
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |      "tagml": {
+            |        "description": "..."
+            |      },
+            |      "q": {
+            |        "description": "..."
+            |      },
+            |      "note": {
+            |        "description": "...",
+            |        "properties": [
+            |          "milestone"
+            |        ],
+            |        "attributes": [
+            |          "text"
+            |        ]
+            |      }
+            |    },
+            |    "attributes": {
+            |      "text": {
+            |        "description": "...",
+            |        "dataType": "String"
             |      }
             |    }
             |  }
@@ -99,5 +180,5 @@ class HeaderInferrerTest {
     }
 
     private fun List<ErrorListener.TAGError>.errorString() =
-            joinToString("\n") { it.message }
+            joinToString(separator = "\n", prefix = "\n") { it.message }
 }

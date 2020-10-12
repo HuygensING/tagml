@@ -58,8 +58,8 @@ sealed class TAGMLToken(private val range: Range, val rawContent: String) {
             qName: String,
             layers: Set<String>,
             val markupId: Long,
-            val attributes: List<KeyValue>
-    ) : MarkupToken(range, rawContent, qName, layers)
+            override val attributes: List<KeyValue>
+    ) : MarkupToken(range, rawContent, qName, layers), MarkupTokenWithAttributes
 
     class MarkupSuspendToken(
             range: Range,
@@ -90,8 +90,8 @@ sealed class TAGMLToken(private val range: Range, val rawContent: String) {
             rawContent: String,
             qName: String,
             layers: Set<String>,
-            val attributes: List<KeyValue>
-    ) : MarkupToken(range, rawContent, qName, layers)
+            override val attributes: List<KeyValue>
+    ) : MarkupToken(range, rawContent, qName, layers), MarkupTokenWithAttributes
 
     class TextToken(
             range: Range,
@@ -101,4 +101,8 @@ sealed class TAGMLToken(private val range: Range, val rawContent: String) {
                 rawContent.isBlank()
     }
 
+}
+
+interface MarkupTokenWithAttributes {
+    val attributes: List<KeyValue>
 }

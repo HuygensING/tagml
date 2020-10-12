@@ -1,3 +1,5 @@
+package nl.knaw.huygens.tag.tagml
+
 /*-
  * #%L
  * tagml
@@ -17,7 +19,6 @@
  * limitations under the License.
  * #L%
  */
-package nl.knaw.huygens.tag.tagml
 
 import arrow.core.Either
 import com.google.gson.GsonBuilder
@@ -33,16 +34,45 @@ fun String.inferHeader(): Either<List<ErrorListener.TAGError>, String> {
             |""".trimMargin()
     return when (val parseResult = parse(tagml)) {
         is TAGMLParseResult.TAGMLParseSuccess -> {
-            val elementsUsed = parseResult.tokens
+            val elementDefinitions: MutableMap<String, MutableMap<String, Any>> = mutableMapOf()
+            val markupTokens = parseResult.tokens
                     .subList(2, parseResult.tokens.lastIndex)
                     .filterIsInstance<TAGMLToken.MarkupToken>()
-                    .map { it.qName }
-                    .distinct()
-            val headerMap: MutableMap<String, Any> = mutableMapOf()
-            val minimalElementDefinition = mapOf("description" to "...")
-            headerMap[":ontology"] = mapOf<String, Any>(
-                    "root" to elementsUsed[0],
-                    "elements" to elementsUsed.map { it to minimalElementDefinition }.toMap()
+            val root = markupTokens[0].qName
+            val attributeDataTypeMap: MutableMap<String, AttributeDataType> = mutableMapOf()
+            markupTokens.forEach { mt ->
+                val elementDefinition = elementDefinitions.getOrPut(mt.qName) { mutableMapOf() }
+                val elementAttributes: MutableList<String> = ((elementDefinition["attributes"]
+                        ?: listOf<String>()) as List<String>).toMutableList()
+                val elementProperties: MutableList<String> = ((elementDefinition["properties"]
+                        ?: listOf<String>()) as List<String>).toMutableList()
+                if (mt is TAGMLToken.MarkupSuspendToken) {
+                    elementProperties += "discontinuous"
+                } else if (mt is MarkupTokenWithAttributes) {
+                    if (mt is TAGMLToken.MarkupMilestoneToken) {
+                        elementProperties += "milestone"
+                    }
+                    mt.attributes.forEach { kv ->
+                        elementAttributes += kv.key
+                        attributeDataTypeMap[kv.key] = (kv.value as TypedValue).type
+                    }
+                }
+                if (elementDefinition["description"] == null) {
+                    elementDefinition["description"] = "..."
+                }
+                if (elementProperties.isNotEmpty()) {
+                    elementDefinition["properties"] = elementProperties
+                }
+                if (elementAttributes.isNotEmpty()) {
+                    elementDefinition["attributes"] = elementAttributes
+                }
+            }
+            val headerMap: Map<String, Any> = mapOf(
+                    ":ontology" to mapOf(
+                            "root" to root,
+                            "elements" to elementDefinitions,
+                            "attributes" to attributeDefinitionMap(attributeDataTypeMap)
+                    )
             )
             val gson = GsonBuilder().setPrettyPrinting().create()
             val header = gson.toJson(headerMap)
@@ -53,6 +83,14 @@ fun String.inferHeader(): Either<List<ErrorListener.TAGError>, String> {
         }
     }
 }
+
+private fun attributeDefinitionMap(typeMap: MutableMap<String, AttributeDataType>) =
+        typeMap.map { (name, type) ->
+            name to mapOf(
+                    "description" to "...",
+                    "dataType" to type.name
+            )
+        }.toMap()
 
 private fun headerJson(header: String?) = """
     |[!$header!]
