@@ -24,8 +24,17 @@ import arrow.core.Either
 import com.google.gson.GsonBuilder
 
 fun String.inferHeader(): Either<List<ErrorListener.TAGError>, String> {
+    val gson = GsonBuilder().setPrettyPrinting().create()
+    val nameSpaces = gson.toJson(
+            Regex("""\[([a-zA-Z0-9]):""")
+                    .findAll(this)
+                    .map { it.groupValues[1] }
+                    .map { it to "http://example.org/ns/test" }
+                    .toMap()
+    )
     val tagml = """
             |[!{
+            |    ":namespaces": $nameSpaces, 
             |    ":ontology": {
             |        "root" : "dummy_root"
             |    }
@@ -40,7 +49,11 @@ fun String.inferHeader(): Either<List<ErrorListener.TAGError>, String> {
                     .filterIsInstance<TAGMLToken.MarkupToken>()
             val root = markupTokens[0].qName
             val attributeDataTypeMap: MutableMap<String, AttributeDataType> = mutableMapOf()
+            val namespaces: MutableSet<String> = mutableSetOf()
             markupTokens.forEach { mt ->
+                if (mt.qName.contains(':')) {
+                    namespaces += mt.qName.subSequence(0, mt.qName.indexOf(':')).toString()
+                }
                 val elementDefinition = elementDefinitions.getOrPut(mt.qName) { mutableMapOf() }
                 val elementAttributes: MutableList<String> = ((elementDefinition["attributes"]
                         ?: listOf<String>()) as List<String>).toMutableList()
@@ -68,13 +81,13 @@ fun String.inferHeader(): Either<List<ErrorListener.TAGError>, String> {
                 }
             }
             val headerMap: Map<String, Any> = mapOf(
+                    ":namespaces" to namespaces.map { it to "https://example.org/ns/$it" }.toMap(),
                     ":ontology" to mapOf(
                             "root" to root,
                             "elements" to elementDefinitions,
                             "attributes" to attributeDefinitionMap(attributeDataTypeMap)
                     )
             )
-            val gson = GsonBuilder().setPrettyPrinting().create()
             val header = gson.toJson(headerMap)
             Either.right(headerJson(header))
         }

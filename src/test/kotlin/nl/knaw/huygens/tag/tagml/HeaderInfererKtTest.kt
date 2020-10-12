@@ -31,6 +31,7 @@ class HeaderInferrerTest {
         val tagml = "[tagml>body [new>text<new] bla<tagml]"
         val expected = """
             |[!{
+            |  ":namespaces": {},
             |  ":ontology": {
             |    "root": "tagml",
             |    "elements": {
@@ -55,6 +56,7 @@ class HeaderInferrerTest {
         val tagml = "[tagml id=1 title=\"Title\">body [new hilite=true>text<new] bla<tagml]"
         val expected = """
             |[!{
+            |  ":namespaces": {},
             |  ":ontology": {
             |    "root": "tagml",
             |    "elements": {
@@ -99,6 +101,7 @@ class HeaderInferrerTest {
         val tagml = "[tagml>[q>Time is an illusion.<-q] he said, [+q>Lunchtime doubly so.<q]<tagml]"
         val expected = """
             |[!{
+            |  ":namespaces": {},
             |  ":ontology": {
             |    "root": "tagml",
             |    "elements": {
@@ -122,10 +125,42 @@ class HeaderInferrerTest {
     }
 
     @Test
+    fun infer_namespaces() {
+        val tagml = "[tagml>[a:q>We are an [b:w>impossibility<b:w] in an impossible universe.<a:q]<tagml]"
+        val expected = """
+            |[!{
+            |  ":namespaces": {
+            |    "a": "https://example.org/ns/a",
+            |    "b": "https://example.org/ns/b"
+            |  },
+            |  ":ontology": {
+            |    "root": "tagml",
+            |    "elements": {
+            |      "tagml": {
+            |        "description": "..."
+            |      },
+            |      "a:q": {
+            |        "description": "..."
+            |      },
+            |      "b:w": {
+            |        "description": "..."
+            |      }
+            |    },
+            |    "attributes": {}
+            |  }
+            |}!]
+            """.trimMargin()
+        assertHeaderCanBeInferred(tagml) { header ->
+            assertThat(header).isEqualTo(expected)
+        }
+    }
+
+    @Test
     fun infer_milestone() {
         val tagml = """[tagml>[q>Nothing travels faster than the speed of light, with the possible exception of bad news[note text="fake news"], which obeys its own special laws.<q]<tagml]"""
         val expected = """
             |[!{
+            |  ":namespaces": {},
             |  ":ontology": {
             |    "root": "tagml",
             |    "elements": {
