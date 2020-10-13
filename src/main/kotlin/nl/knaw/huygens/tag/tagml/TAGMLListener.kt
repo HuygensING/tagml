@@ -240,6 +240,9 @@ class TAGMLListener(private val errorListener: ErrorListener) : TAGMLParserBaseL
                     val ref = actx.refValue().RV_RefValue().text
                     if (ref !in definedEntityRefs) {
                         addError(actx, UNDEFINED_ENTITY, ref)
+                    } else {
+                        val attributeName = actx.annotationName().text
+                        keyValues += KeyValue(attributeName, TypedValue(ref, AttributeDataType.Pointer))
                     }
                 }
             }

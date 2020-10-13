@@ -205,10 +205,18 @@ class HeaderInferrerTest {
             |        "description": "..."
             |      },
             |      "q": {
-            |        "description": "..."
+            |        "description": "...",
+            |        "attributes": [
+            |          "author"
+            |        ]
             |      }
             |    },
-            |    "attributes": {}
+            |    "attributes": {
+            |      "author": {
+            |        "description": "...",
+            |        "dataType": "Pointer"
+            |      }
+            |    }
             |  }
             |}!]
             """.trimMargin()
