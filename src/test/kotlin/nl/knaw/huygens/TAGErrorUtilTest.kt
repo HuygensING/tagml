@@ -105,6 +105,80 @@ class TAGErrorUtilTest {
         }
     }
 
+    @Test
+    fun test_tag_error_util2() {
+        val tagml = """
+            [!{
+              ":ontology": {
+                "root": "tagml"
+              }
+            }!]
+            [tagml>[book>[title>Foo Bar<title][chapter>[l>Lorem ipsum dolar amacet.<l]<chapter]<book]<tagml]
+            """.trimIndent()
+        val u = TAGErrorUtil(tagml)
+        when (val parseResult = parse(tagml)) {
+            is TAGMLParseResult.TAGMLParseFailure -> {
+                fail(parseResult.errors.joinToString("\n") { u.errorInContext(it).pretty() })
+            }
+            else -> {
+                val rangedError0 = parseResult.warnings[0] as ErrorListener.RangedTAGError
+                assertThat(rangedError0.range).isEqualTo(range(6, 1, 6, 8))
+
+                val pretty0 = u.errorInContext(rangedError0).pretty()
+                val expected0 = """
+                    line 6: Element "tagml" is not defined in the ontology.
+                    [tagml>[book>[title>Foo Bar<title][chapter>[l>Lorem ipsum dolar amacet.<l]<chapter]<book]<tagml]
+                    -------
+                    """.trimIndent()
+                assertThat(pretty0).isEqualTo(expected0)
+
+                val rangedError1 = parseResult.warnings[1] as ErrorListener.RangedTAGError
+                assertThat(rangedError1.range).isEqualTo(range(6, 8, 6, 14))
+
+                val pretty1 = u.errorInContext(rangedError1).pretty()
+                val expected1 = """
+                    line 6: Element "book" is not defined in the ontology.
+                    [tagml>[book>[title>Foo Bar<title][chapter>[l>Lorem ipsum dolar amacet.<l]<chapter]<book]<tagml]
+                           ------
+                    """.trimIndent()
+                assertThat(pretty1).isEqualTo(expected1)
+
+                val rangedError2 = parseResult.warnings[2] as ErrorListener.RangedTAGError
+                assertThat(rangedError2.range).isEqualTo(range(6, 14, 6, 21))
+
+                val pretty2 = u.errorInContext(rangedError2).pretty()
+                val expected2 = """
+                    line 6: Element "title" is not defined in the ontology.
+                    [tagml>[book>[title>Foo Bar<title][chapter>[l>Lorem ipsum dolar amacet.<l]<chapter]<book]<tagml]
+                                 -------
+                    """.trimIndent()
+                assertThat(pretty2).isEqualTo(expected2)
+
+                val rangedError3 = parseResult.warnings[3] as ErrorListener.RangedTAGError
+                assertThat(rangedError3.range).isEqualTo(range(6, 35, 6, 44))
+
+                val pretty3 = u.errorInContext(rangedError3).pretty()
+                val expected3 = """
+                    line 6: Element "chapter" is not defined in the ontology.
+                    [tagml>[book>[title>Foo Bar<title][chapter>[l>Lorem ipsum dolar amacet.<l]<chapter]<book]<tagml]
+                                                      ---------
+                    """.trimIndent()
+                assertThat(pretty3).isEqualTo(expected3)
+
+                val rangedError4 = parseResult.warnings[4] as ErrorListener.RangedTAGError
+                val pretty4 = u.errorInContext(rangedError4).pretty()
+                val expected4 = """
+                    line 6: Element "l" is not defined in the ontology.
+                    [tagml>[book>[title>Foo Bar<title][chapter>[l>Lorem ipsum dolar amacet.<l]<chapter]<book]<tagml]
+                                                               ---
+                    """.trimIndent()
+                assertThat(pretty4).isEqualTo(expected4)
+
+                assertThat(parseResult.warnings).hasSize(5)
+            }
+        }
+    }
+
     private fun range(startLine: Int, startChar: Int, endLine: Int, endChar: Int) =
             Range(Position(startLine, startChar), Position(endLine, endChar))
 

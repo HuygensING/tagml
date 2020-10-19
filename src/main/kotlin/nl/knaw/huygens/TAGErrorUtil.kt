@@ -36,7 +36,7 @@ fun ErrorInContext.pretty(): String =
         } else {
             val underlinedSourceLines = this.sourceLineRanges.joinToString("\n") {
                 val underline = "-".repeat(it.charRange.last - it.charRange.first)
-                val padded = if (it.charRange.first == 1) underline else underline.padStart(it.sourceLine.length)
+                val padded = if (it.charRange.first == 1) underline else underline.padStart(it.charRange.last - 1)
                 "${it.sourceLine}\n$padded"
             }
             "${this.header}: ${this.message}\n$underlinedSourceLines"
