@@ -41,25 +41,12 @@ class ErrorListener : ANTLRErrorListener {
 
     class TAGErrorComparator : Comparator<TAGError> {
         override fun compare(e1: TAGError, e2: TAGError): Int = when {
-            (e1 is CustomError && e2 is CustomError) -> when {
+            (e1 is RangedTAGError && e2 is RangedTAGError) -> when {
                 e1.range.startPosition.line != e2.range.startPosition.line -> e1.range.startPosition.line.compareTo(e2.range.startPosition.line)
                 e1.range.startPosition.character != e2.range.startPosition.character -> e1.range.startPosition.character.compareTo(e2.range.startPosition.character)
                 e1.range.endPosition.line != e2.range.endPosition.line -> e1.range.endPosition.line.compareTo(e2.range.endPosition.line)
                 e1.range.endPosition.character != e2.range.endPosition.character -> e1.range.endPosition.character.compareTo(e2.range.endPosition.character)
                 else -> e1.message.compareTo(e2.message)
-            }
-            (e1 is TAGSyntaxError && e2 is TAGSyntaxError) -> when {
-                e1.position.line != e2.position.line -> e1.position.line.compareTo(e2.position.line)
-                e1.position.character != e2.position.character -> e1.position.character.compareTo(e2.position.character)
-                else -> e1.message.compareTo(e2.message)
-            }
-            (e1 is CustomError && e2 is TAGSyntaxError) -> when {
-                e1.range.startPosition.line != e2.position.line -> e1.range.startPosition.line.compareTo(e2.position.line)
-                else -> e1.range.startPosition.character.compareTo(e2.position.character)
-            }
-            (e1 is TAGSyntaxError && e2 is CustomError) -> when {
-                e1.position.line != e2.range.startPosition.line -> e1.position.line.compareTo(e2.range.startPosition.line)
-                else -> e1.position.character.compareTo(e2.range.startPosition.character)
             }
             else -> e1.message.compareTo(e2.message)
         }
@@ -150,7 +137,7 @@ class ErrorListener : ANTLRErrorListener {
             msg: String,
             e: RecognitionException?) {
         val message = format("syntax error: %s", msg.replace("token recognition error at", "unexpected token"))
-        errors += TAGSyntaxError(message, line, charPositionInLine)
+        errors += TAGSyntaxError(line, charPositionInLine, message)
     }
 
     val prefixedErrorMessagesAsString: String
@@ -162,7 +149,7 @@ class ErrorListener : ANTLRErrorListener {
             when (error) {
                 is CustomError -> prefix(error.range.startPosition) + error.message
                 is CustomWarning -> "warning: " + prefix(error.range.startPosition) + error.message
-                is TAGSyntaxError -> prefix(error.position) + error.message
+                is TAGSyntaxError -> prefix(error.range.startPosition) + error.message
                 else -> ""
             }
 
@@ -199,28 +186,39 @@ class ErrorListener : ANTLRErrorListener {
 
     abstract class TAGError(val message: String)
 
-    class TAGSyntaxError(message: String, line: Int, character: Int) : TAGError(message) {
-        val position: Position = Position(line, character)
-    }
-
     class TAGAmbiguityError(message: String) : TAGError(message)
 
     class TAGAttemptingFullContextError(message: String) : TAGError(message)
 
     class TAGContextSensitivityError(message: String) : TAGError(message)
 
-    class CustomError(startPos: Position, endPos: Position, message: String) : TAGError(message) {
-        val range = Range(startPos, endPos)
+    abstract class RangedTAGError(val range: Range, message: String) : TAGError(message)
 
+    class TAGSyntaxError(
+            line: Int,
+            character: Int,
+            message: String
+    ) : RangedTAGError(
+            Range(Position(line, character), Position(line, character)),
+            message
+    )
+
+    class CustomError(
+            startPos: Position,
+            endPos: Position,
+            message: String
+    ) : RangedTAGError(Range(startPos, endPos), message) {
         constructor(range: Range, message: String) :
                 this(range.startPosition, range.endPosition, message)
 
         override fun toString(): String = "CustomError{range=$range, message=$message}"
     }
 
-    class CustomWarning(startPos: Position, endPos: Position, message: String) : TAGError(message) {
-        val range = Range(startPos, endPos)
-
+    class CustomWarning(
+            startPos: Position,
+            endPos: Position,
+            message: String
+    ) : RangedTAGError(Range(startPos, endPos), message) {
         constructor(range: Range, message: String) :
                 this(range.startPosition, range.endPosition, message)
 
