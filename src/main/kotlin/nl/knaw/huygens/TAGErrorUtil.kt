@@ -30,15 +30,22 @@ data class ErrorInContext(
         val sourceLineRanges: List<SourceLineRange> = emptyList()
 )
 
-fun ErrorInContext.pretty(): String =
+fun ErrorInContext.pretty(wrapAt: Int = 120): String =
         if (this.header == null) {
             this.message
         } else {
-            val underlinedSourceLines = this.sourceLineRanges.joinToString("\n") {
-                val underline = "-".repeat(it.charRange.last - it.charRange.first)
-                val padded = if (it.charRange.first == 1) underline else underline.padStart(it.charRange.last - 1)
-                "${it.sourceLine}\n$padded"
-            }
+            val underlinedSourceLines = this.sourceLineRanges
+                    .asSequence()
+                    .map {
+                        val underline = "-".repeat(it.charRange.last - it.charRange.first)
+                        val padded = if (it.charRange.first == 1) underline else underline.padStart(it.charRange.last - 1)
+                        val lineParts = it.sourceLine.chunked(wrapAt)
+                        val underlineParts = padded.chunked(wrapAt)
+                        lineParts.zip(underlineParts)
+                    }
+                    .flatten()
+                    .filter { it.second.isNotBlank() }
+                    .joinToString("\n") { "${it.first}\n${it.second}" }
             "${this.header}: ${this.message}\n$underlinedSourceLines"
         }
 

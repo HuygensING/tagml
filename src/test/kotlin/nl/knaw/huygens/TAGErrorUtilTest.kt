@@ -22,6 +22,7 @@ package nl.knaw.huygens
 
 import nl.knaw.huygens.tag.tagml.*
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.SoftAssertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 
@@ -175,6 +176,64 @@ class TAGErrorUtilTest {
                 assertThat(pretty4).isEqualTo(expected4)
 
                 assertThat(parseResult.warnings).hasSize(5)
+            }
+        }
+    }
+
+    @Test
+    fun test_tag_error_util_with_very_long_lines() {
+        val tagml = """
+            [!{
+              ":ontology": {
+                "root": "tagml"
+              }
+            }!]
+            [tagml>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor [w>incididunt<w] ut labore et dolore magna aliqua. Pretium fusce id velit ut tortor pretium. Bibendum ut tristique et egestas. Varius vel pharetra vel turpis nunc eget. Neque aliquam vestibulum morbi blandit. Proin sagittis nisl rhoncus mattis. Tempor orci eu lobortis elementum nibh. Egestas maecenas pharetra convallis posuere morbi. Urna condimentum mattis pellentesque id. Mauris in aliquam sem fringilla ut. Sed felis eget velit aliquet sagittis id. Dictum fusce ut placerat orci nulla pellentesque dignissim enim sit. Lorem mollis aliquam ut porttitor leo a. Proin sagittis nisl rhoncus mattis rhoncus. Non quam lacus suspendisse faucibus interdum posuere lorem. Eu nisl nunc mi ipsum faucibus vitae aliquet nec ullamcorper. Vulputate odio ut enim blandit volutpat maecenas volutpat blanño aliquam. Fermentum et sollicitudin ac orci [x>phasellus<x].<tagml]
+            """.trimIndent()
+        val u = TAGErrorUtil(tagml)
+        when (val parseResult = parse(tagml)) {
+            is TAGMLParseResult.TAGMLParseFailure -> {
+                fail(parseResult.errors.joinToString("\n") { u.errorInContext(it).pretty() })
+            }
+            else -> {
+                SoftAssertions().apply {
+                    assertThat(parseResult.warnings).hasSize(3)
+
+                    val rangedError0 = parseResult.warnings[0] as ErrorListener.RangedTAGError
+                    assertThat(rangedError0.range).isEqualTo(range(6, 1, 6, 8))
+
+                    val pretty0 = u.errorInContext(rangedError0).pretty()
+                    val expected0 = """
+                        line 6: Element "tagml" is not defined in the ontology.
+                        [tagml>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor [w>incididunt<w] ut labore et dolo
+                        -------
+                        """.trimIndent()
+                    assertThat(pretty0).isEqualTo(expected0)
+
+                    val rangedError1 = parseResult.warnings[1] as ErrorListener.RangedTAGError
+                    assertThat(rangedError1.range).isEqualTo(range(6, 87, 6, 90))
+
+                    val pretty1 = u.errorInContext(rangedError1).pretty()
+                    val expected1 = """
+                        line 6: Element "w" is not defined in the ontology.
+                        [tagml>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor [w>incididunt<w] ut labore et dolo
+                                                                                                              ---
+                        """.trimIndent()
+                    assertThat(pretty1).isEqualTo(expected1)
+
+                    val rangedError2 = parseResult.warnings[2] as ErrorListener.RangedTAGError
+                    assertThat(rangedError2.range).isEqualTo(range(6, 926, 6, 929))
+
+                    val pretty2 = u.errorInContext(rangedError2).pretty(wrapAt = 80)
+                    val expected2 = """
+                        line 6: Element "x" is not defined in the ontology.
+                        o aliquam. Fermentum et sollicitudin ac orci [x>phasellus<x].<tagml]
+                                                                     ---
+                        """.trimIndent()
+                    assertThat(pretty2).isEqualTo(expected2)
+
+                    assertAll()
+                }
             }
         }
     }
