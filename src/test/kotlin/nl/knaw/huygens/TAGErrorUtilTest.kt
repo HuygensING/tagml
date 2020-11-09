@@ -23,13 +23,11 @@ package nl.knaw.huygens
 import nl.knaw.huygens.tag.tagml.*
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.SoftAssertions
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 
 class TAGErrorUtilTest {
 
-    @Disabled
     @Test
     fun test() {
         val tagml = """
@@ -44,11 +42,60 @@ class TAGErrorUtilTest {
         val u = TAGErrorUtil(tagml)
         when (val parseResult = parse(tagml)) {
             is TAGMLParseResult.TAGMLParseFailure -> {
-                println(parseResult.warnings.joinToString("\n") { u.errorInContext(it).pretty() })
-                fail(parseResult.errors.joinToString("\n") { u.errorInContext(it).pretty() })
+                println(parseResult.warnings.joinToString("\n") { u.errorInContext(it).underlinedSourceLines() })
+                println(parseResult.errors.joinToString("\n") { u.errorInContext(it).underlinedSourceLines() })
             }
             else -> {
-                println(parseResult.warnings.joinToString("\n") { u.errorInContext(it).pretty() })
+                println(parseResult.warnings.joinToString("\n") { u.errorInContext(it).underlinedSourceLines() })
+            }
+        }
+    }
+
+    @Test
+    fun syntax_errors() {
+        val tagml = """
+            [!{
+                this is not valid json
+            }!]
+            [tagml>Lorem ipsum<tagml]
+            """.trimIndent()
+        when (val parseResult = parse(tagml)) {
+            is TAGMLParseResult.TAGMLParseFailure -> {
+                SoftAssertions().apply {
+                    val u = TAGErrorUtil(tagml)
+                    println("errors:")
+                    val e0 = parseResult.errors[0]
+                    val rangedError0 = e0 as ErrorListener.RangedTAGError
+                    assertThat(rangedError0.range).isEqualTo(range(2, 5, 2, 7))
+
+                    val errorInContext0 = u.errorInContext(e0)
+                    assertThat(errorInContext0.header).isEqualTo("line 2")
+                    assertThat(errorInContext0.message).isEqualTo(e0.message)
+
+                    val slr00 = errorInContext0.sourceLineRanges[0]
+                    assertThat(slr00.charRange).isEqualTo(IntRange(5, 7))
+
+                    val pretty0 = errorInContext0.underlinedSourceLines()
+                    val expected0 = """
+                        |line 2: syntax error: unexpected token: 'th'
+                        |    this is not valid json
+                        |    --""".trimMargin()
+                    assertThat(pretty0).isEqualTo(expected0)
+                    for (e in (parseResult.errors)) {
+                        val errorLines = u.errorInContext(e).underlinedSourceLines()
+                        println(errorLines)
+                    }
+
+                    println("warnings:")
+                    for (e in (parseResult.warnings)) {
+                        val errorLines = u.errorInContext(e).underlinedSourceLines()
+                        println(errorLines)
+                    }
+                    assertAll()
+                }
+            }
+            else -> {
+                fail("expected error")
             }
         }
     }
@@ -95,7 +142,7 @@ class TAGErrorUtilTest {
                 val slr02 = errorInContext0.sourceLineRanges[2]
                 assertThat(slr02.charRange).isEqualTo(IntRange(1, 10))
 
-                val pretty0 = errorInContext0.pretty()
+                val pretty0 = errorInContext0.underlinedSourceLines()
                 val expected0 = """
                     |line 6-8: Element "p" is missing a description.
                     |        "p": {
@@ -111,7 +158,7 @@ class TAGErrorUtilTest {
                 val rangedError1 = e1 as ErrorListener.RangedTAGError
                 assertThat(rangedError1.range).isEqualTo(range(7, 12, 7, 47))
 
-                val pretty1 = u.errorInContext(e1).pretty()
+                val pretty1 = u.errorInContext(e1).underlinedSourceLines()
                 val expected1 = """
                     |line 7: Unknown element field "decription"
                     |           "decription": "typo is intentional"
@@ -121,7 +168,7 @@ class TAGErrorUtilTest {
 
                 println("warnings:")
                 for (e in (parseResult.warnings)) {
-                    val errorLines = u.errorInContext(e).pretty()
+                    val errorLines = u.errorInContext(e).underlinedSourceLines()
                     println(errorLines)
                 }
             }
@@ -144,13 +191,13 @@ class TAGErrorUtilTest {
         val u = TAGErrorUtil(tagml)
         when (val parseResult = parse(tagml)) {
             is TAGMLParseResult.TAGMLParseFailure -> {
-                fail(parseResult.errors.joinToString("\n") { u.errorInContext(it).pretty() })
+                fail(parseResult.errors.joinToString("\n") { u.errorInContext(it).underlinedSourceLines() })
             }
             else -> {
                 val rangedError0 = parseResult.warnings[0] as ErrorListener.RangedTAGError
                 assertThat(rangedError0.range).isEqualTo(range(6, 1, 6, 8))
 
-                val pretty0 = u.errorInContext(rangedError0).pretty()
+                val pretty0 = u.errorInContext(rangedError0).underlinedSourceLines()
                 val expected0 = """
                     line 6: Element "tagml" is not defined in the ontology.
                     [tagml>[book>[title>Foo Bar<title][chapter>[l>Lorem ipsum dolar amacet.<l]<chapter]<book]<tagml]
@@ -161,7 +208,7 @@ class TAGErrorUtilTest {
                 val rangedError1 = parseResult.warnings[1] as ErrorListener.RangedTAGError
                 assertThat(rangedError1.range).isEqualTo(range(6, 8, 6, 14))
 
-                val pretty1 = u.errorInContext(rangedError1).pretty()
+                val pretty1 = u.errorInContext(rangedError1).underlinedSourceLines()
                 val expected1 = """
                     line 6: Element "book" is not defined in the ontology.
                     [tagml>[book>[title>Foo Bar<title][chapter>[l>Lorem ipsum dolar amacet.<l]<chapter]<book]<tagml]
@@ -172,7 +219,7 @@ class TAGErrorUtilTest {
                 val rangedError2 = parseResult.warnings[2] as ErrorListener.RangedTAGError
                 assertThat(rangedError2.range).isEqualTo(range(6, 14, 6, 21))
 
-                val pretty2 = u.errorInContext(rangedError2).pretty()
+                val pretty2 = u.errorInContext(rangedError2).underlinedSourceLines()
                 val expected2 = """
                     line 6: Element "title" is not defined in the ontology.
                     [tagml>[book>[title>Foo Bar<title][chapter>[l>Lorem ipsum dolar amacet.<l]<chapter]<book]<tagml]
@@ -183,7 +230,7 @@ class TAGErrorUtilTest {
                 val rangedError3 = parseResult.warnings[3] as ErrorListener.RangedTAGError
                 assertThat(rangedError3.range).isEqualTo(range(6, 35, 6, 44))
 
-                val pretty3 = u.errorInContext(rangedError3).pretty()
+                val pretty3 = u.errorInContext(rangedError3).underlinedSourceLines()
                 val expected3 = """
                     line 6: Element "chapter" is not defined in the ontology.
                     [tagml>[book>[title>Foo Bar<title][chapter>[l>Lorem ipsum dolar amacet.<l]<chapter]<book]<tagml]
@@ -192,7 +239,7 @@ class TAGErrorUtilTest {
                 assertThat(pretty3).isEqualTo(expected3)
 
                 val rangedError4 = parseResult.warnings[4] as ErrorListener.RangedTAGError
-                val pretty4 = u.errorInContext(rangedError4).pretty()
+                val pretty4 = u.errorInContext(rangedError4).underlinedSourceLines()
                 val expected4 = """
                     line 6: Element "l" is not defined in the ontology.
                     [tagml>[book>[title>Foo Bar<title][chapter>[l>Lorem ipsum dolar amacet.<l]<chapter]<book]<tagml]
@@ -218,7 +265,7 @@ class TAGErrorUtilTest {
         val u = TAGErrorUtil(tagml)
         when (val parseResult = parse(tagml)) {
             is TAGMLParseResult.TAGMLParseFailure -> {
-                fail(parseResult.errors.joinToString("\n") { u.errorInContext(it).pretty() })
+                fail(parseResult.errors.joinToString("\n") { u.errorInContext(it).underlinedSourceLines() })
             }
             else -> {
                 SoftAssertions().apply {
@@ -227,7 +274,7 @@ class TAGErrorUtilTest {
                     val rangedError0 = parseResult.warnings[0] as ErrorListener.RangedTAGError
                     assertThat(rangedError0.range).isEqualTo(range(6, 1, 6, 8))
 
-                    val pretty0 = u.errorInContext(rangedError0).pretty()
+                    val pretty0 = u.errorInContext(rangedError0).underlinedSourceLines()
                     val expected0 = """
                         line 6: Element "tagml" is not defined in the ontology.
                         [tagml>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor [w>incididunt<w] ut labore et dolo
@@ -238,7 +285,7 @@ class TAGErrorUtilTest {
                     val rangedError1 = parseResult.warnings[1] as ErrorListener.RangedTAGError
                     assertThat(rangedError1.range).isEqualTo(range(6, 87, 6, 90))
 
-                    val pretty1 = u.errorInContext(rangedError1).pretty()
+                    val pretty1 = u.errorInContext(rangedError1).underlinedSourceLines()
                     val expected1 = """
                         line 6: Element "w" is not defined in the ontology.
                         [tagml>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor [w>incididunt<w] ut labore et dolo
@@ -249,7 +296,7 @@ class TAGErrorUtilTest {
                     val rangedError2 = parseResult.warnings[2] as ErrorListener.RangedTAGError
                     assertThat(rangedError2.range).isEqualTo(range(6, 926, 6, 929))
 
-                    val pretty2 = u.errorInContext(rangedError2).pretty(wrapAt = 80)
+                    val pretty2 = u.errorInContext(rangedError2).underlinedSourceLines(wrapAt = 80)
                     val expected2 = """
                         line 6: Element "x" is not defined in the ontology.
                         o aliquam. Fermentum et sollicitudin ac orci [x>phasellus<x].<tagml]

@@ -1,3 +1,5 @@
+package nl.knaw.huygens
+
 /*-
  * #%L
  * tagml
@@ -17,7 +19,6 @@
  * limitations under the License.
  * #L%
  */
-package nl.knaw.huygens
 
 import java.net.URI
 import kotlin.math.max
@@ -29,7 +30,7 @@ fun String.toURI(): URI? =
             null
         }
 
-fun ErrorInContext.pretty(wrapAt: Int = 120): String =
+fun ErrorInContext.underlinedSourceLines(wrapAt: Int = 120): String =
         if (this.header == null) {
             this.message
         } else {

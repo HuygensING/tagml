@@ -77,7 +77,7 @@ private fun CharStream.getLexerWith(errorListener: ErrorListener): TAGMLLexer =
         TAGMLLexer(this)
                 .apply { addErrorListener(errorListener) }
 
-private fun TAGMLLexer.commonTokenStream() = CommonTokenStream(this)
+private fun TAGMLLexer.commonTokenStream(): CommonTokenStream = CommonTokenStream(this)
 
 private fun CommonTokenStream.getParserWith(errorListener: ErrorListener): TAGMLParser =
         TAGMLParser(this)

@@ -53,7 +53,7 @@ class ErrorListener : ANTLRErrorListener {
     }
 
     val orderedErrors: List<TAGError>
-        get() = errors.sortedWith(TAGErrorComparator())
+        get() = errors.sortedWith(TAGErrorComparator())/*.withConsecutiveSyntaxErrorsJoined()*/
 
     val orderedWarnings: List<TAGError>
         get() = warnings.sortedWith(TAGErrorComparator())
@@ -184,6 +184,32 @@ class ErrorListener : ANTLRErrorListener {
         errors += list
     }
 
+//    private fun List<TAGError>.withConsecutiveSyntaxErrorsJoined(): List<TAGError> {
+//        val list = mutableListOf<TAGError>()
+//        var previousTAGSyntaxError: TAGSyntaxError? = null
+//        for (error in this) {
+//            when (error) {
+//                is TAGSyntaxError -> {
+//                    if (previousTAGSyntaxError == null) {
+//                        previousTAGSyntaxError = error
+//                    } else {
+//                        if (previousTAGSyntaxError.range.endPosition == error.range.startPosition) {
+//                            previousTAGSyntaxError.joinWith(error)
+//                        }
+//                    }
+//                }
+//                else -> {
+//                    if (previousTAGSyntaxError != null) {
+//                        list += previousTAGSyntaxError
+//                        previousTAGSyntaxError = null
+//                    }
+//                    list += error
+//                }
+//            }
+//        }
+//        return list
+//    }
+
     abstract class TAGError(val message: String)
 
     class TAGAmbiguityError(message: String) : TAGError(message)
@@ -199,7 +225,7 @@ class ErrorListener : ANTLRErrorListener {
             character: Int,
             message: String
     ) : RangedTAGError(
-            Range(Position(line, character), Position(line, character)),
+            Range(Position(line, character + 1), Position(line, character + message.length - 33)), // 33 == (syntax error: unexpected token: '').length - 1
             message
     )
 
@@ -226,3 +252,4 @@ class ErrorListener : ANTLRErrorListener {
     }
 
 }
+
