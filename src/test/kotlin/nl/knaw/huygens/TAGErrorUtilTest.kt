@@ -42,10 +42,13 @@ class TAGErrorUtilTest {
         val u = TAGErrorUtil(tagml)
         when (val parseResult = parse(tagml)) {
             is TAGMLParseResult.TAGMLParseFailure -> {
-                println(parseResult.warnings.joinToString("\n") { u.errorInContext(it).underlinedSourceLines() })
+                println("ERRORS:")
                 println(parseResult.errors.joinToString("\n") { u.errorInContext(it).underlinedSourceLines() })
+                println("WARNINGS:")
+                println(parseResult.warnings.joinToString("\n") { u.errorInContext(it).underlinedSourceLines() })
             }
             else -> {
+                println("WARNINGS:")
                 println(parseResult.warnings.joinToString("\n") { u.errorInContext(it).underlinedSourceLines() })
             }
         }

@@ -137,7 +137,8 @@ class ErrorListener : ANTLRErrorListener {
             msg: String,
             e: RecognitionException?) {
         val message = format("syntax error: %s", msg.replace("token recognition error at", "unexpected token"))
-        errors += TAGSyntaxError(line, charPositionInLine, message)
+        val range = syntaxErrorRange(line, charPositionInLine, message)
+        errors += TAGSyntaxError(range, message)
     }
 
     val prefixedErrorMessagesAsString: String
@@ -210,7 +211,7 @@ class ErrorListener : ANTLRErrorListener {
 //        return list
 //    }
 
-    abstract class TAGError(val message: String)
+    abstract class TAGError(var message: String)
 
     class TAGAmbiguityError(message: String) : TAGError(message)
 
@@ -218,16 +219,16 @@ class ErrorListener : ANTLRErrorListener {
 
     class TAGContextSensitivityError(message: String) : TAGError(message)
 
-    abstract class RangedTAGError(val range: Range, message: String) : TAGError(message)
+    abstract class RangedTAGError(var range: Range, message: String) : TAGError(message)
 
-    class TAGSyntaxError(
-            line: Int,
-            character: Int,
-            message: String
-    ) : RangedTAGError(
-            Range(Position(line, character + 1), Position(line, character + message.length - 33)), // 33 == (syntax error: unexpected token: '').length - 1
-            message
-    )
+    class TAGSyntaxError(range: Range, message: String) : RangedTAGError(range, message)
+
+    private fun syntaxErrorRange(line: Int, character: Int, message: String): Range {
+        val startQuoteIndex = message.indexOf('\'')
+        val endQuoteIndex = message.indexOf('\'', startQuoteIndex + 1)
+        val tokenLength = endQuoteIndex - startQuoteIndex
+        return Range(Position(line, character + 1), Position(line, character + tokenLength))
+    }
 
     class CustomError(
             startPos: Position,
