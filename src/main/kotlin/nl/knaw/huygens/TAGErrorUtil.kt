@@ -22,33 +22,6 @@ package nl.knaw.huygens
 
 import nl.knaw.huygens.tag.tagml.ErrorListener
 
-data class SourceLineRange(val sourceLine: String, val charRange: IntRange)
-
-data class ErrorInContext(
-        val message: String,
-        val header: String? = null,
-        val sourceLineRanges: List<SourceLineRange> = emptyList()
-)
-
-fun ErrorInContext.pretty(wrapAt: Int = 120): String =
-        if (this.header == null) {
-            this.message
-        } else {
-            val underlinedSourceLines = this.sourceLineRanges
-                    .asSequence()
-                    .map {
-                        val underline = "-".repeat(it.charRange.last - it.charRange.first)
-                        val padded = if (it.charRange.first == 1) underline else underline.padStart(it.charRange.last - 1)
-                        val lineParts = it.sourceLine.chunked(wrapAt)
-                        val underlineParts = padded.chunked(wrapAt)
-                        lineParts.zip(underlineParts)
-                    }
-                    .flatten()
-                    .filter { it.second.isNotBlank() }
-                    .joinToString("\n") { "${it.first}\n${it.second}" }
-            "${this.header}: ${this.message}\n$underlinedSourceLines"
-        }
-
 class TAGErrorUtil(tagml: String) {
     private val tagmlLines: List<String> = tagml.split("\n")
 

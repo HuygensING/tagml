@@ -23,10 +23,35 @@ package nl.knaw.huygens
 import nl.knaw.huygens.tag.tagml.*
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.SoftAssertions
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 
 class TAGErrorUtilTest {
+
+    @Disabled
+    @Test
+    fun test() {
+        val tagml = """
+            [!{
+              ":ontology": {
+                "root": "tagml",
+                "elements": "l","s"
+              }
+            }!]
+            [tagml|+A,+B>[l|A>[s|B>Het is duidelijk, dat de onder deze<l][l|A>aantallen vallende beroepsbeoefenaren niet alle als<l][l|A>"moeilijk misbaar" kunnen worden aangemerkt.<s]<l]<tagml]
+            """.trimIndent()
+        val u = TAGErrorUtil(tagml)
+        when (val parseResult = parse(tagml)) {
+            is TAGMLParseResult.TAGMLParseFailure -> {
+                println(parseResult.warnings.joinToString("\n") { u.errorInContext(it).pretty() })
+                fail(parseResult.errors.joinToString("\n") { u.errorInContext(it).pretty() })
+            }
+            else -> {
+                println(parseResult.warnings.joinToString("\n") { u.errorInContext(it).pretty() })
+            }
+        }
+    }
 
     @Test
     fun test_tag_error_util() {

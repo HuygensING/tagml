@@ -1,3 +1,5 @@
+package nl.knaw.huygens
+
 /*-
  * #%L
  * tagml
@@ -17,13 +19,11 @@
  * limitations under the License.
  * #L%
  */
-package nl.knaw.huygens
 
-import java.net.URI
+data class SourceLineRange(val sourceLine: String, val charRange: IntRange)
 
-fun String.toURI(): URI? =
-        try {
-            URI.create(this)
-        } catch (e: Exception) {
-            null
-        }
+data class ErrorInContext(
+        val message: String,
+        val header: String? = null,
+        val sourceLineRanges: List<SourceLineRange> = emptyList()
+)
