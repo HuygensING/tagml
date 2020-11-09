@@ -55,23 +55,39 @@ fun parse(tagml: String): TAGMLParseResult =
 
 private fun parse(antlrInputStream: CharStream): TAGMLParseResult {
     val errorListener = ErrorListener()
-    val lexer = TAGMLLexer(antlrInputStream)
-            .apply { addErrorListener(errorListener) }
-    val tokens = CommonTokenStream(lexer)
-    val parser = TAGMLParser(tokens)
-            .apply {
-                addErrorListener(errorListener)
-                buildParseTree = true
-            }
-    val parseTree: ParseTree = parser.document()
-    //    LOG.debug("parsetree: {}", parseTree.toStringTree(parser));
-    val listener = TAGMLListener(errorListener)
-    ParseTreeWalker.DEFAULT.walk(listener, parseTree)
-
+    val parseTree: ParseTree = antlrInputStream
+            .getLexerWith(errorListener)
+            .commonTokenStream()
+            .getParserWith(errorListener)
+            .document()
     return if (errorListener.hasErrors) {
         TAGMLParseFailure(errorListener.orderedErrors, errorListener.orderedWarnings)
     } else {
-        TAGMLParseSuccess(listener.tokens, errorListener.orderedWarnings)
+        val validator = TAGMLListener(errorListener)
+        parseTree.walkWith(validator)
+        if (errorListener.hasErrors) {
+            TAGMLParseFailure(errorListener.orderedErrors, errorListener.orderedWarnings)
+        } else {
+            TAGMLParseSuccess(validator.tokens, errorListener.orderedWarnings)
+        }
     }
 }
+
+private fun CharStream.getLexerWith(errorListener: ErrorListener): TAGMLLexer =
+        TAGMLLexer(this)
+                .apply { addErrorListener(errorListener) }
+
+private fun TAGMLLexer.commonTokenStream() = CommonTokenStream(this)
+
+private fun CommonTokenStream.getParserWith(errorListener: ErrorListener): TAGMLParser =
+        TAGMLParser(this)
+                .apply {
+                    addErrorListener(errorListener)
+                    buildParseTree = true
+                }
+
+private fun ParseTree.walkWith(listener: TAGMLListener) {
+    ParseTreeWalker.DEFAULT.walk(listener, this)
+}
+
 
