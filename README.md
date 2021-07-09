@@ -1,5 +1,7 @@
 # tagml
 
+![](https://github.com/HuygensING/tagml/workflows/tests/badge.svg)
+
 This library contains the ANTLR4-generated `TAGMLLexer` and `TAGMLParser` for tokenizing and parsing TAGML documents.
 
 ## maven usage
