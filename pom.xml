@@ -16,7 +16,7 @@
         <project.license.url>http://www.apache.org/licenses/LICENSE-2.0</project.license.url>
         <java.version>1.8</java.version>
 
-        <antlr.version>4.9.3</antlr.version>
+        <antlr.version>4.10</antlr.version>
         <antlr4.visitor>true</antlr4.visitor>
         <arrow.version>0.10.5</arrow.version>
         <asciitable.version>0.3.2</asciitable.version>
